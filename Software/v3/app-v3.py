@@ -11,7 +11,7 @@ import difflib
 app = Flask(__name__)
 CORS(app)
 
-print("Carregando motor de Inteligência Artificial (EasyOCR)...")
+print("Carregando Inteligência Artificial (EasyOCR)...")
 reader = easyocr.Reader(['pt', 'en'], gpu=False)
 print("IA Carregada! Servidor CondLog v3 Operacional.")
 
