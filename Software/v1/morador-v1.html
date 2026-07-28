@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CondLog v1 - Morador</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      .hidden-view {
+        display: none;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 font-sans text-gray-800 min-h-screen flex flex-col">
+    <header class="bg-white p-6 shadow-sm rounded-b-3xl">
+      <div class="max-w-md mx-auto">
+        <h1 class="text-sm font-semibold text-blue-600 tracking-wider uppercase mb-1">CondLog</h1>
+        <h2 class="text-2xl font-bold text-gray-800">Olá, Iury!</h2>
+        <p class="text-gray-500">Apt 104</p>
+      </div>
+    </header>
+
+    <main class="flex-1 w-full max-w-md mx-auto p-6 flex flex-col">
+      <div id="view-dashboard" class="flex flex-col flex-1 space-y-6">
+        <div class="bg-blue-600 text-white rounded-2xl p-6 shadow-lg flex items-center justify-between">
+          <div>
+            <p class="text-blue-100 text-sm mb-1">Aguardando retirada</p>
+            <p class="text-4xl font-bold">2</p>
+            <p class="text-sm mt-1">encomendas</p>
+          </div>
+          <div class="bg-blue-500 p-3 rounded-full opacity-80">
+            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+              ></path>
+            </svg>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <h3 class="font-semibold text-gray-700">Detalhes:</h3>
+          <div
+            class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center"
+          >
+            <div>
+              <p class="font-medium text-gray-800">Caixa Média</p>
+              <p class="text-xs text-gray-400">Chegou hoje, 14:30</p>
+            </div>
+            <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">P-03</span>
+          </div>
+          <div
+            class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center"
+          >
+            <div>
+              <p class="font-medium text-gray-800">Pacote Pequeno</p>
+              <p class="text-xs text-gray-400">Chegou hoje, 14:30</p>
+            </div>
+            <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">P-03</span>
+          </div>
+        </div>
+
+        <div class="mt-auto pt-6">
+          <button
+            onclick="generateQR()"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+              ></path>
+            </svg>
+            Gerar QR Code de Retirada
+          </button>
+        </div>
+      </div>
+
+      <div id="view-qr" class="hidden-view flex-col items-center justify-center flex-1 space-y-8">
+        <div class="text-center space-y-2">
+          <h2 class="text-xl font-bold text-gray-800">Apresente na câmera</h2>
+          <p class="text-sm text-gray-500">
+            Este código expira em
+            <span id="timer" class="font-bold text-blue-600">05:00</span>
+          </p>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-xl border-2 border-gray-100">
+          <svg width="200" height="200" viewBox="0 0 100 100" class="text-gray-800">
+            <rect width="100" height="100" fill="white" />
+            <path d="M10,10 h20 v20 h-20 z M15,15 h10 v10 h-10 z" fill="currentColor" />
+            <path d="M70,10 h20 v20 h-20 z M75,15 h10 v10 h-10 z" fill="currentColor" />
+            <path d="M10,70 h20 v20 h-20 z M15,75 h10 v10 h-10 z" fill="currentColor" />
+            <rect x="40" y="10" width="10" height="10" fill="currentColor" />
+            <rect x="50" y="20" width="10" height="10" fill="currentColor" />
+            <rect x="10" y="40" width="10" height="10" fill="currentColor" />
+            <rect x="30" y="40" width="10" height="10" fill="currentColor" />
+            <rect x="20" y="50" width="20" height="10" fill="currentColor" />
+            <rect x="40" y="60" width="10" height="30" fill="currentColor" />
+            <rect x="60" y="40" width="30" height="10" fill="currentColor" />
+            <rect x="70" y="60" width="20" height="10" fill="currentColor" />
+            <rect x="80" y="80" width="10" height="10" fill="currentColor" />
+          </svg>
+        </div>
+
+        <div class="text-center">
+          <p class="text-xs text-gray-400 mb-4">A retirada será gravada por motivos de segurança.</p>
+          <button onclick="showView('view-dashboard')" class="text-gray-500 font-medium underline">
+            Voltar
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      function showView(viewId) {
+        document.querySelectorAll('main > div').forEach((el) => el.classList.add('hidden-view'))
+        document.querySelectorAll('main > div').forEach((el) => (el.style.display = 'none'))
+
+        const activeView = document.getElementById(viewId)
+        activeView.classList.remove('hidden-view')
+        activeView.style.display = 'flex'
+      }
+
+      let timerInterval
+      function generateQR() {
+        showView('view-qr')
+
+        let timeLeft = 300
+        clearInterval(timerInterval)
+        timerInterval = setInterval(() => {
+          timeLeft--
+          const m = Math.floor(timeLeft / 60)
+            .toString()
+            .padStart(2, '0')
+          const s = (timeLeft % 60).toString().padStart(2, '0')
+          document.getElementById('timer').innerText = `${m}:${s}`
+
+          if (timeLeft <= 0) {
+            clearInterval(timerInterval)
+            showView('view-dashboard')
+          }
+        }, 1000)
+      }
+
+      showView('view-dashboard')
+    </script>
+  </body>
+</html>

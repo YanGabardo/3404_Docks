@@ -1,0 +1,79 @@
+# ============================================================
+#  Docks — .gitignore
+# ============================================================
+
+# --- Bancos de dados SQLite ---
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Ambientes virtuais
+venv/
+.venv/
+env/
+ENV/
+*/venv/
+*/.venv/
+
+# Testes / cobertura
+.pytest_cache/
+.coverage
+htmlcov/
+
+# --- Node.js (whatsapp-api/ e v8/server.js) ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm/
+
+# --- Sessão e cache do WhatsApp Web.js ---
+.wwebjs_auth/
+.wwebjs_cache/
+
+# --- Variáveis de ambiente e segredos ---
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# --- Imagens e uploads temporários (fotos de etiqueta/pacote via OCR) ---
+uploads/
+tmp/
+*.tmp
+
+# --- Logs ---
+*.log
+logs/
+
+# --- Editor / IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-workspace
+
+# --- Sistema operacional ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Arquivos gerados pela conversão de documentos (relatórios) ---
+~$*.docx
+~$*.xlsx
