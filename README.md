@@ -4,7 +4,7 @@
 
 ### Sistema de gerenciamento de encomendas para condomínios
 
-*anteriormente conhecido como **CondLog***
+\*anteriormente conhecido como **CondLog\***
 
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat&logo=python&logoColor=white)
 ![Flask](https://img.shields.io/badge/Flask-black?style=flat&logo=flask&logoColor=white)
@@ -33,6 +33,7 @@ Este repositório guarda **oito versões evolutivas** do projeto (`v1` → `v8`)
 <td width="33%" valign="top">
 
 ### 🛎️ Portaria
+
 - Leitura automática da etiqueta por OCR (EasyOCR)
 - Reconhecimento do morador com autocompletar
 - Alocação de prateleira por tamanho (P/M/G), reaproveitando uma prateleira já em uso pelo mesmo morador quando possível
@@ -42,16 +43,18 @@ Este repositório guarda **oito versões evolutivas** do projeto (`v1` → `v8`)
 <td width="33%" valign="top">
 
 ### 🏠 Morador
+
 - Login pessoal com senha
 - Lista de encomendas pendentes
 - Geração de QR Code de retirada (expira em 5 minutos)
 - Notificação automática por WhatsApp
-- Recuperação de senha por código enviado no WhatsApp *(v8)*
+- Recuperação de senha por código enviado no WhatsApp _(v8)_
 
 </td>
 <td width="33%" valign="top">
 
-### 🖥️ Síndico / Portaria (Painel)
+### 🖥️ Síndico / Portaria
+
 - Métricas em tempo real (aguardando, retiradas, prateleiras livres)
 - Mapeamento físico das prateleiras
 - Auditoria de eventos (logs)
@@ -65,44 +68,43 @@ Este repositório guarda **oito versões evolutivas** do projeto (`v1` → `v8`)
 ## 🔄 Como funciona
 
 ```
-   📷 Portaria escaneia         📲 Morador recebe          🚪 Totem libera
-   a etiqueta (OCR)      →      aviso no WhatsApp    →     a sala via QR Code
-        │                              │                          │
-        ▼                              ▼                          ▼
-  Prateleira alocada          Gera QR Code (5 min)        Porta destrava e
-  automaticamente             no Portal do Morador        câmera registra
+  📷 Portaria escaneia        📲 Morador recebe          🚪 Totem libera
+    a etiqueta (OCR)      →    aviso no WhatsApp    →    a sala via QR Code
+            │                          │                         │
+            ▼                          ▼                         ▼
+   Prateleira alocada         Gera QR Code (5 min)        Porta destrava e
+    automaticamente           no Portal do Morador        câmera registra
 ```
 
 Todo o fluxo fica visível em tempo real no **Painel Administrativo**, incluindo o histórico de auditoria de cada retirada.
 
 ## 🛠️ Stack tecnológica
 
-| Camada | Tecnologias |
-|---|---|
-| **Backend** | Python · Flask · Flask-SQLAlchemy (a partir da v7) · SQLite |
-| **Visão computacional** | EasyOCR · OpenCV |
-| **Frontend** | HTML · Tailwind CSS · JavaScript |
-| **Notificações** | Node.js · [whatsapp-web.js](https://github.com/pedroslopez/whatsapp-web.js) · Puppeteer |
-| **QR Code** | qrcodejs (geração) · html5-qrcode (leitura) |
-| **Autenticação (v7/v8)** | Werkzeug (hash de senha) · tokens de sessão em memória |
+| Camada                  | Tecnologias                                                                             |
+| ----------------------- | --------------------------------------------------------------------------------------- |
+| **Backend**             | Python · Flask · Flask-SQLAlchemy · SQLite                                              |
+| **Visão computacional** | EasyOCR · OpenCV                                                                        |
+| **Frontend**            | HTML · Tailwind CSS · JavaScript                                                        |
+| **Notificações**        | Node.js · [whatsapp-web.js](https://github.com/pedroslopez/whatsapp-web.js) · Puppeteer |
+| **QR Code**             | qrcodejs (geração) · html5-qrcode (leitura)                                             |
+| **Autenticação**        | Werkzeug (hash de senha) · tokens de sessão em memória                                  |
 
 ## 🕓 Linha do tempo das versões
 
-| Versão | O que mudou |
-|---|---|
-| **v1** | Maquete estática das três telas, sem backend |
-| **v2 – v3** | Primeiro backend em Flask; cadastro de morador e registro de encomendas |
-| **v4** | OCR de etiqueta, autocompletar de morador, QR Code com expiração real |
-| **v5** | Login do morador, notificação por e-mail (nunca usada), reaproveitamento de prateleira, sincronismo de hardware |
-| **v6** | Reescrita de banco; perde cadastro pelo painel, sincronismo de hardware e reaproveitamento de prateleira (restaurados posteriormente) |
-| **v7** | Migração para Flask-SQLAlchemy; hash de senha, token de sessão do morador e senha atual exigida na troca |
-| **v8** | Notificação por WhatsApp, câmera IP real, painel com login, recuperação de senha por código, modo escuro |
-
-> O histórico completo de inconsistências identificadas entre versões e das correções aplicadas está no [Relatório de Correções e Mudanças](#-documentação-adicional).
+| Versão      | O que mudou                                                                                                                           |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| **v1**      | Maquete estática das três telas, sem backend                                                                                          |
+| **v2 – v3** | Primeiro backend em Flask, com cadastro de morador e registro de encomendas                                                               |
+| **v4**      | OCR de etiqueta, autocompletar de morador, QR Code com expiração real                                                                 |
+| **v5**      | Login do morador, notificação por e-mail (nunca usada), reaproveitamento de prateleira, sincronismo de hardware                       |
+| **v6**      | Reescrita de banco; perde cadastro pelo painel, sincronismo de hardware e reaproveitamento de prateleira (restaurados posteriormente) |
+| **v7**      | Migração para Flask-SQLAlchemy; hash de senha, token de sessão do morador e senha atual exigida na troca                              |
+| **v8**      | Notificação por WhatsApp, câmera IP real, painel com login, recuperação de senha por código, modo escuro                              |
 
 ## 🚀 Como rodar localmente
 
 ### Pré-requisitos
+
 - Python 3.10+
 - Node.js 18+
 - Um navegador Chromium/Chrome instalado (para a ponte de WhatsApp)
@@ -137,12 +139,12 @@ Abra os arquivos `.html` da versão desejada diretamente no navegador (ex.: `v8/
 
 Disponíveis a partir da v6 (painel) e v8 (WhatsApp), todas opcionais — o projeto roda com valores padrão adequados para desenvolvimento local:
 
-| Variável | Versões | Padrão | Descrição |
-|---|---|---|---|
-| `DASHBOARD_USUARIO` | v6 – v8 | `sindico` | Usuário de acesso ao painel administrativo |
-| `DASHBOARD_SENHA` | v6 – v8 | `docks2026` | Senha de acesso ao painel administrativo |
-| `FLASK_DEBUG` | v6 – v8 | desligado | Defina como `1` para ativar o modo debug **apenas em desenvolvimento local** |
-| `WHATSAPP_BROWSER_PATH` | v8 | *(auto)* | Caminho de um navegador específico para o Puppeteer, se necessário |
+| Variável                | Versões | Padrão      | Descrição                                                                    |
+| ----------------------- | ------- | ----------- | ---------------------------------------------------------------------------- |
+| `DASHBOARD_USUARIO`     | v6 – v8 | `sindico`   | Usuário de acesso ao painel administrativo                                   |
+| `DASHBOARD_SENHA`       | v6 – v8 | `docks2026` | Senha de acesso ao painel administrativo                                     |
+| `FLASK_DEBUG`           | v6 – v8 | desligado   | Defina como `1` para ativar o modo debug **apenas em desenvolvimento local** |
+| `WHATSAPP_BROWSER_PATH` | v8      | _(auto)_    | Caminho de um navegador específico para o Puppeteer, se necessário           |
 
 ## 🔒 Segurança
 
@@ -152,14 +154,6 @@ Este é um projeto em evolução, mantido também como material didático — po
 - ⚠️ A v6 mantém, de propósito, senha de morador em texto puro e troca de senha sem confirmação da senha atual — não é a versão recomendada para uso real.
 - ⚠️ As credenciais da câmera IP (v8) ainda estão escritas diretamente no código-fonte (`app-v8.py`) — mova para variável de ambiente antes de expor o servidor fora da rede local.
 - ⚠️ Sessões (painel e morador) ficam em memória do processo Flask e são perdidas ao reiniciar o servidor; não há expiração automática por tempo.
-
-## 📄 Documentação adicional
-
-Este repositório é acompanhado de relatórios técnicos mais extensos (recomenda-se colocá-los em `docs/`):
-
-- **Relatório de Revisão Técnica** — inconsistências entre versões e falhas identificadas.
-- **Relatório de Correções e Mudanças** — o que foi corrigido, versão por versão.
-- **Contrato de API** — referência única e estável dos endpoints, baseada na v8.
 
 ## 🗺️ Roadmap
 
