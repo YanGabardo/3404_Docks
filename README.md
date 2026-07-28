@@ -4,8 +4,6 @@
 
 ### Sistema de gerenciamento de encomendas para condomínios
 
-\*anteriormente conhecido como **CondLog\***
-
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat&logo=python&logoColor=white)
 ![Flask](https://img.shields.io/badge/Flask-black?style=flat&logo=flask&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat&logo=node.js&logoColor=white)
@@ -36,7 +34,7 @@ Este repositório guarda **oito versões evolutivas** do projeto (`v1` → `v8`)
 
 - Leitura automática da etiqueta por OCR (EasyOCR)
 - Reconhecimento do morador com autocompletar
-- Alocação de prateleira por tamanho (P/M/G), reaproveitando uma prateleira já em uso pelo mesmo morador quando possível
+- Alocação de prateleira por tamanho, reaproveitando uma prateleira já em uso pelo mesmo morador quando possível
 - Foto do pacote anexada ao registro
 
 </td>
@@ -48,14 +46,14 @@ Este repositório guarda **oito versões evolutivas** do projeto (`v1` → `v8`)
 - Lista de encomendas pendentes
 - Geração de QR Code de retirada (expira em 5 minutos)
 - Notificação automática por WhatsApp
-- Recuperação de senha por código enviado no WhatsApp _(v8)_
+- Recuperação de senha por código enviado no WhatsApp
 
 </td>
 <td width="33%" valign="top">
 
 ### 🖥️ Síndico / Portaria
 
-- Métricas em tempo real (aguardando, retiradas, prateleiras livres)
+- Dados em tempo real (aguardando, retiradas, prateleiras livres)
 - Mapeamento físico das prateleiras
 - Auditoria de eventos (logs)
 - Câmera IP ao vivo
@@ -91,15 +89,16 @@ Todo o fluxo fica visível em tempo real no **Painel Administrativo**, incluindo
 
 ## 🕓 Linha do tempo das versões
 
-| Versão      | O que mudou                                                                                                                           |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| **v1**      | Maquete estática das três telas, sem backend                                                                                          |
-| **v2 – v3** | Primeiro backend em Flask, com cadastro de morador e registro de encomendas                                                               |
-| **v4**      | OCR de etiqueta, autocompletar de morador, QR Code com expiração real                                                                 |
-| **v5**      | Login do morador, notificação por e-mail (nunca usada), reaproveitamento de prateleira, sincronismo de hardware                       |
-| **v6**      | Reescrita de banco; perde cadastro pelo painel, sincronismo de hardware e reaproveitamento de prateleira (restaurados posteriormente) |
-| **v7**      | Migração para Flask-SQLAlchemy; hash de senha, token de sessão do morador e senha atual exigida na troca                              |
-| **v8**      | Notificação por WhatsApp, câmera IP real, painel com login, recuperação de senha por código, modo escuro                              |
+| Versão | O que mudou                                                                                                                           |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| **v1** | Maquete estática das três telas, sem backend                                                                                          |
+| **v2** | Primeiro backend em Flask, com registro de encomendas                                                                                 |
+| **v3** | Registro de encomendas com OCR e cadastro de morador                                                                                  |
+| **v4** | OCR de etiqueta, autocompletar de morador, QR Code com expiração real                                                                 |
+| **v5** | Login do morador, notificação por e-mail (nunca usada), reaproveitamento de prateleira, sincronismo de hardware                       |
+| **v6** | Reescrita de banco; perde cadastro pelo painel, sincronismo de hardware e reaproveitamento de prateleira (restaurados posteriormente) |
+| **v7** | Migração para Flask-SQLAlchemy; hash de senha, token de sessão do morador e senha atual exigida na troca                              |
+| **v8** | Notificação por WhatsApp, câmera IP real, painel com login, recuperação de senha por código, modo escuro                              |
 
 ## 🚀 Como rodar localmente
 

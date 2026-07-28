@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CondLog v3 - Porteiro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      .hidden-view {
+        display: none !important;
+      }
+      #video-container {
+        position: relative;
+        width: 100%;
+        max-width: 400px;
+        margin: 0 auto;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        background-color: #000;
+      }
+      #camera-preview {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      #scanner-guide {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 80%;
+        height: 40%;
+        border: 2px dashed rgba(255, 255, 255, 0.7);
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 font-sans text-gray-800 min-h-screen flex flex-col">
+    <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-10">
+      <div class="flex justify-between items-center max-w-md mx-auto">
+        <h1 class="text-xl font-bold tracking-wide">CondLog</h1>
+        <span class="text-sm bg-blue-700 px-3 py-1 rounded-full shadow-inner"
+          >Portaria</span
+        >
+      </div>
+    </header>
+
+    <main class="flex-1 w-full max-w-md mx-auto p-4 flex flex-col relative">
+      <div
+        id="view-home"
+        class="flex flex-col items-center justify-center flex-1 space-y-6"
+      >
+        <div class="text-center space-y-2">
+          <h2 class="text-2xl font-semibold text-gray-700">Nova Encomenda</h2>
+          <p class="text-gray-500">
+            Faça o escaneamento inteligente da etiqueta.
+          </p>
+        </div>
+        <button
+          onclick="startCamera()"
+          class="bg-blue-600 hover:bg-blue-700 text-white w-48 h-48 rounded-full flex flex-col items-center justify-center shadow-lg transition transform hover:scale-105 active:scale-95"
+        >
+          <svg
+            class="w-16 h-16 mb-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+            ></path>
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+            ></path>
+          </svg>
+          <span class="font-semibold text-lg">Escanear por Foto</span>
+        </button>
+        <button
+          onclick="showView('view-form')"
+          class="text-blue-600 font-medium underline mt-4"
+        >
+          Entrar com cadastro manual
+        </button>
+      </div>
+
+      <div
+        id="view-camera"
+        class="hidden-view flex-col items-center flex-1 space-y-4"
+      >
+        <div class="w-full flex justify-between items-center mb-2">
+          <h2 class="text-lg font-semibold text-gray-700">
+            Foque no Texto da Etiqueta
+          </h2>
+          <button
+            onclick="stopCameraAndGoHome()"
+            class="text-red-500 font-medium"
+          >
+            Cancelar
+          </button>
+        </div>
+        <div id="video-container">
+          <video id="camera-preview" autoplay playsinline></video>
+          <div id="scanner-guide"></div>
+        </div>
+        <canvas id="capture-canvas" class="hidden"></canvas>
+
+        <button
+          onclick="captureImageAndReadOCR()"
+          class="mt-8 mx-auto block bg-blue-600 text-white font-bold py-4 px-8 rounded-full shadow-lg w-full max-w-xs hover:bg-blue-700 active:scale-95 transition"
+        >
+          Processar Captura
+        </button>
+      </div>
+
+      <div
+        id="view-loading"
+        class="hidden-view absolute inset-0 bg-gray-50 z-20 flex-col items-center justify-center space-y-4"
+      >
+        <div
+          class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600"
+        ></div>
+        <p class="text-gray-600 font-medium animate-pulse mt-4">
+          Processando com Inteligência Artificial...
+        </p>
+      </div>
+
+      <div id="view-form" class="hidden-view flex-col flex-1">
+        <h2 class="text-xl font-bold mb-4 text-gray-800 border-b pb-2">
+          Confirmar Dados
+        </h2>
+        <div class="space-y-4 flex-1">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1"
+              >Texto Bruto Extraído (OCR)</label
+            >
+            <textarea
+              id="raw-ocr-text"
+              class="w-full bg-gray-100 border border-gray-300 rounded-lg p-2 text-xs text-gray-600 outline-none resize-none"
+              rows="2"
+              readonly
+            ></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Nome do Morador</label
+            >
+            <input
+              type="text"
+              id="input-nome"
+              class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Apartamento</label
+            >
+            <input
+              type="text"
+              id="input-apt"
+              class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Tamanho da Encomenda</label
+            >
+            <div class="grid grid-cols-3 gap-2">
+              <button
+                class="size-btn border-2 border-gray-200 rounded-lg py-3 text-gray-600 font-medium transition"
+                onclick="selectSize(this, 'Pequeno')"
+              >
+                Pequeno
+              </button>
+              <button
+                class="size-btn border-2 border-gray-200 rounded-lg py-3 text-gray-600 font-medium transition"
+                onclick="selectSize(this, 'Médio')"
+              >
+                Médio
+              </button>
+              <button
+                class="size-btn border-2 border-gray-200 rounded-lg py-3 text-gray-600 font-medium transition"
+                onclick="selectSize(this, 'Grande')"
+              >
+                Grande
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="mt-8 flex gap-3">
+          <button
+            onclick="showView('view-home')"
+            class="flex-1 bg-gray-200 text-gray-700 font-semibold py-3 rounded-lg"
+          >
+            Cancelar
+          </button>
+          <button
+            id="btn-guardar"
+            onclick="confirmStorage()"
+            class="flex-1 bg-blue-600 text-white font-semibold py-3 rounded-lg shadow-md hover:bg-blue-700"
+          >
+            Confirmar Local
+          </button>
+        </div>
+      </div>
+
+      <div
+        id="view-success"
+        class="hidden-view flex-col items-center justify-center flex-1 space-y-4"
+      >
+        <div class="bg-green-100 p-4 rounded-full">
+          <svg
+            class="w-12 h-12 text-green-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M5 13l4 4L19 7"
+            ></path>
+          </svg>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-800">Processado!</h2>
+        <div
+          class="bg-blue-50 border border-blue-200 p-6 rounded-xl w-full text-center mt-4"
+        >
+          <p class="text-sm text-gray-500 uppercase tracking-wider mb-1">
+            Destinação Física
+          </p>
+          <p
+            class="text-4xl font-extrabold text-blue-700"
+            id="display-prateleira"
+          >
+            --
+          </p>
+        </div>
+        <button
+          onclick="resetApp()"
+          class="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg shadow-md hover:bg-blue-700 mt-8"
+        >
+          Nova Entrada
+        </button>
+      </div>
+    </main>
+
+    <script>
+      const video = document.getElementById('camera-preview')
+      const canvas = document.getElementById('capture-canvas')
+      let stream = null
+      let tamanhoSelecionado = ''
+
+      function showView(viewId) {
+        document
+          .querySelectorAll('main > div')
+          .forEach((el) => el.classList.add('hidden-view'))
+        const targetView = document.getElementById(viewId)
+        targetView.classList.remove('hidden-view')
+        if (viewId === 'view-loading') targetView.style.display = 'flex'
+        else targetView.style.display = ''
+      }
+
+      async function startCamera() {
+        showView('view-camera')
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' } },
+            audio: false,
+          })
+          video.srcObject = stream
+        } catch (err) {
+          alert('Câmera indisponível.')
+          showView('view-home')
+        }
+      }
+
+      function stopCamera() {
+        if (stream) stream.getTracks().forEach((track) => track.stop())
+      }
+      function stopCameraAndGoHome() {
+        stopCamera()
+        showView('view-home')
+      }
+
+      async function captureImageAndReadOCR() {
+        canvas.width = video.videoWidth
+        canvas.height = video.videoHeight
+        canvas
+          .getContext('2d')
+          .drawImage(video, 0, 0, canvas.width, canvas.height)
+        const imageDataUrl = canvas.toDataURL('image/jpeg')
+        stopCamera()
+        showView('view-loading')
+
+        try {
+          const res = await fetch('http://127.0.0.1:5000/api/ocr', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: imageDataUrl }),
+          })
+          const result = await res.json()
+          document.getElementById('raw-ocr-text').value =
+            result.raw_text || 'Nada legível'
+          if (result.matched) {
+            document.getElementById('input-nome').value = result.matched.nome
+            document.getElementById('input-apt').value = result.matched.apt
+          }
+          showView('view-form')
+        } catch (e) {
+          alert('Erro ao processar imagem.')
+          showView('view-form')
+        }
+      }
+
+      function selectSize(btn, tamanho) {
+        tamanhoSelecionado = tamanho
+        document.querySelectorAll('.size-btn').forEach((b) => {
+          b.style.borderColor = '#e5e7eb'
+          b.style.backgroundColor = 'transparent'
+          b.style.color = '#4b5563'
+        })
+        btn.style.borderColor = '#2563eb'
+        btn.style.backgroundColor = '#eff6ff'
+        btn.style.color = '#2563eb'
+      }
+
+      async function confirmStorage() {
+        const nome = document.getElementById('input-nome').value
+        const apt = document.getElementById('input-apt').value
+        if (!nome || !apt || !tamanhoSelecionado)
+          return alert('Preencha todos os dados.')
+
+        const btn = document.getElementById('btn-guardar')
+        btn.innerText = 'Calculando Rota...'
+        btn.disabled = true
+
+        try {
+          const res = await fetch('http://127.0.0.1:5000/api/encomendas', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              nome: nome,
+              apartamento: apt,
+              tamanho: tamanhoSelecionado,
+            }),
+          })
+          const data = await res.json()
+          if (data.success) {
+            document.getElementById('display-prateleira').innerText =
+              data.prateleira
+            showView('view-success')
+          } else {
+            alert(data.error)
+          }
+        } catch (e) {
+          alert('Erro na API.')
+        } finally {
+          btn.innerText = 'Confirmar Local'
+          btn.disabled = false
+        }
+      }
+
+      function resetApp() {
+        document.getElementById('raw-ocr-text').value = ''
+        document.getElementById('input-nome').value = ''
+        document.getElementById('input-apt').value = ''
+        tamanhoSelecionado = ''
+        document.querySelectorAll('.size-btn').forEach((b) => {
+          b.style.borderColor = '#e5e7eb'
+          b.style.backgroundColor = 'transparent'
+          b.style.color = '#4b5563'
+        })
+        showView('view-home')
+      }
+    </script>
+  </body>
+</html>
