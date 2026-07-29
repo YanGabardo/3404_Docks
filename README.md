@@ -94,8 +94,8 @@ Todo o fluxo fica visível em tempo real no **Painel Administrativo**, incluindo
 | **v1** | Maquete estática das três telas, sem backend                                                                                          |
 | **v2** | Primeiro backend em Flask, com registro de encomendas                                                                                 |
 | **v3** | Registro de encomendas com OCR e cadastro de morador                                                                                  |
-| **v4** | OCR de etiqueta, autocompletar de morador, QR Code com expiração real                                                                 |
-| **v5** | Login do morador, notificação por e-mail (nunca usada), reaproveitamento de prateleira, sincronismo de hardware                       |
+| **v4** | Autocompletar de morador, _QR Code_ com expiração real e Login do morador                                                             |
+| **v5** | Notificação por e-mail (nunca usada), reaproveitamento de prateleira, sincronismo de hardware                       |
 | **v6** | Reescrita de banco; perde cadastro pelo painel, sincronismo de hardware e reaproveitamento de prateleira (restaurados posteriormente) |
 | **v7** | Migração para Flask-SQLAlchemy; hash de senha, token de sessão do morador e senha atual exigida na troca                              |
 | **v8** | Notificação por WhatsApp, câmera IP real, painel com login, recuperação de senha por código, modo escuro                              |

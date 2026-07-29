@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CondLog v4 - Morador</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+      .hidden-view {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 font-sans text-gray-800 min-h-screen flex flex-col relative">
+    <div id="view-login" class="flex flex-col items-center justify-center flex-1 p-6 space-y-8">
+      <div class="text-center">
+        <h1 class="text-3xl font-bold text-blue-600 tracking-wider uppercase mb-2">CondLog</h1>
+        <p class="text-gray-500">Acesso Seguro do Morador</p>
+      </div>
+
+      <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 w-full max-w-sm">
+        <div class="space-y-5">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Usuário</label>
+            <input
+              type="text"
+              id="login-user"
+              class="w-full border border-gray-300 rounded-xl p-3 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              placeholder="Primeiro Nome (ex: Iury)"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+            <input
+              type="password"
+              id="login-pwd"
+              class="w-full border border-gray-300 rounded-xl p-3 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              placeholder="Sua senha..."
+            />
+          </div>
+          <button
+            onclick="fazerLogin()"
+            id="btn-login"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl mt-4 transition"
+          >
+            Acessar
+          </button>
+          <p id="login-error" class="text-red-500 text-sm text-center hidden mt-2"></p>
+        </div>
+      </div>
+    </div>
+
+    <div id="area-logada" class="hidden-view flex flex-col flex-1">
+      <header class="bg-white p-6 shadow-sm rounded-b-3xl">
+        <div class="max-w-md mx-auto flex justify-between items-start">
+          <div>
+            <h1 class="text-sm font-semibold text-blue-600 tracking-wider uppercase mb-1">CondLog</h1>
+            <h2 class="text-2xl font-bold text-gray-800" id="user-name-display">Olá!</h2>
+            <p class="text-gray-500">Apt <span id="user-apt-display">--</span></p>
+          </div>
+          <button onclick="fazerLogout()" class="text-sm text-gray-400 underline">Sair</button>
+        </div>
+      </header>
+
+      <main class="flex-1 w-full max-w-md mx-auto p-6 flex flex-col">
+        <div id="view-dashboard" class="flex flex-col flex-1 space-y-6">
+          <div class="bg-blue-600 text-white rounded-2xl p-6 shadow-lg flex items-center justify-between">
+            <div>
+              <p class="text-blue-100 text-sm mb-1">Aguardando retirada</p>
+              <p class="text-4xl font-bold" id="qtd-encomendas">0</p>
+            </div>
+            <div class="bg-blue-500 p-3 rounded-full opacity-80">
+              <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                ></path>
+              </svg>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <h3 class="font-semibold text-gray-700">Pacotes Prontos:</h3>
+            <div id="lista-encomendas" class="space-y-3">
+              <p class="text-sm text-gray-500 italic">Buscando banco de dados...</p>
+            </div>
+          </div>
+
+          <div class="mt-auto pt-6">
+            <button
+              id="btn-gerar"
+              onclick="solicitarQRCode()"
+              class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
+              disabled
+            >
+              Gerar QR Code de Retirada
+            </button>
+          </div>
+        </div>
+
+        <div id="view-qr" class="hidden-view flex flex-col items-center justify-center flex-1 space-y-8">
+          <div class="text-center space-y-2">
+            <h2 class="text-xl font-bold text-gray-800">Apresente ao Totem</h2>
+            <p class="text-sm text-gray-500">
+              Este código de segurança expira em
+              <span id="timer" class="font-bold text-blue-600">05:00</span>
+            </p>
+          </div>
+
+          <div
+            class="bg-white p-6 rounded-2xl shadow-xl border-2 border-gray-100 flex justify-center items-center w-full max-w-[280px] mx-auto"
+          >
+            <div id="qrcode-canvas"></div>
+          </div>
+
+          <div class="text-center">
+            <p class="text-xs text-gray-400 mb-4">A retirada destranca a prateleira e aciona a câmera.</p>
+            <button onclick="voltarInicio()" class="text-gray-500 font-medium underline">
+              Cancelar Retirada
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      const API_URL =
+        window.location.hostname === '' ? 'http://127.0.0.1:5000' : `http://${window.location.hostname}:5000`
+      let apartamentoLogado = null
+      let timerInterval
+
+      function showView(viewId) {
+        document.getElementById('view-dashboard').classList.add('hidden-view')
+        document.getElementById('view-qr').classList.add('hidden-view')
+        document.getElementById(viewId).classList.remove('hidden-view')
+      }
+
+      async function fazerLogin() {
+        const user = document.getElementById('login-user').value
+        const btn = document.getElementById('btn-login')
+        const err = document.getElementById('login-error')
+
+        btn.innerText = 'Aguarde...'
+        err.classList.add('hidden')
+
+        try {
+          const res = await fetch(`${API_URL}/api/morador/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usuario: user }),
+          })
+          const data = await res.json()
+
+          if (data.success) {
+            apartamentoLogado = data.apartamento
+            document.getElementById('user-name-display').innerText = `Olá, ${data.nome.split(' ')[0]}!`
+            document.getElementById('user-apt-display').innerText = apartamentoLogado
+            document.getElementById('view-login').classList.add('hidden-view')
+            document.getElementById('area-logada').classList.remove('hidden-view')
+            carregarEncomendas()
+          } else {
+            err.innerText = data.message
+            err.classList.remove('hidden')
+          }
+        } catch (e) {
+          err.innerText = 'Erro no servidor central.'
+          err.classList.remove('hidden')
+        }
+        btn.innerText = 'Acessar'
+      }
+
+      function fazerLogout() {
+        apartamentoLogado = null
+        document.getElementById('login-pwd').value = ''
+        document.getElementById('area-logada').classList.add('hidden-view')
+        document.getElementById('view-login').classList.remove('hidden-view')
+      }
+
+      async function carregarEncomendas() {
+        if (!apartamentoLogado) return
+        try {
+          const res = await fetch(`${API_URL}/api/morador/${apartamentoLogado}/encomendas`)
+          const data = await res.json()
+          document.getElementById('qtd-encomendas').innerText = data.encomendas.length
+          const listaContainer = document.getElementById('lista-encomendas')
+          listaContainer.innerHTML = ''
+
+          if (data.encomendas.length === 0) {
+            listaContainer.innerHTML =
+              '<p class="text-sm text-gray-500 italic">Você não possui encomendas pendentes.</p>'
+            document.getElementById('btn-gerar').disabled = true
+            document.getElementById('btn-gerar').classList.add('opacity-50', 'cursor-not-allowed')
+          } else {
+            document.getElementById('btn-gerar').disabled = false
+            document.getElementById('btn-gerar').classList.remove('opacity-50', 'cursor-not-allowed')
+
+            data.encomendas.forEach((enc) => {
+              listaContainer.innerHTML += `
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+                    <div>
+                        <p class="font-medium text-gray-800 capitalize">Pacote ${enc.tamanho}</p>
+                        <p class="text-xs text-gray-400">Chegou: ${enc.data_chegada.split(' ')[0]}</p>
+                    </div>
+                    <span class="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-1 rounded">${enc.prateleira}</span>
+                </div>`
+            })
+          }
+        } catch (err) {}
+      }
+
+      async function solicitarQRCode() {
+        try {
+          const res = await fetch(`${API_URL}/api/morador/${apartamentoLogado}/gerar_qr`, { method: 'POST' })
+          const data = await res.json()
+          if (data.success) {
+            gerarImagemQR(data.token)
+            iniciarTimer(300)
+            showView('view-qr')
+          }
+        } catch (err) {
+          alert('Erro de Conexão Segura.')
+        }
+      }
+
+      function gerarImagemQR(token) {
+        document.getElementById('qrcode-canvas').innerHTML = ''
+        new QRCode(document.getElementById('qrcode-canvas'), {
+          text: token,
+          width: 200,
+          height: 200,
+          colorDark: '#1e293b',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.H,
+        })
+      }
+
+      function iniciarTimer(segundos) {
+        clearInterval(timerInterval)
+        let timeLeft = segundos
+        timerInterval = setInterval(() => {
+          timeLeft--
+          const m = Math.floor(timeLeft / 60)
+            .toString()
+            .padStart(2, '0')
+          const s = (timeLeft % 60).toString().padStart(2, '0')
+          document.getElementById('timer').innerText = `${m}:${s}`
+          if (timeLeft <= 0) voltarInicio()
+        }, 1000)
+      }
+
+      function voltarInicio() {
+        clearInterval(timerInterval)
+        carregarEncomendas()
+        showView('view-dashboard')
+      }
+    </script>
+  </body>
+</html>
