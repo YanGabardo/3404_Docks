@@ -40,33 +40,21 @@
     <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-10">
       <div class="flex justify-between items-center max-w-md mx-auto">
         <h1 class="text-xl font-bold tracking-wide">CondLog</h1>
-        <span class="text-sm bg-blue-700 px-3 py-1 rounded-full shadow-inner"
-          >Portaria</span
-        >
+        <span class="text-sm bg-blue-700 px-3 py-1 rounded-full shadow-inner">Portaria</span>
       </div>
     </header>
 
     <main class="flex-1 w-full max-w-md mx-auto p-4 flex flex-col relative">
-      <div
-        id="view-home"
-        class="flex flex-col items-center justify-center flex-1 space-y-6"
-      >
+      <div id="view-home" class="flex flex-col items-center justify-center flex-1 space-y-6">
         <div class="text-center space-y-2">
           <h2 class="text-2xl font-semibold text-gray-700">Nova Encomenda</h2>
-          <p class="text-gray-500">
-            Faça o escaneamento inteligente da etiqueta.
-          </p>
+          <p class="text-gray-500">Faça o escaneamento inteligente da etiqueta.</p>
         </div>
         <button
           onclick="startCamera()"
           class="bg-blue-600 hover:bg-blue-700 text-white w-48 h-48 rounded-full flex flex-col items-center justify-center shadow-lg transition transform hover:scale-105 active:scale-95"
         >
-          <svg
-            class="w-16 h-16 mb-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+          <svg class="w-16 h-16 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -82,28 +70,15 @@
           </svg>
           <span class="font-semibold text-lg">Escanear por Foto</span>
         </button>
-        <button
-          onclick="showView('view-form')"
-          class="text-blue-600 font-medium underline mt-4"
-        >
+        <button onclick="showView('view-form')" class="text-blue-600 font-medium underline mt-4">
           Entrar com cadastro manual
         </button>
       </div>
 
-      <div
-        id="view-camera"
-        class="hidden-view flex-col items-center flex-1 space-y-4"
-      >
+      <div id="view-camera" class="hidden-view flex-col items-center flex-1 space-y-4">
         <div class="w-full flex justify-between items-center mb-2">
-          <h2 class="text-lg font-semibold text-gray-700">
-            Foque no Texto da Etiqueta
-          </h2>
-          <button
-            onclick="stopCameraAndGoHome()"
-            class="text-red-500 font-medium"
-          >
-            Cancelar
-          </button>
+          <h2 class="text-lg font-semibold text-gray-700">Foque no Texto da Etiqueta</h2>
+          <button onclick="stopCameraAndGoHome()" class="text-red-500 font-medium">Cancelar</button>
         </div>
         <div id="video-container">
           <video id="camera-preview" autoplay playsinline></video>
@@ -123,23 +98,15 @@
         id="view-loading"
         class="hidden-view absolute inset-0 bg-gray-50 z-20 flex-col items-center justify-center space-y-4"
       >
-        <div
-          class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600"
-        ></div>
-        <p class="text-gray-600 font-medium animate-pulse mt-4">
-          Processando com Inteligência Artificial...
-        </p>
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600"></div>
+        <p class="text-gray-600 font-medium animate-pulse mt-4">Processando com Inteligência Artificial...</p>
       </div>
 
       <div id="view-form" class="hidden-view flex-col flex-1">
-        <h2 class="text-xl font-bold mb-4 text-gray-800 border-b pb-2">
-          Confirmar Dados
-        </h2>
+        <h2 class="text-xl font-bold mb-4 text-gray-800 border-b pb-2">Confirmar Dados</h2>
         <div class="space-y-4 flex-1">
           <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1"
-              >Texto Bruto Extraído (OCR)</label
-            >
+            <label class="block text-xs font-medium text-gray-500 mb-1">Texto Bruto Extraído (OCR)</label>
             <textarea
               id="raw-ocr-text"
               class="w-full bg-gray-100 border border-gray-300 rounded-lg p-2 text-xs text-gray-600 outline-none resize-none"
@@ -148,9 +115,7 @@
             ></textarea>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1"
-              >Nome do Morador</label
-            >
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nome do Morador</label>
             <input
               type="text"
               id="input-nome"
@@ -158,9 +123,7 @@
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1"
-              >Apartamento</label
-            >
+            <label class="block text-sm font-medium text-gray-700 mb-1">Apartamento</label>
             <input
               type="text"
               id="input-apt"
@@ -168,9 +131,7 @@
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2"
-              >Tamanho da Encomenda</label
-            >
+            <label class="block text-sm font-medium text-gray-700 mb-2">Tamanho da Encomenda</label>
             <div class="grid grid-cols-3 gap-2">
               <button
                 class="size-btn border-2 border-gray-200 rounded-lg py-3 text-gray-600 font-medium transition"
@@ -210,38 +171,16 @@
         </div>
       </div>
 
-      <div
-        id="view-success"
-        class="hidden-view flex-col items-center justify-center flex-1 space-y-4"
-      >
+      <div id="view-success" class="hidden-view flex-col items-center justify-center flex-1 space-y-4">
         <div class="bg-green-100 p-4 rounded-full">
-          <svg
-            class="w-12 h-12 text-green-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M5 13l4 4L19 7"
-            ></path>
+          <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
           </svg>
         </div>
         <h2 class="text-2xl font-bold text-gray-800">Processado!</h2>
-        <div
-          class="bg-blue-50 border border-blue-200 p-6 rounded-xl w-full text-center mt-4"
-        >
-          <p class="text-sm text-gray-500 uppercase tracking-wider mb-1">
-            Destinação Física
-          </p>
-          <p
-            class="text-4xl font-extrabold text-blue-700"
-            id="display-prateleira"
-          >
-            --
-          </p>
+        <div class="bg-blue-50 border border-blue-200 p-6 rounded-xl w-full text-center mt-4">
+          <p class="text-sm text-gray-500 uppercase tracking-wider mb-1">Destinação Física</p>
+          <p class="text-4xl font-extrabold text-blue-700" id="display-prateleira">--</p>
         </div>
         <button
           onclick="resetApp()"
@@ -259,9 +198,7 @@
       let tamanhoSelecionado = ''
 
       function showView(viewId) {
-        document
-          .querySelectorAll('main > div')
-          .forEach((el) => el.classList.add('hidden-view'))
+        document.querySelectorAll('main > div').forEach((el) => el.classList.add('hidden-view'))
         const targetView = document.getElementById(viewId)
         targetView.classList.remove('hidden-view')
         if (viewId === 'view-loading') targetView.style.display = 'flex'
@@ -293,9 +230,7 @@
       async function captureImageAndReadOCR() {
         canvas.width = video.videoWidth
         canvas.height = video.videoHeight
-        canvas
-          .getContext('2d')
-          .drawImage(video, 0, 0, canvas.width, canvas.height)
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height)
         const imageDataUrl = canvas.toDataURL('image/jpeg')
         stopCamera()
         showView('view-loading')
@@ -307,8 +242,7 @@
             body: JSON.stringify({ image: imageDataUrl }),
           })
           const result = await res.json()
-          document.getElementById('raw-ocr-text').value =
-            result.raw_text || 'Nada legível'
+          document.getElementById('raw-ocr-text').value = result.raw_text || 'Nada legível'
           if (result.matched) {
             document.getElementById('input-nome').value = result.matched.nome
             document.getElementById('input-apt').value = result.matched.apt
@@ -335,8 +269,7 @@
       async function confirmStorage() {
         const nome = document.getElementById('input-nome').value
         const apt = document.getElementById('input-apt').value
-        if (!nome || !apt || !tamanhoSelecionado)
-          return alert('Preencha todos os dados.')
+        if (!nome || !apt || !tamanhoSelecionado) return alert('Preencha todos os dados.')
 
         const btn = document.getElementById('btn-guardar')
         btn.innerText = 'Calculando Rota...'
@@ -354,8 +287,7 @@
           })
           const data = await res.json()
           if (data.success) {
-            document.getElementById('display-prateleira').innerText =
-              data.prateleira
+            document.getElementById('display-prateleira').innerText = data.prateleira
             showView('view-success')
           } else {
             alert(data.error)
