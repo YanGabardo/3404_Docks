@@ -89,16 +89,16 @@ Todo o fluxo fica visível em tempo real no **Painel Administrativo**, incluindo
 
 ## 🕓 Linha do tempo das versões
 
-| Versão | O que mudou                                                                                                                           |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| **v1** | Maquete estática das três telas, sem backend                                                                                          |
-| **v2** | Primeiro backend em Flask, com registro de encomendas                                                                                 |
-| **v3** | Registro de encomendas com OCR e cadastro de morador                                                                                  |
-| **v4** | Autocompletar de morador, _QR Code_ com expiração real e Login do morador                                                             |
-| **v5** | Notificação por e-mail (nunca usada), reaproveitamento de prateleira, sincronismo de hardware                       |
-| **v6** | Reescrita de banco; perde cadastro pelo painel, sincronismo de hardware e reaproveitamento de prateleira (restaurados posteriormente) |
-| **v7** | Migração para Flask-SQLAlchemy; hash de senha, token de sessão do morador e senha atual exigida na troca                              |
-| **v8** | Notificação por WhatsApp, câmera IP real, painel com login, recuperação de senha por código, modo escuro                              |
+| Versão | O que mudou                                                                                              |
+| ------ | -------------------------------------------------------------------------------------------------------- |
+| **v1** | Maquete estática das três telas, sem backend                                                             |
+| **v2** | Primeiro backend em Flask, com registro de encomendas e inclusão no banco de dados                       |
+| **v3** | Registro de encomendas com OCR e cadastro de moradores                                                   |
+| **v4** | Login do morador, geração e validação de _QR Codes_ (totem) e autocompletar                              |
+| **v5** | Notificação por e-mail _(nunca usada)_, reaproveitamento de prateleira, sincronismo de Hardware          |
+| **v6** | Reescrita de banco, login no dashboard e alteração da senha do morador                                   |
+| **v7** | Migração para Flask-SQLAlchemy, hash de senha, token de sessão do morador e senha atual exigida na troca |
+| **v8** | Notificação por WhatsApp, câmera IP, painel com login, recuperação de senha por código, modo escuro      |
 
 ## 🚀 Como rodar localmente
 
@@ -106,7 +106,6 @@ Todo o fluxo fica visível em tempo real no **Painel Administrativo**, incluindo
 
 - Python 3.10+
 - Node.js 18+
-- Um navegador Chromium/Chrome instalado (para a ponte de WhatsApp)
 
 ### 1. Backend (exemplo com a v8 — versão atual)
 
@@ -136,7 +135,7 @@ Abra os arquivos `.html` da versão desejada diretamente no navegador (ex.: `v8/
 
 ## 🔑 Variáveis de ambiente
 
-Disponíveis a partir da v6 (painel) e v8 (WhatsApp), todas opcionais — o projeto roda com valores padrão adequados para desenvolvimento local:
+Disponíveis a partir da v6 (painel) e v8 (WhatsApp), todas opcionais. O projeto roda com valores padrão adequados para desenvolvimento local:
 
 | Variável                | Versões | Padrão      | Descrição                                                                    |
 | ----------------------- | ------- | ----------- | ---------------------------------------------------------------------------- |
@@ -147,7 +146,7 @@ Disponíveis a partir da v6 (painel) e v8 (WhatsApp), todas opcionais — o proj
 
 ## 🔒 Segurança
 
-Este é um projeto em evolução, mantido também como material didático — por isso, propositalmente, **nem todas as versões têm o mesmo nível de segurança**. Antes de usar em produção com moradores reais:
+Este é um projeto em evolução e, por isso, propositalmente, **nem todas as versões têm o mesmo nível de segurança**. Antes de usar em produção com moradores reais:
 
 - ⚠️ Troque `DASHBOARD_USUARIO` / `DASHBOARD_SENHA` do valor padrão.
 - ⚠️ A v6 mantém, de propósito, senha de morador em texto puro e troca de senha sem confirmação da senha atual — não é a versão recomendada para uso real.
@@ -164,7 +163,7 @@ Este é um projeto em evolução, mantido também como material didático — po
 
 ## 📜 Licença
 
-Licença a definir pela equipe do projeto.
+Licença a definir pela equipe.
 
 ---
 
