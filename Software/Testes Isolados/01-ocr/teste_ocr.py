@@ -2,7 +2,7 @@ import easyocr
 import cv2
 
 # Nome da imagem que você vai testar
-IMAGEM = 'etiqueta_teste.jpg'
+IMAGEM = 'teste.jpg'
 
 print("Iniciando EasyOCR...")
 reader = easyocr.Reader(['pt', 'en'], gpu=False)
