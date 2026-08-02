@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Teste QR Code</title>
+    <!-- Importação direta da biblioteca, sem frameworks CSS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  </head>
+  <body>
+    <h1>Teste Isolado - QR Code</h1>
+    <hr />
+
+    <label>Digite o texto: </label>
+    <br />
+    <input type="text" id="texto-token" value="DOCKS-TESTE-3404" size="50" />
+    <br /><br />
+
+    <button onclick="gerarTeste()">GERAR IMAGEM DO QR CODE</button>
+    <br /><br />
+
+    <!-- Onde o QR Code vai ser injetado -->
+    <div id="qrcode"></div>
+
+    <script>
+      function gerarTeste() {
+        var texto = document.getElementById('texto-token').value
+        var container = document.getElementById('qrcode')
+
+        // Limpa o conteúdo anterior
+        container.innerHTML = ''
+
+        // Chamada mais crua possível da biblioteca
+        new QRCode(container, texto)
+
+        // Log para o terminal do navegador (F12)
+        console.log('Sucesso: QR Code gerado para a string -> ' + texto)
+      }
+    </script>
+  </body>
+</html>

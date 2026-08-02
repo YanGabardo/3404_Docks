@@ -47,9 +47,14 @@ def init_db():
     
     # Insere você como morador padrão para testes caso o banco esteja vazio
     cursor.execute("SELECT COUNT(*) FROM moradores")
+    # Insere os integrantes do grupo Docks caso o banco esteja vazio
+    cursor.execute("SELECT COUNT(*) FROM moradores")
     if cursor.fetchone()[0] == 0:
-        cursor.execute("INSERT INTO moradores (nome, apartamento) VALUES ('Iury Gonçalves', '104')")
-        
+        cursor.execute("INSERT INTO moradores (nome, apartamento) VALUES ('Caio Augusto', '999')")
+        cursor.execute("INSERT INTO moradores (nome, apartamento) VALUES ('Iury Gonçalves', '202')")
+        cursor.execute("INSERT INTO moradores (nome, apartamento) VALUES ('Tuany Silva', '396')")
+        cursor.execute("INSERT INTO moradores (nome, apartamento) VALUES ('Yan Gabardo', '567')")
+
     conn.commit()
     conn.close()
 
