@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CondLog v5 - Central de Controle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      .hidden-view {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 font-sans text-gray-800 flex h-screen overflow-hidden">
+    <aside class="w-64 bg-slate-900 text-white flex flex-col shadow-2xl z-20">
+      <div class="p-6 border-b border-slate-800">
+        <h1 class="text-2xl font-bold text-blue-400">
+          CondLog
+          <span class="text-sm font-normal text-slate-400 block">Admin Painel v5</span>
+        </h1>
+      </div>
+      <nav class="flex-1 p-4 space-y-2">
+        <button
+          onclick="switchView('view-overview', this)"
+          class="nav-btn w-full text-left block bg-blue-600 text-white px-4 py-3 rounded-lg font-medium transition"
+        >
+          Painel Central
+        </button>
+        <button
+          onclick="
+            switchView('view-shelves', this)
+            carregarPrateleiras()
+          "
+          class="nav-btn w-full text-left block text-slate-300 hover:bg-slate-800 px-4 py-3 rounded-lg font-medium transition"
+        >
+          Mapeamento Físico
+        </button>
+        <button
+          onclick="
+            switchView('view-logs', this)
+            carregarLogs()
+          "
+          class="nav-btn w-full text-left block text-slate-300 hover:bg-slate-800 px-4 py-3 rounded-lg font-medium transition"
+        >
+          Auditoria de Sistema
+        </button>
+        <button
+          onclick="switchView('view-camera', this)"
+          class="nav-btn w-full text-left block text-slate-300 hover:bg-slate-800 px-4 py-3 rounded-lg font-medium transition"
+        >
+          CFTV / DVR Sala
+        </button>
+        <button
+          onclick="abrirModalMorador()"
+          class="w-full text-left block text-green-400 hover:bg-slate-800 px-4 py-3 rounded-lg font-medium transition mt-4 border border-slate-700 shadow-sm"
+        >
+          + Adicionar Morador
+        </button>
+      </nav>
+      <div class="p-4 border-t border-slate-800">
+        <div class="flex items-center gap-2 text-xs font-mono text-green-400">
+          <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+          Servidor Conectado
+        </div>
+      </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-full overflow-y-auto relative bg-slate-50">
+      <header class="bg-white p-4 shadow-sm flex justify-between items-center z-10">
+        <h2 id="header-title" class="text-xl font-semibold text-slate-700 tracking-tight">
+          Painel Central de Monitoramento
+        </h2>
+
+        <div class="flex items-center gap-4 bg-slate-100 px-4 py-2 rounded-lg border border-slate-200">
+          <span class="text-xs font-bold text-slate-500 uppercase">Trava da Sala:</span>
+          <div id="hw-door-status" class="flex items-center gap-2 text-sm font-bold text-red-500">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              ></path>
+            </svg>
+            BLOQUEADA
+          </div>
+        </div>
+      </header>
+
+      <div id="view-overview" class="view-section p-6 grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div class="xl:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div
+            class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between"
+          >
+            <div>
+              <p class="text-sm text-slate-500 font-medium">Pacotes Aguardando</p>
+              <p class="text-4xl font-bold text-slate-800 mt-1" id="stat-aguardando">--</p>
+            </div>
+            <div class="bg-blue-100 p-3 rounded-full text-blue-600">
+              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                ></path>
+              </svg>
+            </div>
+          </div>
+          <div
+            class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between"
+          >
+            <div>
+              <p class="text-sm text-slate-500 font-medium">Retiradas Hoje (Totem)</p>
+              <p class="text-4xl font-bold text-slate-800 mt-1" id="stat-retiradas">--</p>
+            </div>
+            <div class="bg-green-100 p-3 rounded-full text-green-600">
+              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                ></path>
+              </svg>
+            </div>
+          </div>
+          <div
+            class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between"
+          >
+            <div>
+              <p class="text-sm text-slate-500 font-medium">Prateleiras Livres</p>
+              <p class="text-4xl font-bold text-slate-800 mt-1" id="stat-livres">--/50</p>
+            </div>
+            <div class="bg-yellow-100 p-3 rounded-full text-yellow-600">
+              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                ></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="xl:col-span-2 space-y-6">
+          <div class="bg-slate-900 rounded-2xl shadow-xl overflow-hidden relative group">
+            <div class="absolute top-4 left-4 z-10 flex gap-2">
+              <span
+                id="badge-rec-home"
+                class="text-xs bg-slate-700 text-slate-400 px-3 py-1 rounded font-bold border border-slate-600 transition-colors"
+                >STANDBY</span
+              >
+              <span
+                class="text-xs bg-slate-800/80 backdrop-blur text-white px-3 py-1 rounded font-mono border border-slate-700"
+                >CAM_SALA_01</span
+              >
+            </div>
+
+            <div class="aspect-video flex items-center justify-center">
+              <svg
+                class="w-20 h-20 text-slate-800 group-hover:scale-110 transition-transform duration-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                ></path>
+              </svg>
+            </div>
+
+            <div class="absolute bottom-4 right-4 text-slate-400 font-mono text-sm cam-time-display">
+              --:--:--
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col h-[400px]">
+          <div class="p-5 border-b border-slate-50">
+            <h3 class="font-bold text-slate-800">Eventos Recentes</h3>
+          </div>
+          <div class="p-0 flex-1 overflow-y-auto">
+            <ul class="divide-y divide-slate-50" id="lista-logs-home">
+              <p class="p-6 text-sm text-slate-400 text-center">Buscando dados...</p>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div id="view-shelves" class="view-section hidden-view p-6">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="font-bold text-slate-800 text-lg">Mapeamento Físico de Prateleiras</h3>
+            <div class="flex gap-4 text-sm font-medium">
+              <span class="flex items-center gap-2"
+                ><div class="w-3 h-3 bg-slate-100 border border-slate-300 rounded-full"></div>
+                Livre</span
+              >
+              <span class="flex items-center gap-2"
+                ><div class="w-3 h-3 bg-blue-500 rounded-full shadow-sm shadow-blue-200"></div>
+                Ocupada</span
+              >
+              <span class="flex items-center gap-2"
+                ><div
+                  class="w-3 h-3 bg-green-400 rounded-full shadow-sm shadow-green-200 animate-pulse"
+                ></div>
+                Em Retirada</span
+              >
+            </div>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-10 gap-3" id="grid-prateleiras"></div>
+        </div>
+      </div>
+
+      <div id="view-logs" class="view-section hidden-view p-6">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <div class="p-5 border-b border-slate-50 flex justify-between items-center">
+            <h3 class="font-bold text-slate-800 text-lg">Histórico de Auditoria</h3>
+            <button
+              onclick="carregarLogs()"
+              class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded-lg font-medium transition"
+            >
+              Atualizar Agora
+            </button>
+          </div>
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr
+                class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-100"
+              >
+                <th class="p-4 font-bold">Data/Hora</th>
+                <th class="p-4 font-bold">Natureza do Evento</th>
+                <th class="p-4 font-bold">Descrição Detalhada</th>
+              </tr>
+            </thead>
+            <tbody class="text-sm divide-y divide-slate-50" id="tabela-logs-full"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="view-camera" class="view-section hidden-view p-6 flex-1 flex flex-col">
+        <div class="bg-slate-900 rounded-2xl shadow-2xl overflow-hidden flex-1 flex flex-col relative">
+          <div
+            class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50 backdrop-blur z-10 absolute top-0 left-0 right-0"
+          >
+            <h3 class="font-bold text-white text-lg flex items-center gap-2">
+              <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                ></path>
+              </svg>
+              DVR Monitoramento
+            </h3>
+            <div class="flex gap-2">
+              <span
+                id="badge-rec-full"
+                class="bg-slate-800 text-slate-400 px-4 py-1.5 rounded-lg text-xs font-bold border border-slate-700 transition-colors flex items-center gap-2"
+              >
+                <div class="w-2 h-2 rounded-full bg-slate-500" id="dot-rec"></div>
+                STANDBY
+              </span>
+            </div>
+          </div>
+
+          <div
+            class="flex-1 flex items-center justify-center relative bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PHBhdGggZD0iTTAgMGgyMHYyMEgwem0xMCAxMGgxMHYxMEgxMHoiIGZpbGw9IiMxZTI5M2IiIGZpbGwtb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')]"
+          >
+            <div
+              class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80 pointer-events-none"
+            ></div>
+
+            <div
+              class="border border-slate-700/50 w-3/4 max-w-4xl aspect-video rounded-xl flex items-center justify-center relative overflow-hidden bg-slate-950 shadow-2xl"
+            >
+              <div
+                class="absolute inset-0 opacity-10 bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:40px_40px]"
+              ></div>
+              <svg class="w-24 h-24 text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1"
+                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                ></path>
+              </svg>
+
+              <div class="absolute bottom-6 right-6 text-white font-mono drop-shadow-md text-right">
+                <div class="text-sm text-slate-400">SALA_ENC_CAM01_FULLHD</div>
+                <div class="text-xl cam-time-display">--:--:--</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        id="modal-morador"
+        class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm hidden-view flex items-center justify-center z-50 transition-opacity"
+      >
+        <div class="bg-white p-8 rounded-3xl w-96 shadow-2xl transform scale-100 transition-transform">
+          <h3 class="text-2xl font-bold text-slate-800 mb-6">Adicionar Morador</h3>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1"
+                >Nome Completo</label
+              >
+              <input
+                type="text"
+                id="add-nome"
+                class="w-full border border-slate-200 rounded-xl p-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1"
+                >Nº Apartamento</label
+              >
+              <input
+                type="text"
+                id="add-apt"
+                class="w-full border border-slate-200 rounded-xl p-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
+              />
+            </div>
+            <div class="flex gap-3 pt-6">
+              <button
+                onclick="fecharModalMorador()"
+                class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-xl font-bold transition"
+              >
+                Cancelar
+              </button>
+              <button
+                onclick="salvarMorador()"
+                class="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-bold transition shadow-md"
+              >
+                Cadastrar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const API_URL =
+        window.location.hostname === '' ? 'http://127.0.0.1:5000' : `http://${window.location.hostname}:5000`
+      let hardware_leds_ativos = []
+
+      function switchView(viewId, btnElement) {
+        document.querySelectorAll('.view-section').forEach((el) => el.classList.add('hidden-view'))
+        document.getElementById(viewId).classList.remove('hidden-view')
+        document.querySelectorAll('.nav-btn').forEach((btn) => {
+          btn.className =
+            'nav-btn w-full text-left block text-slate-300 hover:bg-slate-800 px-4 py-3 rounded-lg font-medium transition'
+        })
+        btnElement.className =
+          'nav-btn w-full text-left block bg-blue-600 text-white px-4 py-3 rounded-lg font-medium transition shadow-inner'
+
+        const titles = {
+          'view-overview': 'Painel Central de Monitoramento',
+          'view-shelves': 'Mapeamento Físico de Prateleiras',
+          'view-logs': 'Auditoria de Sistema',
+          'view-camera': 'Monitoramento de Segurança DVR',
+        }
+        document.getElementById('header-title').innerText = titles[viewId] || ''
+      }
+
+      async function atualizarStatus() {
+        try {
+          const res = await fetch(`${API_URL}/api/dashboard/status`)
+          const data = await res.json()
+          document.getElementById('stat-aguardando').innerText = data.aguardando
+          document.getElementById('stat-livres').innerText = data.livres
+          document.getElementById('stat-retiradas').innerText = data.retiradas_hoje
+        } catch (e) {}
+      }
+
+      async function carregarLogs() {
+        try {
+          const res = await fetch(`${API_URL}/api/dashboard/logs`)
+          const data = await res.json()
+          const listaHome = document.getElementById('lista-logs-home')
+          const tabFull = document.getElementById('tabela-logs-full')
+          listaHome.innerHTML = ''
+          tabFull.innerHTML = ''
+          data.forEach((log, index) => {
+            let colorGroup = log.tipo.includes('RETIRADA')
+              ? ['text-green-600', 'bg-green-50']
+              : log.tipo.includes('ALERTA')
+                ? ['text-red-500', 'bg-red-50']
+                : ['text-blue-600', 'bg-blue-50']
+            if (index < 5) {
+              listaHome.innerHTML += `<li class="p-5 hover:bg-slate-50 transition border-b border-slate-50"><div class="flex justify-between items-start"><div><span class="inline-block px-2 py-1 rounded-md text-[10px] font-bold ${colorGroup[0]} ${colorGroup[1]} mb-1">${log.tipo}</span><p class="text-sm font-medium text-slate-700 mt-1">${log.descricao}</p></div><span class="text-xs text-slate-400 font-mono">${log.horario.split(' ')[1]}</span></div></li>`
+            }
+            tabFull.innerHTML += `<tr class="hover:bg-slate-50 transition"><td class="p-4 text-slate-500 font-mono">${log.horario}</td><td class="p-4"><span class="px-2 py-1 rounded-md text-[10px] font-bold ${colorGroup[0]} ${colorGroup[1]}">${log.tipo}</span></td><td class="p-4 text-slate-700 font-medium">${log.descricao}</td></tr>`
+          })
+        } catch (e) {}
+      }
+
+      async function carregarPrateleiras() {
+        try {
+          const res = await fetch(`${API_URL}/api/dashboard/prateleiras`)
+          const data = await res.json()
+          const container = document.getElementById('grid-prateleiras')
+          container.innerHTML = ''
+          data.forEach((p) => {
+            const isOcupada = p.status === 'ocupada'
+            const isAtivaHardware = hardware_leds_ativos.includes(p.id) // Lógica visual de LED
+
+            let classBorder = isOcupada ? 'border-blue-400 bg-blue-50' : 'border-slate-200 bg-slate-50'
+            let classText = isOcupada ? 'text-blue-800' : 'text-slate-400'
+
+            if (isAtivaHardware) {
+              classBorder =
+                'border-green-500 bg-green-100 shadow-[0_0_15px_rgba(74,222,128,0.5)] scale-105 transition-all'
+              classText = 'text-green-800'
+            }
+
+            const textApt = isOcupada ? `Apt ${p.apt}` : 'Livre'
+            container.innerHTML += `<div class="border-2 ${classBorder} rounded-xl p-3 text-center transition-all duration-300"><p class="font-black ${classText} text-sm">${p.id}</p><p class="text-[10px] mt-1 ${isOcupada ? (isAtivaHardware ? 'text-green-700' : 'text-blue-600') : 'text-slate-400'} font-bold">${textApt}</p></div>`
+          })
+        } catch (e) {}
+      }
+
+      // --- MÓDULO IoT (Polling) ---
+      async function syncHardware() {
+        try {
+          const res = await fetch(`${API_URL}/api/hardware/sync`)
+          const state = await res.json()
+
+          hardware_leds_ativos = state.leds_ativos
+
+          // Atualiza UI da Fechadura
+          const doorUI = document.getElementById('hw-door-status')
+          if (state.porta_destravada) {
+            doorUI.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg> ABERTA (${state.segundos_restantes}s)`
+            doorUI.className = 'flex items-center gap-2 text-sm font-bold text-green-500'
+          } else {
+            doorUI.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> BLOQUEADA`
+            doorUI.className = 'flex items-center gap-2 text-sm font-bold text-red-500 transition-colors'
+          }
+
+          // Atualiza UI da Câmera (DVR)
+          const badgeHome = document.getElementById('badge-rec-home')
+          const badgeFull = document.getElementById('badge-rec-full')
+          const dotFull = document.getElementById('dot-rec')
+
+          if (state.gravar_dvr) {
+            badgeHome.className =
+              'text-xs bg-red-100 text-red-600 px-3 py-1 rounded font-bold border border-red-200 animate-pulse'
+            badgeHome.innerText = 'GRAVANDO EVENTO'
+
+            badgeFull.className =
+              'bg-red-500/20 text-red-500 px-4 py-1.5 rounded-lg text-xs font-bold border border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.3)] flex items-center gap-2 animate-pulse'
+            badgeFull.innerHTML = `<div class="w-2 h-2 rounded-full bg-red-500"></div> REC ATIVO`
+          } else {
+            badgeHome.className =
+              'text-xs bg-slate-700 text-slate-400 px-3 py-1 rounded font-bold border border-slate-600'
+            badgeHome.innerText = 'STANDBY'
+
+            badgeFull.className =
+              'bg-slate-800 text-slate-400 px-4 py-1.5 rounded-lg text-xs font-bold border border-slate-700 flex items-center gap-2'
+            badgeFull.innerHTML = `<div class="w-2 h-2 rounded-full bg-slate-500"></div> STANDBY`
+          }
+
+          // Recarrega prateleiras apenas se estivermos visualizando elas para ver o piscar do LED
+          if (!document.getElementById('view-shelves').classList.contains('hidden-view')) {
+            carregarPrateleiras()
+          }
+        } catch (e) {}
+      }
+
+      function abrirModalMorador() {
+        document.getElementById('add-nome').value = ''
+        document.getElementById('add-apt').value = ''
+        document.getElementById('modal-morador').classList.remove('hidden-view')
+      }
+      function fecharModalMorador() {
+        document.getElementById('modal-morador').classList.add('hidden-view')
+      }
+
+      async function salvarMorador() {
+        const nome = document.getElementById('add-nome').value
+        const apt = document.getElementById('add-apt').value
+        if (!nome || !apt) return alert('Preencha os dados.')
+        try {
+          const res = await fetch(`${API_URL}/api/moradores`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome: nome, apartamento: apt }),
+          })
+          if (res.ok) {
+            alert('Sucesso! O morador já pode acessar o App.')
+            fecharModalMorador()
+          }
+        } catch (e) {
+          alert('Erro de rede.')
+        }
+      }
+
+      setInterval(() => {
+        const now = new Date()
+        document
+          .querySelectorAll('.cam-time-display')
+          .forEach(
+            (el) => (el.innerText = now.toISOString().split('T')[0] + ' ' + now.toTimeString().split(' ')[0]),
+          )
+      }, 1000)
+
+      // Loop do Hardware é mais rápido (1s) para sensação de tempo real
+      setInterval(syncHardware, 1000)
+
+      atualizarStatus()
+      carregarLogs()
+      setInterval(atualizarStatus, 5000)
+      setInterval(carregarLogs, 5000)
+    </script>
+  </body>
+</html>

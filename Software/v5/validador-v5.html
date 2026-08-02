@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CondLog v5 - Totem Físico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+  </head>
+  <body
+    id="main-body"
+    class="bg-slate-950 font-sans text-white h-screen flex flex-col items-center justify-center relative overflow-hidden transition-colors duration-500"
+  >
+    <div
+      class="absolute inset-0 opacity-10 pointer-events-none"
+      style="background-image: radial-gradient(#3b82f6 1px, transparent 1px); background-size: 30px 30px"
+    ></div>
+
+    <div class="z-10 text-center mb-10">
+      <div class="inline-block bg-blue-900/50 border border-blue-500/30 px-4 py-1 rounded-full mb-4">
+        <span class="text-blue-400 font-bold text-xs tracking-widest uppercase flex items-center gap-2">
+          <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+          Autoatendimento
+        </span>
+      </div>
+      <h1 class="text-5xl font-black text-white tracking-tight drop-shadow-lg">CondLog</h1>
+      <p class="text-slate-400 mt-2 text-lg font-medium">Apresente seu QR Code do App para destrancar</p>
+    </div>
+
+    <div
+      class="z-10 bg-slate-900 p-3 rounded-[2rem] shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-slate-800 relative w-full max-w-lg transform transition-transform"
+      id="scanner-box"
+    >
+      <div
+        id="reader"
+        class="rounded-[1.5rem] overflow-hidden bg-black"
+        style="width: 100%; min-height: 350px"
+      ></div>
+
+      <div
+        id="overlay-result"
+        class="absolute inset-0 bg-slate-900/95 rounded-[2rem] flex flex-col items-center justify-center hidden backdrop-blur-md transition-all"
+      >
+        <div id="icon-success" class="hidden text-green-400 mb-6 drop-shadow-[0_0_15px_rgba(74,222,128,0.5)]">
+          <svg class="w-32 h-32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            ></path>
+          </svg>
+        </div>
+        <div id="icon-error" class="hidden text-red-500 mb-6 drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]">
+          <svg class="w-32 h-32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            ></path>
+          </svg>
+        </div>
+        <h2 id="result-title" class="text-4xl font-black mb-2 tracking-tight">Analisando...</h2>
+        <p id="result-msg" class="text-slate-300 text-xl text-center px-8 font-medium">
+          Conectando com o hardware.
+        </p>
+      </div>
+    </div>
+
+    <div
+      class="z-10 mt-12 flex items-center gap-4 bg-slate-900/80 px-6 py-3 rounded-2xl border border-slate-800"
+    >
+      <span class="flex h-3 w-3 relative">
+        <span
+          class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"
+        ></span>
+        <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+      </span>
+      <span class="text-slate-300 font-bold text-sm tracking-wide">Monitoramento DVR Ativo na Sala</span>
+    </div>
+
+    <script>
+      const API_URL =
+        window.location.hostname === '' ? 'http://127.0.0.1:5000' : `http://${window.location.hostname}:5000`
+      let html5QrCode
+      let isProcessing = false
+
+      async function initScanner() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          alert('Erro de Hardware: Câmera bloqueada.')
+          return
+        }
+        html5QrCode = new Html5Qrcode('reader')
+        const config = { fps: 15, qrbox: { width: 280, height: 280 } }
+        try {
+          await html5QrCode.start({ facingMode: 'environment' }, config, onScanSuccess, onScanFailure)
+        } catch (err) {
+          try {
+            await html5QrCode.start({ facingMode: 'user' }, config, onScanSuccess, onScanFailure)
+          } catch (err2) {
+            alert('Falha ao ligar hardware de vídeo.')
+          }
+        }
+      }
+
+      async function onScanSuccess(decodedText) {
+        if (isProcessing) return
+        isProcessing = true
+        showOverlay(true, 'Autenticando...', '', null)
+
+        try {
+          const res = await fetch(`${API_URL}/api/validar_qr`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: decodedText }),
+          })
+          const data = await res.json()
+          if (res.ok) {
+            // EFEITO FÍSICO VISUAL DE SUCESSO!
+            document.getElementById('main-body').classList.replace('bg-slate-950', 'bg-green-950')
+            document.getElementById('scanner-box').classList.replace('border-slate-800', 'border-green-500')
+            showOverlay(
+              true,
+              'ACESSO LIBERADO',
+              `Vá até as luzes acesas:\n ${data.prateleiras_acionadas.join(' | ')}`,
+              'success',
+            )
+          } else {
+            showOverlay(true, 'ACESSO NEGADO', data.message, 'error')
+          }
+        } catch (err) {
+          showOverlay(true, 'ERRO DE REDE', 'Sistema Offline.', 'error')
+        }
+
+        setTimeout(() => {
+          showOverlay(false)
+          isProcessing = false
+          document.getElementById('main-body').classList.replace('bg-green-950', 'bg-slate-950')
+          document.getElementById('scanner-box').classList.replace('border-green-500', 'border-slate-800')
+        }, 8000) // 8 Segundos exibindo a liberação para dar tempo de pegar
+      }
+
+      function onScanFailure(error) {}
+
+      function showOverlay(show, title = '', msg = '', type = null) {
+        const overlay = document.getElementById('overlay-result')
+        const iconSuccess = document.getElementById('icon-success')
+        const iconError = document.getElementById('icon-error')
+        if (show) {
+          overlay.classList.remove('hidden')
+          document.getElementById('result-title').innerText = title
+          document.getElementById('result-msg').innerText = msg
+          iconSuccess.classList.add('hidden')
+          iconError.classList.add('hidden')
+          if (type === 'success') {
+            iconSuccess.classList.remove('hidden')
+            document.getElementById('result-title').className =
+              'text-4xl font-black mb-2 tracking-tight text-green-400'
+          } else if (type === 'error') {
+            iconError.classList.remove('hidden')
+            document.getElementById('result-title').className =
+              'text-4xl font-black mb-2 tracking-tight text-red-500'
+          }
+        } else {
+          overlay.classList.add('hidden')
+        }
+      }
+
+      initScanner()
+    </script>
+  </body>
+</html>
