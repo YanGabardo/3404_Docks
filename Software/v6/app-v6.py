@@ -25,7 +25,7 @@ hardware_trigger = {
 # --- AUTENTICAÇÃO DO PAINEL ADMINISTRATIVO (DASHBOARD) ---
 DASHBOARD_USUARIO = os.environ.get('DASHBOARD_USUARIO', 'sindico')
 DASHBOARD_SENHA = os.environ.get('DASHBOARD_SENHA', 'docks2026')
-# Sessões válidas do painel (guardadas em memória, como já ocorre com o hardware_trigger)
+# Sessões válidas do painel
 dashboard_sessions = set()
 
 def dashboard_auth_required(f):
@@ -68,9 +68,6 @@ init_db()
 print("Carregando EasyOCR (Inteligência Artificial)...")
 reader = easyocr.Reader(['pt', 'en'], gpu=False)
 print("Servidor CondLog v6 Operacional!")
-
-def disparar_notificacao_email(nome, apartamento):
-    print(f"\n[E-MAIL] Notificação enviada para {nome} (Apt {apartamento})")
 
 def acionar_hardware_tuya():
     print("\n[IoT TUYA] -> Fechadura 12V: DESTRAVADA | Iluminação: LIGADA")
@@ -231,7 +228,6 @@ def salvar_encomenda():
         cursor.execute("INSERT INTO logs (tipo, descricao, horario) VALUES ('CADASTRO DE ENCOMENDA', 'Apt ' || ? || ' - Alocado na ' || ?, ?)", (apartamento, prateleira_alocada, data_chegada))
         conn.commit()
 
-        disparar_notificacao_email(nome, apartamento)
         return jsonify({'success': True, 'prateleira': prateleira_alocada})
     except Exception as e: return jsonify({'error': str(e)}), 500
     finally: conn.close()
