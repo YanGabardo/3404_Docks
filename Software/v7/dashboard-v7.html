@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Docks - Dashboard Central</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            .hidden-view {
+                display: none !important;
+            }
+        </style>
+    </head>
+    <body class="bg-slate-50 font-sans text-slate-800 flex h-screen overflow-hidden">
+        <!-- TELA DE LOGIN DO PAINEL (restaurado o acesso; antes o Dashboard era aberto para qualquer pessoa) -->
+        <div id="view-dashboard-login" class="w-full h-full flex items-center justify-center bg-slate-900">
+            <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm">
+                <h1 class="text-2xl font-bold text-blue-600 mb-1">Docks</h1>
+                <p class="text-slate-400 text-sm font-medium uppercase tracking-wide mb-6">Acesso ao Painel</p>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Usuário</label>
+                        <input id="dash-login-user" type="text" class="w-full border border-slate-200 rounded-xl p-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Senha</label>
+                        <input id="dash-login-pwd" type="password" class="w-full border border-slate-200 rounded-xl p-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition" />
+                    </div>
+                    <p id="dash-login-error" class="text-red-500 text-sm font-medium hidden"></p>
+                    <button onclick="fazerLoginDashboard()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold transition">
+                        Entrar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="app-shell" class="hidden-view w-full h-full flex">
+        <aside class="w-64 bg-slate-900 text-white flex flex-col shadow-2xl z-20">
+            <div class="p-6 border-b border-slate-800 flex justify-between items-center">
+                <h1 class="text-2xl font-bold text-blue-400">
+                    Docks
+                    <span class="text-sm font-normal text-slate-400 block">Admin Painel</span>
+                </h1>
+            </div>
+            <nav class="flex-1 p-4 space-y-2">
+                <button
+                    onclick="switchView('view-overview', this)"
+                    class="nav-btn w-full text-left block bg-blue-600 text-white px-4 py-3 rounded-lg font-medium transition"
+                >
+                    Painel Central
+                </button>
+                <button
+                    onclick="
+                        switchView('view-shelves', this)
+                        carregarPrateleiras()
+                    "
+                    class="nav-btn w-full text-left block text-slate-300 hover:bg-slate-800 px-4 py-3 rounded-lg font-medium transition"
+                >
+                    Mapeamento Físico
+                </button>
+                <button
+                    onclick="
+                        switchView('view-logs', this)
+                        carregarLogs()
+                    "
+                    class="nav-btn w-full text-left block text-slate-300 hover:bg-slate-800 px-4 py-3 rounded-lg font-medium transition"
+                >
+                    Auditoria de Sistema
+                </button>
+                <button
+                    onclick="switchView('view-camera', this)"
+                    class="nav-btn w-full text-left block text-slate-300 hover:bg-slate-800 px-4 py-3 rounded-lg font-medium transition"
+                >
+                    Câmera IP (DVR)
+                </button>
+                <button
+                    onclick="abrirModalMorador()"
+                    class="w-full text-left block text-green-400 hover:bg-slate-800 px-4 py-3 rounded-lg font-medium transition mt-4 border border-slate-700 shadow-sm"
+                >
+                    + Adicionar Morador
+                </button>
+            </nav>
+            <div
+                class="p-4 border-t border-slate-800 text-xs font-mono text-green-400 flex items-center gap-2"
+            >
+                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                Servidor Conectado
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col h-full overflow-y-auto relative">
+            <header
+                class="bg-white p-4 shadow-sm border-b border-slate-200 flex justify-between items-center z-10"
+            >
+                <h2 id="header-title" class="text-xl font-semibold text-slate-700 tracking-tight">
+                    Painel Central de Monitoramento
+                </h2>
+                <div class="flex items-center gap-4 bg-slate-100 px-4 py-2 rounded-lg border border-slate-200">
+                    <span class="text-xs font-bold text-slate-500 uppercase">Trava da Sala:</span>
+                    <div id="hw-door-status" class="flex items-center gap-2 text-sm font-bold text-red-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                        BLOQUEADA
+                    </div>
+                </div>
+            </header>
+
+            <!-- VIEW OVERVIEW -->
+            <div id="view-overview" class="view-section p-6 flex flex-col gap-6">
+                <!-- Top Cards (Full Width) -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+                    <div
+                        class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between"
+                    >
+                        <div>
+                            <p class="text-sm text-slate-500 font-bold tracking-wide">Aguardando Retirada</p>
+                            <p class="text-5xl font-black text-slate-800 mt-2" id="stat-aguardando">--</p>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-2xl text-blue-600 border border-slate-100">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                                ></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div
+                        class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between"
+                    >
+                        <div>
+                            <p class="text-sm text-slate-500 font-bold tracking-wide">Retiradas Hoje</p>
+                            <p class="text-5xl font-black text-slate-800 mt-2" id="stat-retiradas">--</p>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-2xl text-green-600 border border-slate-100">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                ></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <!-- Card "Prateleiras Livres" restaurado (existia até a v5) -->
+                    <div
+                        class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between"
+                    >
+                        <div>
+                            <p class="text-sm text-slate-500 font-bold tracking-wide">Prateleiras Livres</p>
+                            <p class="text-5xl font-black text-slate-800 mt-2" id="stat-livres">--/50</p>
+                        </div>
+                        <div class="bg-yellow-50 p-4 rounded-2xl text-yellow-600 border border-slate-100">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Camera & Logs -->
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 flex-1">
+                    <div class="xl:col-span-2 space-y-6 flex flex-col">
+                        <div
+                            class="bg-slate-900 rounded-2xl shadow-xl overflow-hidden relative group border border-slate-800 flex-1 min-h-[300px]"
+                        >
+                            <div class="absolute top-4 left-4 z-10 flex gap-2">
+                                <span
+                                    id="badge-rec-home"
+                                    class="text-xs bg-slate-700 text-slate-400 px-3 py-1 rounded font-bold border border-slate-600 transition-colors"
+                                    >STANDBY</span
+                                >
+                            </div>
+                            <div
+                                class="w-full h-full flex items-center justify-center bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PHBhdGggZD0iTTAgMGgyMHYyMEgwem0xMCAxMGgxMHYxMEgxMHoiIGZpbGw9IiMxZTI5M2IiIGZpbGwtb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')]"
+                            >
+                                <p class="text-slate-600 font-mono text-sm">
+                                    [Simulação de Fluxo RTSP da Câmera IP]
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        class="xl:col-span-1 bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col h-[450px]"
+                    >
+                        <div class="p-5 border-b border-slate-100">
+                            <h3 class="font-bold text-slate-800">Eventos Recentes</h3>
+                        </div>
+                        <div class="p-0 flex-1 overflow-y-auto">
+                            <ul class="divide-y divide-slate-100" id="lista-logs-home">
+                                <p class="p-6 text-sm text-slate-400 text-center">Buscando dados...</p>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW SHELVES -->
+            <div id="view-shelves" class="view-section hidden-view p-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-bold text-slate-800 text-lg">Mapeamento Físico de Prateleiras</h3>
+                    </div>
+                    <div
+                        class="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-10 gap-3"
+                        id="grid-prateleiras"
+                    ></div>
+                </div>
+            </div>
+
+            <!-- VIEW LOGS -->
+            <div id="view-logs" class="view-section hidden-view p-6">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+                        <h3 class="font-bold text-slate-800 text-lg">Histórico de Auditoria</h3>
+                    </div>
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr
+                                class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200"
+                            >
+                                <th class="p-4 font-bold">Data/Hora</th>
+                                <th class="p-4 font-bold">Evento</th>
+                                <th class="p-4 font-bold">Descrição Detalhada</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm divide-y divide-slate-100" id="tabela-logs-full"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- VIEW CAMERA -->
+            <div id="view-camera" class="view-section hidden-view p-6 flex-1 flex flex-col">
+                <div
+                    class="bg-slate-900 rounded-2xl shadow-2xl overflow-hidden flex-1 flex flex-col relative"
+                >
+                    <div
+                        class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50 backdrop-blur z-10 absolute top-0 left-0 right-0"
+                    >
+                        <h3 class="font-bold text-white text-lg flex items-center gap-2">DVR IP Wi-Fi</h3>
+                    </div>
+                    <div
+                        class="flex-1 flex items-center justify-center relative bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PHBhdGggZD0iTTAgMGgyMHYyMEgwem0xMCAxMGgxMHYxMEgxMHoiIGZpbGw9IiMxZTI5M2IiIGZpbGwtb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')]"
+                    >
+                        <div
+                            class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80 pointer-events-none"
+                        ></div>
+                        <div
+                            class="border border-slate-700/50 w-3/4 max-w-4xl aspect-video rounded-xl flex items-center justify-center bg-slate-950 shadow-2xl"
+                        >
+                            <p class="text-slate-600 font-mono text-lg">[Player de Fluxo IP]</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        </div>
+
+        <!-- MODAL ADICIONAR MORADOR (restaurado conforme a v5/v6) -->
+        <div
+            id="modal-morador"
+            class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm hidden-view flex items-center justify-center z-50 transition-opacity"
+        >
+            <div class="bg-white p-8 rounded-3xl w-96 shadow-2xl transform scale-100 transition-transform">
+                <h3 class="text-2xl font-bold text-slate-800 mb-6">Adicionar Morador</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Nome Completo</label>
+                        <input type="text" id="add-nome" class="w-full border border-slate-200 rounded-xl p-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Nº Apartamento</label>
+                        <input type="text" id="add-apt" class="w-full border border-slate-200 rounded-xl p-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition" />
+                    </div>
+                    <div class="flex gap-3 pt-6">
+                        <button onclick="fecharModalMorador()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-xl font-bold transition">Cancelar</button>
+                        <button onclick="salvarMorador()" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-bold transition shadow-md">Cadastrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            const API_URL =
+                window.location.hostname === ''
+                    ? 'http://127.0.0.1:5000'
+                    : `http://${window.location.hostname}:5000`
+
+            let dashboardToken = ''
+            let hardware_leds_ativos = []
+
+            async function fazerLoginDashboard() {
+                const usuario = document.getElementById('dash-login-user').value
+                const senha = document.getElementById('dash-login-pwd').value
+                const erro = document.getElementById('dash-login-error')
+                erro.classList.add('hidden')
+                try {
+                    const res = await fetch(`${API_URL}/api/dashboard/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ usuario, senha }),
+                    })
+                    const data = await res.json()
+                    if (data.success) {
+                        dashboardToken = data.token
+                        document.getElementById('view-dashboard-login').classList.add('hidden-view')
+                        document.getElementById('app-shell').classList.remove('hidden-view')
+                        iniciarPainel()
+                    } else {
+                        erro.innerText = data.message || 'Usuário ou senha incorretos'
+                        erro.classList.remove('hidden')
+                    }
+                } catch (e) {
+                    erro.innerText = 'Falha de conexão com o servidor.'
+                    erro.classList.remove('hidden')
+                }
+            }
+
+            // Wrapper de fetch que sempre envia o token do painel autenticado
+            function fetchDashboard(path, options = {}) {
+                options.headers = { ...(options.headers || {}), 'X-Dashboard-Token': dashboardToken }
+                return fetch(`${API_URL}${path}`, options)
+            }
+
+            function switchView(viewId, btnElement) {
+                document.querySelectorAll('.view-section').forEach((el) => el.classList.add('hidden-view'))
+                document.getElementById(viewId).classList.remove('hidden-view')
+                document.querySelectorAll('.nav-btn').forEach((btn) => {
+                    btn.className =
+                        'nav-btn w-full text-left block text-slate-300 hover:bg-slate-800 px-4 py-3 rounded-lg font-medium transition'
+                })
+                btnElement.className =
+                    'nav-btn w-full text-left block bg-blue-600 text-white px-4 py-3 rounded-lg font-medium transition shadow-inner'
+                const titles = {
+                    'view-overview': 'Painel Central de Monitoramento',
+                    'view-shelves': 'Mapeamento Físico de Prateleiras',
+                    'view-logs': 'Auditoria de Sistema',
+                    'view-camera': 'Monitoramento DVR IP',
+                }
+                document.getElementById('header-title').innerText = titles[viewId] || ''
+            }
+
+            async function atualizarStatus() {
+                try {
+                    const res = await fetchDashboard('/api/dashboard/status')
+                    const data = await res.json()
+                    document.getElementById('stat-aguardando').innerText = data.aguardando
+                    document.getElementById('stat-livres').innerText = data.livres
+                    document.getElementById('stat-retiradas').innerText = data.retiradas_hoje
+                } catch (e) {}
+            }
+
+            async function carregarPrateleiras() {
+                try {
+                    const res = await fetchDashboard('/api/dashboard/prateleiras')
+                    const data = await res.json()
+                    const container = document.getElementById('grid-prateleiras')
+                    container.innerHTML = ''
+                    data.forEach((p) => {
+                        const isOcupada = p.status === 'ocupada'
+                        const isAtivaHardware = hardware_leds_ativos.includes(p.id)
+                        let classBorder = isOcupada
+                            ? 'border-blue-400 bg-blue-50'
+                            : 'border-slate-200 bg-slate-50'
+                        let classText = isOcupada ? 'text-blue-800' : 'text-slate-400'
+                        if (isAtivaHardware) {
+                            classBorder =
+                                'border-green-500 bg-green-100 shadow-[0_0_15px_rgba(74,222,128,0.5)] scale-105 transition-all'
+                            classText = 'text-green-800'
+                        }
+                        const textApt = isOcupada ? `Apt ${p.apt}` : 'Livre'
+                        container.innerHTML += `<div class="border-2 ${classBorder} rounded-xl p-3 text-center transition-all"><p class="font-black ${classText} text-sm">${p.id}</p><p class="text-[10px] mt-1 ${isOcupada ? (isAtivaHardware ? 'text-green-700' : 'text-blue-600') : 'text-slate-400'} font-bold">${textApt}</p></div>`
+                    })
+                } catch (e) {}
+            }
+
+            async function carregarLogs() {
+                try {
+                    const res = await fetchDashboard('/api/dashboard/logs')
+                    const data = await res.json()
+                    const listaHome = document.getElementById('lista-logs-home')
+                    const tabFull = document.getElementById('tabela-logs-full')
+                    listaHome.innerHTML = ''
+                    tabFull.innerHTML = ''
+                    data.forEach((log, index) => {
+                        let colorGroup = log.tipo.includes('RETIRADA')
+                            ? ['text-green-600', 'bg-green-50']
+                            : log.tipo.includes('ALERTA')
+                              ? ['text-red-500', 'bg-red-50']
+                              : ['text-blue-600', 'bg-blue-50']
+                        if (index < 5) {
+                            listaHome.innerHTML += `<li class="p-5 hover:bg-slate-50 transition border-b border-slate-100"><div class="flex justify-between items-start"><div><span class="inline-block px-2 py-1 rounded-md text-[10px] font-bold ${colorGroup[0]} ${colorGroup[1]} mb-1">${log.tipo}</span><p class="text-sm font-medium text-slate-700 mt-1">${log.descricao}</p></div><span class="text-xs text-slate-400 font-mono">${log.horario.split(' ')[1]}</span></div></li>`
+                        }
+                        tabFull.innerHTML += `<tr class="hover:bg-slate-50 transition"><td class="p-4 text-slate-500 font-mono">${log.horario}</td><td class="p-4"><span class="px-2 py-1 rounded-md text-[10px] font-bold ${colorGroup[0]} ${colorGroup[1]}">${log.tipo}</span></td><td class="p-4 text-slate-700 font-medium">${log.descricao}</td></tr>`
+                    })
+                } catch (e) {}
+            }
+
+            // --- MÓDULO IoT (Polling) — restaurado ---
+            async function syncHardware() {
+                try {
+                    const res = await fetch(`${API_URL}/api/hardware/sync`)
+                    const state = await res.json()
+                    hardware_leds_ativos = state.leds_ativos
+
+                    const doorUI = document.getElementById('hw-door-status')
+                    if (state.porta_destravada) {
+                        doorUI.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg> ABERTA (${state.segundos_restantes}s)`
+                        doorUI.className = 'flex items-center gap-2 text-sm font-bold text-green-500'
+                    } else {
+                        doorUI.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> BLOQUEADA`
+                        doorUI.className = 'flex items-center gap-2 text-sm font-bold text-red-500 transition-colors'
+                    }
+
+                    const badgeHome = document.getElementById('badge-rec-home')
+                    if (state.gravar_dvr) {
+                        badgeHome.className = 'text-xs bg-red-100 text-red-600 px-3 py-1 rounded font-bold border border-red-200 animate-pulse'
+                        badgeHome.innerText = 'GRAVANDO EVENTO'
+                    } else {
+                        badgeHome.className = 'text-xs bg-slate-700 text-slate-400 px-3 py-1 rounded font-bold border border-slate-600'
+                        badgeHome.innerText = 'STANDBY'
+                    }
+
+                    if (!document.getElementById('view-shelves').classList.contains('hidden-view')) {
+                        carregarPrateleiras()
+                    }
+                } catch (e) {}
+            }
+
+            function abrirModalMorador() {
+                document.getElementById('add-nome').value = ''
+                document.getElementById('add-apt').value = ''
+                document.getElementById('modal-morador').classList.remove('hidden-view')
+            }
+            function fecharModalMorador() {
+                document.getElementById('modal-morador').classList.add('hidden-view')
+            }
+
+            async function salvarMorador() {
+                const nome = document.getElementById('add-nome').value
+                const apt = document.getElementById('add-apt').value
+                if (!nome || !apt) return alert('Preencha os dados.')
+                try {
+                    const res = await fetchDashboard('/api/moradores', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ nome: nome, apartamento: apt }),
+                    })
+                    if (res.ok) {
+                        alert('Sucesso! O morador já pode acessar o App.')
+                        fecharModalMorador()
+                    }
+                } catch (e) {
+                    alert('Erro de rede.')
+                }
+            }
+
+            function iniciarPainel() {
+                atualizarStatus()
+                carregarLogs()
+                carregarPrateleiras()
+                setInterval(atualizarStatus, 5000)
+                setInterval(carregarLogs, 5000)
+                setInterval(carregarPrateleiras, 5000)
+                setInterval(syncHardware, 1000)
+            }
+        </script>
+    </body>
+</html>
