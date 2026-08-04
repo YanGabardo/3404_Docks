@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CondLog - Portal do Morador</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+      .hidden-view {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-slate-50 font-sans text-slate-800 min-h-screen flex flex-col relative transition-colors duration-300"
+  >
+    <!-- Tela de Login -->
+    <div id="view-login" class="flex flex-col items-center justify-center flex-1 p-6 space-y-8">
+      <div class="text-center">
+        <h1 class="text-4xl font-black text-blue-600 tracking-tight mb-2">CondLog</h1>
+        <p class="text-slate-500 font-medium tracking-wide uppercase text-sm">Portal do Morador</p>
+      </div>
+
+      <div
+        class="bg-white p-8 rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100 w-full max-w-sm"
+      >
+        <div class="space-y-5">
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Usuário</label>
+            <input
+              type="text"
+              id="login-user"
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 outline-none focus:border-blue-500 transition-all font-medium"
+              placeholder="Ex: iury.goncalves"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Senha</label>
+            <input
+              type="password"
+              id="login-pwd"
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 outline-none focus:border-blue-500 transition-all font-medium"
+              placeholder="••••••••"
+            />
+          </div>
+          <button
+            onclick="fazerLogin()"
+            id="btn-login"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl mt-6 shadow-md transition-all active:scale-95"
+          >
+            Acessar Conta
+          </button>
+          <p
+            id="login-error"
+            class="text-red-500 text-sm font-medium text-center hidden mt-4 bg-red-50 p-2 rounded-lg"
+          ></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Área Logada -->
+    <div id="area-logada" class="hidden-view flex flex-col flex-1">
+      <header class="bg-blue-600 p-6 shadow-lg rounded-b-[2rem] text-white">
+        <div class="max-w-md mx-auto flex justify-between items-start pt-4">
+          <div>
+            <p class="text-blue-200 text-xs font-bold tracking-wider uppercase mb-1">CondLog Residencial</p>
+            <h2 class="text-3xl font-black" id="user-name-display">Olá!</h2>
+            <p class="text-blue-100 font-medium mt-1">
+              Apt <span id="user-apt-display" class="font-bold">--</span>
+            </p>
+          </div>
+          <button
+            onclick="abrirConfiguracoes()"
+            class="text-white hover:text-blue-200 bg-white/20 p-2 rounded-xl transition-colors"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+              ></path>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              ></path>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <main class="flex-1 w-full max-w-md mx-auto p-6 flex flex-col mt-4">
+        <!-- DASHBOARD -->
+        <div id="view-dashboard" class="flex flex-col flex-1 space-y-8">
+          <div
+            class="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/50 border border-slate-100 flex items-center justify-between"
+          >
+            <div>
+              <p class="text-slate-500 font-bold text-xs uppercase tracking-wide mb-1">Pacotes Pendentes</p>
+              <p class="text-5xl font-black text-slate-800" id="qtd-encomendas">0</p>
+            </div>
+            <div class="bg-blue-50 p-4 rounded-2xl text-blue-600">
+              <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                ></path>
+              </svg>
+            </div>
+          </div>
+
+          <div class="space-y-4 flex-1">
+            <h3 class="font-bold text-slate-800 text-lg">Suas Encomendas</h3>
+            <div id="lista-encomendas" class="space-y-4"></div>
+          </div>
+
+          <div class="mt-auto pt-6">
+            <button
+              id="btn-gerar"
+              onclick="solicitarQRCode()"
+              class="w-full bg-slate-900 hover:bg-black text-white font-bold py-5 rounded-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+                ></path>
+              </svg>
+              Abrir Sala (Gerar QR)
+            </button>
+          </div>
+        </div>
+
+        <!-- VIEW QR (AGUARDANDO VALIDAÇÃO) -->
+        <div id="view-qr" class="hidden-view flex-col items-center justify-center flex-1 space-y-6">
+          <div class="text-center space-y-2">
+            <h2 class="text-2xl font-black text-slate-800">Passe no Leitor</h2>
+            <p class="text-sm font-medium text-slate-600 bg-slate-200 px-3 py-1 rounded-full inline-block">
+              Expira em
+              <span id="timer" class="font-bold text-blue-600">05:00</span>
+            </p>
+          </div>
+
+          <div
+            class="bg-white p-6 rounded-[2rem] shadow-2xl border-4 border-white ring-1 ring-slate-100 flex justify-center items-center w-full max-w-[280px] mx-auto"
+          >
+            <div id="qrcode-canvas"></div>
+          </div>
+
+          <div class="text-center bg-blue-50 p-4 rounded-2xl border border-blue-100 w-full">
+            <p class="text-xs font-bold text-blue-800 uppercase tracking-wide mb-1">Aviso de Segurança</p>
+            <p class="text-xs text-blue-600">Sua retirada será gravada.</p>
+          </div>
+
+          <div class="text-center w-full pt-4">
+            <button
+              onclick="voltarInicio()"
+              class="text-slate-500 font-bold hover:text-slate-800 transition-colors py-2 block mx-auto"
+            >
+              Cancelar Retirada
+            </button>
+          </div>
+        </div>
+
+        <!-- VIEW RETIRADA (SALA ABERTA) -->
+        <div id="view-retirada" class="hidden-view flex-col items-center justify-center flex-1 space-y-6">
+          <div class="text-center space-y-2 w-full">
+            <div class="bg-green-100 text-green-600 p-4 rounded-full inline-block mb-2">
+              <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="3"
+                  d="M5 13l4 4L19 7"
+                ></path>
+              </svg>
+            </div>
+            <h2 class="text-3xl font-black text-slate-800">Acesso Liberado!</h2>
+            <p class="text-slate-500 font-medium">Veja onde estão suas encomendas:</p>
+          </div>
+
+          <div
+            id="retirada-photos-container"
+            class="w-full flex flex-col gap-4 overflow-y-auto max-h-80 pb-2"
+          ></div>
+
+          <button
+            onclick="voltarInicio()"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-5 rounded-2xl shadow-xl transition-all mt-8 active:scale-95"
+          >
+            Confirmar Retirada
+          </button>
+        </div>
+      </main>
+    </div>
+
+    <!-- Modal Primeiro Login / Mudar Senha -->
+    <div
+      id="modal-senha"
+      class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm hidden-view flex items-center justify-center z-50"
+    >
+      <div class="bg-white p-8 rounded-3xl w-11/12 max-w-sm shadow-2xl">
+        <h3 class="text-2xl font-bold text-slate-800 mb-2" id="modal-senha-title">Atualizar Senha</h3>
+        <p class="text-sm text-slate-500 mb-6" id="modal-senha-desc">Crie uma senha segura para continuar.</p>
+
+        <div class="space-y-4">
+          <input
+            type="password"
+            id="nova-senha"
+            class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 outline-none focus:border-blue-500 font-medium"
+            placeholder="Nova senha..."
+          />
+          <button
+            onclick="salvarNovaSenha()"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all shadow-md"
+          >
+            Salvar e Continuar
+          </button>
+          <button
+            onclick="fecharModalSenha()"
+            id="btn-fechar-senha"
+            class="w-full text-slate-500 font-bold py-2 hidden block mx-auto"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Configurações -->
+    <div
+      id="modal-config"
+      class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm hidden-view flex items-center justify-center z-50"
+    >
+      <div class="bg-white p-8 rounded-3xl w-11/12 max-w-sm shadow-2xl text-center">
+        <div
+          class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4"
+        >
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+            ></path>
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-slate-800 mb-6">Configurações da Conta</h3>
+
+        <div class="space-y-3">
+          <button
+            onclick="abrirModalTrocaSenha()"
+            class="w-full bg-slate-100 text-slate-700 font-bold py-3 rounded-xl transition hover:bg-slate-200"
+          >
+            Alterar Minha Senha
+          </button>
+          <button
+            onclick="fazerLogout()"
+            class="w-full bg-red-100 text-red-600 font-bold py-3 rounded-xl transition hover:bg-red-200"
+          >
+            Sair da Conta (Logout)
+          </button>
+        </div>
+        <button
+          onclick="document.getElementById('modal-config').classList.add('hidden-view')"
+          class="mt-6 text-slate-500 font-bold block mx-auto"
+        >
+          Voltar
+        </button>
+      </div>
+    </div>
+
+    <script>
+      const API_URL =
+        window.location.hostname === '' ? 'http://127.0.0.1:5000' : `http://${window.location.hostname}:5000`
+      let apartamentoLogado = null
+      let timerInterval
+      let pollingInterval
+      let cachedPackages = []
+      let currentQrToken = ''
+
+      window.onload = () => {
+        const savedApt = localStorage.getItem('condlog_apt')
+        const savedName = localStorage.getItem('condlog_name')
+        if (savedApt && savedName) {
+          apartamentoLogado = savedApt
+          document.getElementById('user-name-display').innerText = `Olá, ${savedName.split(' ')[0]}!`
+          document.getElementById('user-apt-display').innerText = apartamentoLogado
+          showView('area-logada')
+          carregarEncomendas()
+        }
+      }
+
+      function showView(viewId) {
+        document.getElementById('view-login').classList.add('hidden-view')
+        document.getElementById('area-logada').classList.add('hidden-view')
+
+        if (
+          viewId === 'area-logada' ||
+          viewId === 'view-dashboard' ||
+          viewId === 'view-qr' ||
+          viewId === 'view-retirada'
+        ) {
+          document.getElementById('area-logada').classList.remove('hidden-view')
+          document.getElementById('view-dashboard').classList.add('hidden-view')
+          document.getElementById('view-qr').classList.add('hidden-view')
+          document.getElementById('view-retirada').classList.add('hidden-view')
+          document
+            .getElementById(viewId === 'area-logada' ? 'view-dashboard' : viewId)
+            .classList.remove('hidden-view')
+        } else {
+          document.getElementById(viewId).classList.remove('hidden-view')
+        }
+      }
+
+      async function fazerLogin() {
+        const user = document.getElementById('login-user').value
+        const pwd = document.getElementById('login-pwd').value
+        const btn = document.getElementById('btn-login')
+        const err = document.getElementById('login-error')
+        btn.innerText = 'Autenticando...'
+        err.classList.add('hidden')
+        try {
+          const res = await fetch(`${API_URL}/api/morador/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usuario: user, senha: pwd }),
+          })
+          const data = await res.json()
+          if (data.success) {
+            apartamentoLogado = data.apartamento
+            localStorage.setItem('condlog_apt', data.apartamento)
+            localStorage.setItem('condlog_name', data.nome)
+
+            if (data.primeiro_login) {
+              abrirModalTrocaSenha(true)
+            } else {
+              document.getElementById('user-name-display').innerText = `Olá, ${data.nome.split(' ')[0]}!`
+              document.getElementById('user-apt-display').innerText = apartamentoLogado
+              showView('area-logada')
+              carregarEncomendas()
+            }
+          } else {
+            err.innerText = data.message
+            err.classList.remove('hidden')
+          }
+        } catch (e) {
+          err.innerText = 'Falha de rede.'
+          err.classList.remove('hidden')
+        }
+        btn.innerText = 'Acessar Conta'
+      }
+
+      function fazerLogout() {
+        apartamentoLogado = null
+        localStorage.removeItem('condlog_apt')
+        localStorage.removeItem('condlog_name')
+        document.getElementById('login-pwd').value = ''
+        document.getElementById('modal-config').classList.add('hidden-view')
+        showView('view-login')
+      }
+
+      function abrirConfiguracoes() {
+        document.getElementById('modal-config').classList.remove('hidden-view')
+      }
+
+      function abrirModalTrocaSenha(force = false) {
+        document.getElementById('modal-config').classList.add('hidden-view')
+        document.getElementById('modal-senha').classList.remove('hidden-view')
+        document.getElementById('nova-senha').value = ''
+        if (force) {
+          document.getElementById('btn-fechar-senha').classList.add('hidden')
+          document.getElementById('modal-senha-desc').innerText =
+            'Este é seu primeiro acesso. Crie uma senha segura.'
+        } else {
+          document.getElementById('btn-fechar-senha').classList.remove('hidden')
+          document.getElementById('modal-senha-desc').innerText = 'Digite a sua nova senha abaixo.'
+        }
+      }
+
+      function fecharModalSenha() {
+        document.getElementById('modal-senha').classList.add('hidden-view')
+      }
+
+      async function salvarNovaSenha() {
+        const novaSenha = document.getElementById('nova-senha').value
+        if (!novaSenha || novaSenha.length < 8) return alert('A senha deve ter no mínimo 8 caracteres.')
+        try {
+          const res = await fetch(`${API_URL}/api/morador/mudar_senha`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              apartamento: apartamentoLogado,
+              nova_senha: novaSenha,
+            }),
+          })
+          if (res.ok) {
+            fecharModalSenha()
+            document.getElementById('user-name-display').innerText =
+              `Olá, ${localStorage.getItem('condlog_name').split(' ')[0]}!`
+            document.getElementById('user-apt-display').innerText = apartamentoLogado
+            showView('area-logada')
+            carregarEncomendas()
+          }
+        } catch (e) {
+          alert('Erro ao salvar senha.')
+        }
+      }
+
+      async function carregarEncomendas() {
+        if (!apartamentoLogado) return
+        try {
+          const res = await fetch(`${API_URL}/api/morador/${apartamentoLogado}/encomendas`)
+          const data = await res.json()
+          cachedPackages = data.encomendas
+          document.getElementById('qtd-encomendas').innerText = cachedPackages.length
+          const listaContainer = document.getElementById('lista-encomendas')
+          listaContainer.innerHTML = ''
+          if (cachedPackages.length === 0) {
+            listaContainer.innerHTML =
+              '<div class="text-center py-8"><p class="text-sm font-medium text-slate-400">Nenhuma encomenda na sala de logística.</p></div>'
+            document.getElementById('btn-gerar').disabled = true
+          } else {
+            document.getElementById('btn-gerar').disabled = false
+            cachedPackages.forEach((enc) => {
+              listaContainer.innerHTML += `
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                    <div>
+                        <p class="font-bold text-slate-800 capitalize mb-1">Pacote ${enc.tamanho}</p>
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Chegou: ${enc.data.split(' ')[0]}</p>
+                    </div>
+                </div>`
+            })
+          }
+        } catch (err) {}
+      }
+
+      async function solicitarQRCode() {
+        const btn = document.getElementById('btn-gerar')
+        btn.innerText = 'Gerando Segurança...'
+        try {
+          const res = await fetch(`${API_URL}/api/morador/${apartamentoLogado}/gerar_qr`, { method: 'POST' })
+          const data = await res.json()
+          if (data.success) {
+            currentQrToken = data.token
+            gerarImagemQR(data.token)
+            iniciarTimer(300)
+            iniciarPollingQR()
+            showView('view-qr')
+          }
+        } catch (err) {
+          alert('Erro de Conexão.')
+        }
+        btn.innerHTML = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg> Abrir Sala (Gerar QR)`
+      }
+
+      function gerarImagemQR(token) {
+        document.getElementById('qrcode-canvas').innerHTML = ''
+        new QRCode(document.getElementById('qrcode-canvas'), {
+          text: token,
+          width: 220,
+          height: 220,
+          colorDark: '#0f172a',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.H,
+        })
+      }
+
+      function iniciarPollingQR() {
+        clearInterval(pollingInterval)
+        pollingInterval = setInterval(async () => {
+          try {
+            const res = await fetch(`${API_URL}/api/qr_status/${currentQrToken}`)
+            const data = await res.json()
+            if (data.validated) {
+              clearInterval(pollingInterval)
+              clearInterval(timerInterval)
+              exibirRetiradaFinal()
+            }
+          } catch (e) {}
+        }, 1500)
+      }
+
+      function exibirRetiradaFinal() {
+        showView('view-retirada')
+        const container = document.getElementById('retirada-photos-container')
+        container.innerHTML = ''
+        cachedPackages.forEach((enc) => {
+          const imgSrc =
+            enc.foto ||
+            'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PHJlY3Qgd2lkdGg9IjIwIiBoZWlnaHQ9IjIwIiBmaWxsPSIjZTElZTllNiIvPjwvc3ZnPg=='
+          container.innerHTML += `
+             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex gap-4 items-center">
+                 <img src="${imgSrc}" class="w-20 h-20 rounded-xl object-cover border border-slate-100 flex-shrink-0">
+                 <div class="flex-1">
+                     <p class="font-bold text-slate-500 uppercase tracking-widest text-[10px] mb-1">Localização</p>
+                     <p class="font-black text-blue-600 text-xl leading-none">${enc.prateleira}</p>
+                 </div>
+             </div>`
+        })
+      }
+
+      function iniciarTimer(segundos) {
+        clearInterval(timerInterval)
+        let timeLeft = segundos
+        timerInterval = setInterval(() => {
+          timeLeft--
+          const m = Math.floor(timeLeft / 60)
+            .toString()
+            .padStart(2, '0')
+          const s = (timeLeft % 60).toString().padStart(2, '0')
+          document.getElementById('timer').innerText = `${m}:${s}`
+          if (timeLeft <= 0) voltarInicio()
+        }, 1000)
+      }
+
+      function voltarInicio() {
+        clearInterval(timerInterval)
+        clearInterval(pollingInterval)
+        carregarEncomendas()
+        showView('view-dashboard')
+      }
+    </script>
+  </body>
+</html>
