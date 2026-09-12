@@ -12,7 +12,6 @@
         </style>
     </head>
     <body class="bg-slate-50 font-sans text-slate-800 flex h-screen overflow-hidden">
-        <!-- TELA DE LOGIN DO PAINEL (restaurado o acesso; antes o Dashboard era aberto para qualquer pessoa) -->
         <div id="view-dashboard-login" class="w-full h-full flex items-center justify-center bg-slate-900">
             <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm">
                 <h1 class="text-2xl font-bold text-blue-600 mb-1">Docks</h1>
@@ -106,9 +105,7 @@
                 </div>
             </header>
 
-            <!-- VIEW OVERVIEW -->
             <div id="view-overview" class="view-section p-6 flex flex-col gap-6">
-                <!-- Top Cards (Full Width) -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
                     <div
                         class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between"
@@ -146,7 +143,6 @@
                             </svg>
                         </div>
                     </div>
-                    <!-- Card "Prateleiras Livres" restaurado (existia até a v5) -->
                     <div
                         class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between"
                     >
@@ -162,7 +158,6 @@
                     </div>
                 </div>
 
-                <!-- Camera & Logs -->
                 <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 flex-1">
                     <div class="xl:col-span-2 space-y-6 flex flex-col">
                         <div
@@ -200,7 +195,6 @@
                 </div>
             </div>
 
-            <!-- VIEW SHELVES -->
             <div id="view-shelves" class="view-section hidden-view p-6">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                     <div class="flex justify-between items-center mb-6">
@@ -213,7 +207,6 @@
                 </div>
             </div>
 
-            <!-- VIEW LOGS -->
             <div id="view-logs" class="view-section hidden-view p-6">
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="p-5 border-b border-slate-100 flex justify-between items-center">
@@ -234,7 +227,6 @@
                 </div>
             </div>
 
-            <!-- VIEW CAMERA -->
             <div id="view-camera" class="view-section hidden-view p-6 flex-1 flex flex-col">
                 <div
                     class="bg-slate-900 rounded-2xl shadow-2xl overflow-hidden flex-1 flex flex-col relative"
@@ -261,7 +253,6 @@
         </main>
         </div>
 
-        <!-- MODAL ADICIONAR MORADOR (restaurado conforme a v5/v6) -->
         <div
             id="modal-morador"
             class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm hidden-view flex items-center justify-center z-50 transition-opacity"
@@ -321,7 +312,6 @@
                 }
             }
 
-            // Wrapper de fetch que sempre envia o token do painel autenticado
             function fetchDashboard(path, options = {}) {
                 options.headers = { ...(options.headers || {}), 'X-Dashboard-Token': dashboardToken }
                 return fetch(`${API_URL}${path}`, options)
@@ -401,7 +391,6 @@
                 } catch (e) {}
             }
 
-            // --- MÓDULO IoT (Polling) — restaurado ---
             async function syncHardware() {
                 try {
                     const res = await fetch(`${API_URL}/api/hardware/sync`)

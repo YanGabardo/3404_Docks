@@ -15,12 +15,10 @@ print("Carregando Inteligência Artificial (EasyOCR)...")
 reader = easyocr.Reader(['pt', 'en'], gpu=False)
 print("IA Carregada! Servidor CondLog v3 Operacional.")
 
-# --- INICIALIZAÇÃO DO BANCO DE DADOS ---
 def init_db():
     conn = sqlite3.connect('condlog.db')
     cursor = conn.cursor()
     
-    # Tabela de Encomendas
     cursor.execute('''CREATE TABLE IF NOT EXISTS encomendas (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nome TEXT NOT NULL,
@@ -31,7 +29,6 @@ def init_db():
         data_chegada DATETIME
     )''')
     
-    # Tabela de Logs
     cursor.execute('''CREATE TABLE IF NOT EXISTS logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         tipo TEXT,
@@ -40,16 +37,13 @@ def init_db():
         horario DATETIME
     )''')
     
-    # Tabela de Moradores (Adicionada!)
     cursor.execute('''CREATE TABLE IF NOT EXISTS moradores (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nome TEXT NOT NULL,
         apartamento TEXT NOT NULL
     )''')
     
-    # Insere você como morador padrão caso o banco esteja vazio
     cursor.execute("SELECT COUNT(*) FROM moradores")
-    # Insere os integrantes do grupo Docks caso o banco esteja vazio
     cursor.execute("SELECT COUNT(*) FROM moradores")
     if cursor.fetchone()[0] == 0:
         cursor.execute("INSERT INTO moradores (nome, apartamento) VALUES ('Iury Gonçalves', '202')")
@@ -59,9 +53,7 @@ def init_db():
 
 init_db()
 
-# --- MÓDULO DE INTELIGÊNCIA: OCR E FUZZY MATCHING ---
 def tentar_adivinhar_morador(texto_linhas):
-    # Agora a IA busca os moradores dinamicamente direto do banco de dados
     conn = sqlite3.connect('condlog.db')
     cursor = conn.cursor()
     cursor.execute("SELECT nome, apartamento FROM moradores")
@@ -93,7 +85,6 @@ def processar_ocr():
         nparr = np.frombuffer(base64.b64decode(img_data), np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-        # Processamento de imagem para melhorar leitura
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         adjusted = cv2.convertScaleAbs(gray, alpha=1.5, beta=10)
         processed_img = cv2.threshold(adjusted, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
@@ -111,7 +102,6 @@ def processar_ocr():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# --- MÓDULO DE AUTOMAÇÃO: ALOCAÇÃO DE PRATELEIRAS ---
 @app.route('/api/encomendas', methods=['POST'])
 def registrar_encomenda():
     data = request.json
@@ -120,7 +110,6 @@ def registrar_encomenda():
     tamanho = data.get('tamanho')
     agora = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # Regras Físicas de Alocação
     if tamanho == 'Pequeno': prateleiras_permitidas = [f"PA{i}" for i in range(1, 21)]
     elif tamanho == 'Médio': prateleiras_permitidas = [f"PA{i}" for i in range(21, 41)]
     else: prateleiras_permitidas = [f"PA{i}" for i in range(41, 51)]
@@ -128,7 +117,6 @@ def registrar_encomenda():
     conn = sqlite3.connect('condlog.db')
     cursor = conn.cursor()
     
-    # Verifica vagas ocupadas
     cursor.execute("SELECT prateleira FROM encomendas WHERE status = 'Aguardando'")
     ocupadas = set([r[0] for r in cursor.fetchall()])
     
@@ -155,7 +143,6 @@ def registrar_encomenda():
     
     return jsonify({"success": True, "prateleira": prateleira_alocada}), 201
 
-# --- ROTAS DE MORADORES (Adicionado para corrigir o erro!) ---
 @app.route('/api/moradores', methods=['POST'])
 def cadastrar_morador():
     data = request.json
@@ -173,7 +160,6 @@ def cadastrar_morador():
     
     return jsonify({"success": True}), 201
 
-# --- ROTAS GERAIS (MORADOR E DASHBOARD) ---
 @app.route('/api/morador/<apartamento>/encomendas', methods=['GET'])
 def encomendas_morador(apartamento):
     conn = sqlite3.connect('condlog.db')

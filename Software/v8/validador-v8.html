@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Docks · Totem de Validação</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              ink: '#10192B',
+              inkalt: '#182640',
+              paper: '#FAF8F3',
+              blue: { DEFAULT: '#2563EB', dark: '#1D4ED8', light: '#DBEAFE' },
+              teal: { DEFAULT: '#2E9C6C', dark: '#1F7A54', light: '#DDF3E9' },
+              brick: { DEFAULT: '#D14343', dark: '#AC3232', light: '#FBE1E1' },
+              line: '#28344C',
+            },
+            fontFamily: {
+              display: ['"Space Grotesk"', 'sans-serif'],
+              body: ['Inter', 'sans-serif'],
+              mono: ['"IBM Plex Mono"', 'monospace'],
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      .font-display {
+        font-family: 'Space Grotesk', sans-serif;
+      }
+      .font-mono {
+        font-family: 'IBM Plex Mono', monospace;
+      }
+      #reader video {
+        border-radius: 1.25rem;
+      }
+      #reader__scan_region {
+        border-radius: 1.25rem;
+      }
+      #reader__dashboard {
+        display: none !important;
+      }
+      input:focus,
+      button:focus-visible {
+        outline: 2px solid #2563eb;
+        outline-offset: 2px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body
+    id="main-body"
+    class="bg-ink font-body text-white h-screen flex flex-col items-center justify-center relative overflow-hidden transition-colors duration-500 px-4"
+  >
+    <div
+      class="absolute inset-0 opacity-[0.06] pointer-events-none"
+      style="background-image: radial-gradient(#2563eb 1px, transparent 1px); background-size: 28px 28px"
+    ></div>
+
+    <div class="z-10 text-center mb-8">
+      <div
+        class="w-12 h-12 rounded-2xl bg-blue flex items-center justify-center text-white font-display font-bold text-xl mx-auto mb-4"
+      >
+        D
+      </div>
+      <h1 class="text-4xl font-display font-bold text-white tracking-tight">Sala de Encomendas</h1>
+      <p class="text-white/50 mt-2 text-base font-medium">
+        Apresente o QR Code do app Docks para destravar a porta
+      </p>
+    </div>
+
+    <div
+      id="scanner-box"
+      class="z-10 bg-inkalt p-3 rounded-[2rem] shadow-[0_0_60px_rgba(0,0,0,0.45)] border border-line relative w-full max-w-lg transform transition-colors"
+    >
+      <div
+        id="reader"
+        class="rounded-[1.5rem] overflow-hidden bg-black"
+        style="width: 100%; min-height: 340px"
+      ></div>
+
+      <div
+        id="camera-fallback"
+        class="hidden rounded-[1.5rem] bg-black/40 flex flex-col items-center justify-center text-center p-8"
+        style="min-height: 340px"
+      >
+        <svg class="w-10 h-10 text-white/30 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.5"
+            d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+          />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.5"
+            d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+          />
+        </svg>
+        <p class="text-sm text-white/60 font-medium">
+          Câmera indisponível neste dispositivo.<br />Use a entrada manual abaixo.
+        </p>
+      </div>
+
+      <div
+        id="overlay-result"
+        class="absolute inset-0 bg-inkalt/97 rounded-[2rem] flex flex-col items-center justify-center hidden backdrop-blur-md transition-all"
+      >
+        <div id="icon-success" class="hidden text-teal mb-6 drop-shadow-[0_0_15px_rgba(46,156,108,0.5)]">
+          <svg class="w-28 h-28" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        </div>
+        <div id="icon-error" class="hidden text-brick mb-6 drop-shadow-[0_0_15px_rgba(209,67,67,0.5)]">
+          <svg class="w-28 h-28" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+        </div>
+        <h2 id="result-title" class="text-3xl font-display font-bold mb-2 tracking-tight text-center px-6">
+          Analisando…
+        </h2>
+        <p id="result-msg" class="text-white/60 text-lg text-center px-8 font-medium">
+          Conectando com o módulo de acesso Docks.
+        </p>
+      </div>
+    </div>
+
+    <div class="z-10 mt-6 w-full max-w-lg">
+      <button
+        id="btn-toggle-manual"
+        onclick="toggleManual()"
+        class="w-full text-center text-xs font-bold uppercase tracking-widest text-white/40 hover:text-white/70 transition-colors py-2"
+      >
+        Digitar código manualmente
+      </button>
+      <div id="manual-entry" class="hidden mt-2 flex gap-2">
+        <input
+          id="manual-token"
+          type="text"
+          placeholder="Cole ou digite o código do QR"
+          class="flex-1 bg-inkalt border border-line rounded-xl px-4 py-3 text-sm font-mono text-white outline-none focus:border-blue placeholder:text-white/30"
+        />
+        <button
+          onclick="validarManual()"
+          class="bg-blue hover:bg-blue-dark text-white font-bold px-5 rounded-xl transition-colors"
+        >
+          Validar
+        </button>
+      </div>
+    </div>
+
+    <div class="z-10 mt-8 flex items-center gap-3 bg-inkalt/80 px-5 py-2.5 rounded-2xl border border-line">
+      <span class="flex h-2.5 w-2.5 relative">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brick opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-brick"></span>
+      </span>
+      <span class="text-white/50 font-bold text-xs tracking-wide uppercase">Câmera de segurança ativa</span>
+    </div>
+
+    <script>
+      const API_URL =
+        window.location.hostname === '' ? 'http://127.0.0.1:5000' : `http://${window.location.hostname}:5000`
+      let html5QrCode
+      let isProcessing = false
+
+      async function initScanner() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          document.getElementById('reader').classList.add('hidden')
+          document.getElementById('camera-fallback').classList.remove('hidden')
+          toggleManual(true)
+          return
+        }
+        html5QrCode = new Html5Qrcode('reader')
+        try {
+          await html5QrCode.start(
+            { facingMode: 'environment' },
+            { fps: 15, qrbox: { width: 280, height: 280 } },
+            onScanSuccess,
+            () => {},
+          )
+        } catch (e) {
+          try {
+            await html5QrCode.start(
+              { facingMode: 'user' },
+              { fps: 15, qrbox: { width: 280, height: 280 } },
+              onScanSuccess,
+              () => {},
+            )
+          } catch (e2) {
+            document.getElementById('reader').classList.add('hidden')
+            document.getElementById('camera-fallback').classList.remove('hidden')
+            toggleManual(true)
+          }
+        }
+      }
+
+      function toggleManual(forceOpen) {
+        const box = document.getElementById('manual-entry')
+        const shouldOpen = forceOpen === true ? true : box.classList.contains('hidden')
+        box.classList.toggle('hidden', !shouldOpen)
+        if (shouldOpen) document.getElementById('manual-token').focus()
+      }
+
+      function validarManual() {
+        const val = document.getElementById('manual-token').value.trim()
+        if (!val) return
+        onScanSuccess(val)
+        document.getElementById('manual-token').value = ''
+      }
+
+      async function onScanSuccess(decodedText) {
+        if (isProcessing) return
+        isProcessing = true
+        showOverlay(true, 'Autenticando…', '', null)
+        try {
+          const res = await fetch(`${API_URL}/api/validar_qr`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: decodedText }),
+          })
+          const data = await res.json()
+          if (res.ok) {
+            document.getElementById('main-body').classList.replace('bg-ink', 'bg-teal-dark')
+            document.getElementById('scanner-box').classList.replace('border-line', 'border-teal')
+            showOverlay(true, 'Sala destravada', 'Sua retirada Docks está liberada.', 'success')
+          } else {
+            showOverlay(true, 'Acesso negado', data.message || 'Código inválido.', 'error')
+          }
+        } catch (err) {
+          showOverlay(true, 'Erro de rede', 'Não foi possível falar com o servidor Docks.', 'error')
+        }
+
+        setTimeout(() => {
+          showOverlay(false)
+          isProcessing = false
+          document.getElementById('main-body').classList.replace('bg-teal-dark', 'bg-ink')
+          document.getElementById('scanner-box').classList.replace('border-teal', 'border-line')
+        }, 6000)
+      }
+
+      function showOverlay(show, title = '', msg = '', type = null) {
+        const overlay = document.getElementById('overlay-result')
+        const iconSuccess = document.getElementById('icon-success')
+        const iconError = document.getElementById('icon-error')
+        if (show) {
+          overlay.classList.remove('hidden')
+          document.getElementById('result-title').innerText = title
+          document.getElementById('result-msg').innerText = msg
+          iconSuccess.classList.add('hidden')
+          iconError.classList.add('hidden')
+          const titleEl = document.getElementById('result-title')
+          if (type === 'success') {
+            iconSuccess.classList.remove('hidden')
+            titleEl.className =
+              'text-3xl font-display font-bold mb-2 tracking-tight text-center px-6 text-teal'
+          } else if (type === 'error') {
+            iconError.classList.remove('hidden')
+            titleEl.className =
+              'text-3xl font-display font-bold mb-2 tracking-tight text-center px-6 text-brick'
+          } else {
+            titleEl.className =
+              'text-3xl font-display font-bold mb-2 tracking-tight text-center px-6 text-white'
+          }
+        } else {
+          overlay.classList.add('hidden')
+        }
+      }
+
+      initScanner()
+    </script>
+  </body>
+</html>

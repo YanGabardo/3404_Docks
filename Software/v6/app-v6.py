@@ -22,10 +22,8 @@ hardware_trigger = {
     "prateleiras": []
 }
 
-# --- AUTENTICAÇÃO DO PAINEL ADMINISTRATIVO (DASHBOARD) ---
 DASHBOARD_USUARIO = os.environ.get('DASHBOARD_USUARIO', 'sindico')
 DASHBOARD_SENHA = os.environ.get('DASHBOARD_SENHA', 'docks2026')
-# Sessões válidas do painel
 dashboard_sessions = set()
 
 def dashboard_auth_required(f):
@@ -125,7 +123,6 @@ def buscar_moradores():
     results = [{'nome': r[0], 'apartamento': r[1]} for r in todos if q in remover_acentos(r[0].lower())]
     return jsonify(results[:10])
 
-# Cadastro de morador pelo Dashboard
 @app.route('/api/moradores', methods=['POST'])
 @dashboard_auth_required
 def cadastrar_morador():
@@ -211,7 +208,6 @@ def salvar_encomenda():
         if not morador_row: return jsonify({'error': 'Morador não cadastrado no banco.'}), 400
         morador_id = morador_row[0]
 
-        # Reaproveita uma prateleira já usada pelo mesmo morador no mesmo tamanho, se houver
         cursor.execute("SELECT prateleira FROM encomendas WHERE morador_id = ? AND tamanho = ? AND status = 'aguardando' LIMIT 1", (morador_id, tamanho))
         existing_shelf = cursor.fetchone()
 
@@ -306,7 +302,6 @@ def validar_qr():
         
         acionar_hardware_tuya()
 
-        # Restaura o gatilho IoT em tempo real (porta / câmera) consumido pelo Dashboard
         hardware_trigger["timestamp"] = time.time()
         hardware_trigger["prateleiras"] = prateleiras
         
@@ -316,7 +311,6 @@ def validar_qr():
     finally:
         conn.close()
 
-# ROTA EXCLUSIVA PARA O ESP32 E DASHBOARD LEREM (POLLING IoT)
 @app.route('/api/hardware/sync', methods=['GET'])
 def hardware_sync():
     agora = time.time()

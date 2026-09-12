@@ -200,7 +200,6 @@
             let colorClass =
               log.status_log === 'Info' ? 'text-blue-700 bg-blue-100' : 'text-red-700 bg-red-100'
 
-            // Preenche Home (Até 5 logs)
             if (index < 5) {
               listaHome.innerHTML += `
                     <li class="p-4 hover:bg-gray-50 transition border-b">
@@ -211,7 +210,6 @@
                     </li>`
             }
 
-            // Preenche Tabela Full
             tabelaFull.innerHTML += `
                 <tr class="hover:bg-gray-50">
                     <td class="p-4 text-gray-600">${log.horario}</td>
@@ -223,12 +221,11 @@
         } catch (e) {}
       }
 
-      // Inicialização
       carregarStatusAPI()
       carregarLogsAPI()
 
       setInterval(() => {
-        carregarStatusAPI() // Atualiza painel a cada 5 segundos
+        carregarStatusAPI()
       }, 5000)
 
       setInterval(() => {

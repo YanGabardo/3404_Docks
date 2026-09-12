@@ -155,7 +155,6 @@
         const targetView = document.getElementById(viewId)
         targetView.classList.remove('hidden-view')
 
-        // Aplica display flex dinâmico se a visualização for de carregamento para respeitar o absolute inset
         if (viewId === 'view-loading') {
           targetView.style.display = 'flex'
         } else {

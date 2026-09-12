@@ -16,7 +16,6 @@ print("Carregando Inteligência Artificial (EasyOCR)...")
 reader = easyocr.Reader(['pt', 'en'], gpu=False)
 print("IA Carregada! Servidor CondLog v4 Operacional.")
 
-# --- INICIALIZAÇÃO DO BANCO DE DADOS ---
 def init_db():
     conn = sqlite3.connect('condlog.db')
     cursor = conn.cursor()
@@ -45,9 +44,7 @@ def init_db():
         apartamento TEXT NOT NULL
     )''')
     
-    # Insere você como morador padrão para testes caso o banco esteja vazio
     cursor.execute("SELECT COUNT(*) FROM moradores")
-    # Insere os integrantes do grupo Docks caso o banco esteja vazio
     cursor.execute("SELECT COUNT(*) FROM moradores")
     if cursor.fetchone()[0] == 0:
         cursor.execute("INSERT INTO moradores (nome, apartamento) VALUES ('Caio Augusto', '999')")
@@ -60,7 +57,6 @@ def init_db():
 
 init_db()
 
-# --- MÓDULO DE INTELIGÊNCIA: OCR E FUZZY MATCHING ---
 def tentar_adivinhar_morador(texto_linhas):
     conn = sqlite3.connect('condlog.db')
     cursor = conn.cursor()
@@ -110,7 +106,6 @@ def processar_ocr():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# --- MÓDULO DE AUTOMAÇÃO E CADASTRO ---
 @app.route('/api/encomendas', methods=['POST'])
 def registrar_encomenda():
     data = request.json
@@ -179,13 +174,11 @@ def buscar_moradores():
     conn.close()
     return jsonify(resultados)
 
-# --- MÓDULO DE SEGURANÇA E QR CODE (v4) ---
 @app.route('/api/morador/login', methods=['POST'])
 def login_morador():
     data = request.json
     usuario = data.get('usuario', '')
     
-    # Validação simples baseada no primeiro nome para o MVP
     primeiro_nome = usuario.split('.')[0] if '.' in usuario else usuario
     
     conn = sqlite3.connect('condlog.db')
@@ -202,7 +195,7 @@ def login_morador():
 
 @app.route('/api/morador/<apartamento>/gerar_qr', methods=['POST'])
 def gerar_qr(apartamento):
-    expiracao = int(time.time()) + 300 # Token dura 5 minutos
+    expiracao = int(time.time()) + 300
     token = f"CONDLOG_TOKEN_{apartamento}_{expiracao}"
     return jsonify({"success": True, "token": token})
 
@@ -246,7 +239,6 @@ def validar_qr():
     
     return jsonify({"success": True, "prateleiras_acionadas": prateleiras}), 200
 
-# --- ROTAS DE VISUALIZAÇÃO ---
 @app.route('/api/morador/<apartamento>/encomendas', methods=['GET'])
 def encomendas_morador(apartamento):
     conn = sqlite3.connect('condlog.db')

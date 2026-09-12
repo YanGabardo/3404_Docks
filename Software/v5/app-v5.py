@@ -14,7 +14,6 @@ import unicodedata
 app = Flask(__name__)
 CORS(app)
 
-# Variável Global Volátil (RAM) para comunicação em Tempo Real com o ESP32 e Dashboard
 hardware_trigger = {
     "timestamp": 0,
     "prateleiras": []
@@ -233,7 +232,6 @@ def validar_qr():
         cursor.execute("UPDATE qr_codes SET expirado = 1 WHERE id = ?", (qr_id,))
         cursor.execute("UPDATE encomendas SET status = 'retirado', data_retirada = ? WHERE morador_id = ? AND status = 'aguardando'", (agora, morador_id))
         
-        # O GATILHO IOT MÁGICO: Dispara o hardware por 10 segundos
         hardware_trigger["timestamp"] = time.time()
         hardware_trigger["prateleiras"] = prateleiras
         
@@ -243,11 +241,9 @@ def validar_qr():
     finally:
         conn.close()
 
-# ROTA EXCLUSIVA PARA O ESP32 E DASHBOARD LEREM (POLLING IoT)
 @app.route('/api/hardware/sync', methods=['GET'])
 def hardware_sync():
     agora = time.time()
-    # Se o gatilho ocorreu há menos de 10 segundos, destrava e acende luzes!
     if agora - hardware_trigger["timestamp"] < 10:
         return jsonify({
             "porta_destravada": True,
@@ -256,7 +252,6 @@ def hardware_sync():
             "segundos_restantes": int(10 - (agora - hardware_trigger["timestamp"]))
         })
     else:
-        # Estado de repouso (Standby)
         return jsonify({
             "porta_destravada": False,
             "gravar_dvr": False,

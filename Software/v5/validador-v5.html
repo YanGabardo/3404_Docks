@@ -117,7 +117,6 @@
           })
           const data = await res.json()
           if (res.ok) {
-            // EFEITO FÍSICO VISUAL DE SUCESSO!
             document.getElementById('main-body').classList.replace('bg-slate-950', 'bg-green-950')
             document.getElementById('scanner-box').classList.replace('border-slate-800', 'border-green-500')
             showOverlay(
@@ -138,7 +137,7 @@
           isProcessing = false
           document.getElementById('main-body').classList.replace('bg-green-950', 'bg-slate-950')
           document.getElementById('scanner-box').classList.replace('border-green-500', 'border-slate-800')
-        }, 8000) // 8 Segundos exibindo a liberação para dar tempo de pegar
+        }, 8000)
       }
 
       function onScanFailure(error) {}

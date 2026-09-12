@@ -412,7 +412,7 @@
           container.innerHTML = ''
           data.forEach((p) => {
             const isOcupada = p.status === 'ocupada'
-            const isAtivaHardware = hardware_leds_ativos.includes(p.id) // Lógica visual de LED
+            const isAtivaHardware = hardware_leds_ativos.includes(p.id)
 
             let classBorder = isOcupada ? 'border-blue-400 bg-blue-50' : 'border-slate-200 bg-slate-50'
             let classText = isOcupada ? 'text-blue-800' : 'text-slate-400'
@@ -429,7 +429,6 @@
         } catch (e) {}
       }
 
-      // --- MÓDULO IoT (Polling) ---
       async function syncHardware() {
         try {
           const res = await fetch(`${API_URL}/api/hardware/sync`)
@@ -437,7 +436,6 @@
 
           hardware_leds_ativos = state.leds_ativos
 
-          // Atualiza UI da Fechadura
           const doorUI = document.getElementById('hw-door-status')
           if (state.porta_destravada) {
             doorUI.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg> ABERTA (${state.segundos_restantes}s)`
@@ -447,7 +445,6 @@
             doorUI.className = 'flex items-center gap-2 text-sm font-bold text-red-500 transition-colors'
           }
 
-          // Atualiza UI da Câmera (DVR)
           const badgeHome = document.getElementById('badge-rec-home')
           const badgeFull = document.getElementById('badge-rec-full')
           const dotFull = document.getElementById('dot-rec')
@@ -470,7 +467,6 @@
             badgeFull.innerHTML = `<div class="w-2 h-2 rounded-full bg-slate-500"></div> STANDBY`
           }
 
-          // Recarrega prateleiras apenas se estivermos visualizando elas para ver o piscar do LED
           if (!document.getElementById('view-shelves').classList.contains('hidden-view')) {
             carregarPrateleiras()
           }
@@ -514,7 +510,6 @@
           )
       }, 1000)
 
-      // Loop do Hardware é mais rápido (1s) para sensação de tempo real
       setInterval(syncHardware, 1000)
 
       atualizarStatus()

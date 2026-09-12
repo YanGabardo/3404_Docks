@@ -1,0 +1,959 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Docks · Portal do Morador</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              ink: '#10192B',
+              inkalt: '#182640',
+              paper: '#FAF8F3',
+              blue: { DEFAULT: '#2563EB', dark: '#1D4ED8', light: '#DBEAFE' },
+              teal: { DEFAULT: '#2E9C6C', dark: '#1F7A54', light: '#DDF3E9' },
+              brick: { DEFAULT: '#D14343', dark: '#AC3232', light: '#FBE1E1' },
+              line: '#E6E1D3',
+              muted: '#8C8571',
+            },
+            fontFamily: {
+              display: ['"Space Grotesk"', 'sans-serif'],
+              body: ['Inter', 'sans-serif'],
+              mono: ['"IBM Plex Mono"', 'monospace'],
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      .hidden-view {
+        display: none !important;
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      .font-display {
+        font-family: 'Space Grotesk', sans-serif;
+      }
+      .font-mono {
+        font-family: 'IBM Plex Mono', monospace;
+      }
+
+      .dock-tag {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-family: 'IBM Plex Mono', monospace;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        padding: 0.4rem 0.85rem 0.4rem 1.6rem;
+        border-radius: 0.5rem;
+      }
+      .dock-tag::before {
+        content: '';
+        position: absolute;
+        left: 0.65rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 0.3rem;
+        height: 0.3rem;
+        border-radius: 50%;
+        background: currentColor;
+        opacity: 0.4;
+      }
+      .size-pill {
+        font-family: 'IBM Plex Mono', monospace;
+        font-weight: 700;
+        font-size: 0.65rem;
+        letter-spacing: 0.05em;
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
+        text-transform: uppercase;
+      }
+
+      @keyframes toast-in {
+        from {
+          opacity: 0;
+          transform: translate(-50%, 12px);
+        }
+        to {
+          opacity: 1;
+          transform: translate(-50%, 0);
+        }
+      }
+      .toast {
+        animation: toast-in 0.25s ease-out;
+      }
+      input:focus,
+      button:focus-visible {
+        outline: 2px solid #2563eb;
+        outline-offset: 2px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      html.dark body {
+        background-color: #0b1220;
+      }
+      html.dark .bg-paper {
+        background-color: #0b1220 !important;
+      }
+      html.dark .bg-white {
+        background-color: #16213a !important;
+      }
+      html.dark .border-line {
+        border-color: #26324a !important;
+      }
+      html.dark .text-ink {
+        color: #f1ede3 !important;
+      }
+      html.dark .text-muted {
+        color: #9ca8bf !important;
+      }
+      html.dark input,
+      html.dark textarea {
+        background-color: #1c2740 !important;
+        color: #f1ede3 !important;
+      }
+    </style>
+  </head>
+  <body class="bg-paper font-body text-ink h-[100dvh] overflow-hidden flex flex-col relative">
+    <div
+      id="view-login"
+      class="flex flex-col items-center justify-center flex-1 p-6 space-y-6 overflow-y-auto relative"
+    >
+      <button
+        onclick="toggleDarkMode()"
+        id="btn-dark-toggle"
+        aria-label="Alternar modo escuro"
+        class="absolute top-4 right-4 text-muted hover:text-ink bg-white border border-line p-2 rounded-full transition-colors"
+      >
+        <svg id="icon-dark" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+          />
+        </svg>
+      </button>
+      <div class="text-center">
+        <div
+          class="w-12 h-12 rounded-2xl bg-ink flex items-center justify-center text-blue font-display font-bold text-xl mx-auto mb-3"
+        >
+          D
+        </div>
+        <h1 class="text-2xl font-display font-bold text-ink tracking-tight">Docks</h1>
+        <p class="text-muted font-medium tracking-wide uppercase text-xs mt-1">Portal do Morador</p>
+      </div>
+
+      <div class="bg-white p-6 rounded-[2rem] shadow-xl shadow-ink/5 border border-line w-full max-w-sm">
+        <div class="space-y-4">
+          <div
+            id="login-error"
+            class="hidden bg-brick-light text-brick-dark text-sm font-semibold text-center p-3 rounded-xl"
+          ></div>
+          <div>
+            <label class="block text-xs font-bold text-muted uppercase tracking-wide mb-2">Usuário</label>
+            <input
+              type="text"
+              id="login-user"
+              class="w-full bg-paper border border-line rounded-xl p-3.5 outline-none focus:border-blue transition-all font-medium"
+              placeholder="ex: iury.goncalves"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-muted uppercase tracking-wide mb-2">Senha</label>
+            <div class="relative">
+              <input
+                type="password"
+                id="login-pwd"
+                class="w-full bg-paper border border-line rounded-xl p-3.5 pr-12 outline-none focus:border-blue transition-all font-medium"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onclick="togglePwd('login-pwd', this)"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink text-xs font-bold uppercase tracking-wide"
+              >
+                Ver
+              </button>
+            </div>
+          </div>
+          <button
+            onclick="fazerLogin()"
+            id="btn-login"
+            class="w-full bg-ink hover:bg-inkalt text-white font-bold py-3.5 rounded-xl mt-2 shadow-md transition-all active:scale-95"
+          >
+            Acessar conta
+          </button>
+          <button
+            type="button"
+            onclick="abrirModalEsqueci()"
+            class="w-full text-muted hover:text-ink text-xs font-bold text-center"
+          >
+            Esqueci minha senha
+          </button>
+        </div>
+      </div>
+      <p class="text-xs text-muted text-center max-w-xs">
+        Ainda não tem uma conta? Fale com a portaria para receber seu usuário e senha provisória.
+      </p>
+    </div>
+
+    <div id="area-logada" class="hidden-view flex flex-col flex-1 min-h-0">
+      <header class="bg-ink p-5 shadow-lg rounded-b-[2rem] text-white flex-shrink-0">
+        <div class="max-w-md mx-auto flex justify-between items-start pt-1">
+          <div>
+            <p class="text-blue text-xs font-bold tracking-wider uppercase mb-1">Docks Residencial</p>
+            <h2 class="text-xl font-display font-bold" id="user-name-display">Olá!</h2>
+            <p class="text-white/60 font-medium mt-1 text-sm font-mono">
+              Apto <span id="user-apt-display">--</span>
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              onclick="toggleDarkMode()"
+              class="text-white hover:text-blue bg-white/10 p-2.5 rounded-xl transition-colors"
+              aria-label="Alternar modo escuro"
+            >
+              <svg id="icon-dark-2" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+                />
+              </svg>
+            </button>
+            <button
+              onclick="abrirConfiguracoes()"
+              class="text-white hover:text-blue bg-white/10 p-2.5 rounded-xl transition-colors"
+              aria-label="Configurações"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                ></path>
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                ></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main class="flex-1 min-h-0 w-full max-w-md mx-auto p-5 flex flex-col overflow-y-auto">
+        <div id="view-dashboard" class="flex flex-col flex-1 space-y-4">
+          <div
+            class="bg-white rounded-3xl p-5 shadow-sm border border-line flex items-center justify-between"
+          >
+            <div>
+              <p class="text-muted font-bold text-xs uppercase tracking-wide mb-1">Pacotes pendentes</p>
+              <p class="text-4xl font-display font-bold text-ink" id="qtd-encomendas">0</p>
+            </div>
+            <div class="bg-blue-light p-3.5 rounded-2xl text-blue-dark">
+              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                ></path>
+              </svg>
+            </div>
+          </div>
+
+          <div class="space-y-2.5 flex-1 min-h-0">
+            <h3 class="font-display font-bold text-ink text-base">Suas encomendas</h3>
+            <div id="lista-encomendas" class="space-y-2.5">
+              <div class="animate-pulse space-y-2.5">
+                <div class="h-14 bg-line/50 rounded-2xl"></div>
+                <div class="h-14 bg-line/50 rounded-2xl"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-auto pt-3 flex-shrink-0">
+            <button
+              id="btn-gerar"
+              onclick="solicitarQRCode()"
+              class="w-full bg-ink hover:bg-inkalt text-white font-bold py-4 rounded-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <svg class="w-5 h-5 text-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+                ></path>
+              </svg>
+              <span id="btn-gerar-text">Abrir sala (gerar QR Code)</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="view-qr" class="hidden-view flex-col items-center justify-center flex-1 space-y-4">
+          <div class="text-center space-y-2">
+            <h2 class="text-xl font-display font-bold text-ink">Passe no leitor</h2>
+            <p
+              class="text-sm font-semibold text-muted bg-white border border-line px-3 py-1.5 rounded-full inline-flex items-center gap-2 font-mono"
+            >
+              <span class="w-1.5 h-1.5 rounded-full bg-blue animate-pulse"></span>
+              <span id="timer">05:00</span>
+            </p>
+          </div>
+
+          <div
+            class="bg-white p-5 rounded-[2rem] shadow-2xl border-4 border-white ring-1 ring-line flex justify-center items-center w-full max-w-[240px] mx-auto"
+          >
+            <div id="qrcode-canvas"></div>
+          </div>
+
+          <div class="text-center bg-ink p-3.5 rounded-2xl w-full">
+            <p class="text-xs font-bold text-blue uppercase tracking-wide mb-1">Este código é pessoal</p>
+            <p class="text-xs text-white/70">Não compartilhe. A retirada fica registrada em vídeo.</p>
+          </div>
+
+          <button onclick="voltarInicio()" class="text-muted font-bold hover:text-ink transition-colors py-1">
+            Cancelar retirada
+          </button>
+        </div>
+
+        <div id="view-retirada" class="hidden-view flex-col items-center justify-center flex-1 space-y-4">
+          <div class="text-center space-y-1.5 w-full">
+            <div class="bg-teal-light text-teal-dark p-3.5 rounded-full inline-block mb-1">
+              <svg class="w-9 h-9" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="3"
+                  d="M5 13l4 4L19 7"
+                ></path>
+              </svg>
+            </div>
+            <h2 class="text-2xl font-display font-bold text-ink">Acesso liberado!</h2>
+            <p class="text-muted font-medium text-sm">Suas encomendas estão em:</p>
+          </div>
+
+          <div
+            id="retirada-photos-container"
+            class="w-full flex flex-col gap-2.5 overflow-y-auto max-h-56 pb-2"
+          ></div>
+
+          <button
+            onclick="voltarInicio()"
+            class="w-full bg-ink hover:bg-inkalt text-white font-bold py-4 rounded-2xl shadow-xl transition-all mt-2 active:scale-95"
+          >
+            Concluir
+          </button>
+        </div>
+      </main>
+    </div>
+
+    <div
+      id="modal-senha"
+      class="absolute inset-0 bg-ink/80 backdrop-blur-sm hidden-view flex items-center justify-center z-50 p-4"
+    >
+      <div class="bg-white p-8 rounded-3xl w-full max-w-sm shadow-2xl">
+        <h3 class="text-2xl font-display font-bold text-ink mb-2" id="modal-senha-title">Atualizar senha</h3>
+        <p class="text-sm text-muted mb-6" id="modal-senha-desc">Digite sua senha atual e a nova senha.</p>
+        <div class="space-y-4">
+          <input
+            type="password"
+            id="senha-atual-input"
+            class="w-full bg-paper border border-line rounded-xl p-4 outline-none focus:border-blue font-medium"
+            placeholder="Senha atual…"
+          />
+          <div class="relative">
+            <input
+              type="password"
+              id="nova-senha"
+              class="w-full bg-paper border border-line rounded-xl p-4 pr-12 outline-none focus:border-blue font-medium"
+              placeholder="Nova senha…"
+            />
+            <button
+              type="button"
+              onclick="togglePwd('nova-senha', this)"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink text-xs font-bold uppercase tracking-wide"
+            >
+              Ver
+            </button>
+          </div>
+          <p class="text-xs text-muted -mt-2">
+            Use pelo menos 8 caracteres. Evite repetir o número do apartamento.
+          </p>
+          <p
+            id="senha-modal-erro"
+            class="hidden bg-brick-light text-brick-dark text-xs font-semibold p-2.5 rounded-lg"
+          ></p>
+          <button
+            onclick="salvarNovaSenha()"
+            class="w-full bg-ink hover:bg-inkalt text-white font-bold py-4 rounded-xl transition-all shadow-md"
+          >
+            Salvar e continuar
+          </button>
+          <button
+            onclick="fecharModalSenha()"
+            id="btn-fechar-senha"
+            class="w-full text-muted font-bold py-2 hidden"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="modal-esqueci"
+      class="absolute inset-0 bg-ink/80 backdrop-blur-sm hidden-view flex items-center justify-center z-50 p-4"
+    >
+      <div class="bg-white p-8 rounded-3xl w-full max-w-sm shadow-2xl">
+        <h3 class="text-2xl font-display font-bold text-ink mb-2">Recuperar acesso</h3>
+
+        <div id="esqueci-passo1">
+          <p class="text-sm text-muted mb-6">
+            Informe seu apartamento. Enviaremos um código de 6 dígitos pelo WhatsApp cadastrado.
+          </p>
+          <div class="space-y-4">
+            <input
+              type="text"
+              id="esqueci-apt"
+              class="w-full bg-paper border border-line rounded-xl p-4 outline-none focus:border-blue font-mono font-medium"
+              placeholder="Número do apartamento"
+            />
+            <p
+              id="esqueci-erro1"
+              class="hidden bg-brick-light text-brick-dark text-xs font-semibold p-2.5 rounded-lg"
+            ></p>
+            <button
+              onclick="enviarCodigoRecuperacao()"
+              id="btn-enviar-codigo"
+              class="w-full bg-ink hover:bg-inkalt text-white font-bold py-4 rounded-xl transition-all shadow-md"
+            >
+              Enviar código por WhatsApp
+            </button>
+            <button onclick="fecharModalEsqueci()" class="w-full text-muted font-bold py-2">Cancelar</button>
+          </div>
+        </div>
+
+        <div id="esqueci-passo2" class="hidden-view">
+          <p class="text-sm text-muted mb-6">
+            Digite o código recebido no WhatsApp e escolha uma nova senha.
+          </p>
+          <div class="space-y-4">
+            <input
+              type="text"
+              id="esqueci-codigo"
+              inputmode="numeric"
+              maxlength="6"
+              class="w-full bg-paper border border-line rounded-xl p-4 outline-none focus:border-blue font-mono text-center text-xl tracking-[0.4em]"
+              placeholder="000000"
+            />
+            <input
+              type="password"
+              id="esqueci-nova-senha"
+              class="w-full bg-paper border border-line rounded-xl p-4 outline-none focus:border-blue font-medium"
+              placeholder="Nova senha (mín. 8 caracteres)…"
+            />
+            <p
+              id="esqueci-erro2"
+              class="hidden bg-brick-light text-brick-dark text-xs font-semibold p-2.5 rounded-lg"
+            ></p>
+            <button
+              onclick="confirmarRecuperacao()"
+              class="w-full bg-ink hover:bg-inkalt text-white font-bold py-4 rounded-xl transition-all shadow-md"
+            >
+              Confirmar e trocar senha
+            </button>
+            <button onclick="fecharModalEsqueci()" class="w-full text-muted font-bold py-2">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="modal-config"
+      class="absolute inset-0 bg-ink/80 backdrop-blur-sm hidden-view flex items-center justify-center z-50 p-4"
+    >
+      <div class="bg-white p-8 rounded-3xl w-full max-w-sm shadow-2xl text-center">
+        <h3 class="text-xl font-display font-bold text-ink mb-6">Configurações da conta</h3>
+        <div class="space-y-3">
+          <button
+            onclick="abrirModalTrocaSenha()"
+            class="w-full bg-paper text-ink font-bold py-3.5 rounded-xl transition hover:bg-line/60"
+          >
+            Alterar minha senha
+          </button>
+          <button
+            onclick="fazerLogout()"
+            class="w-full bg-brick-light text-brick-dark font-bold py-3.5 rounded-xl transition hover:bg-brick/20"
+          >
+            Sair da conta
+          </button>
+        </div>
+        <button
+          onclick="document.getElementById('modal-config').classList.add('hidden-view')"
+          class="mt-6 text-muted font-bold"
+        >
+          Voltar
+        </button>
+      </div>
+    </div>
+
+    <div
+      id="toast-root"
+      class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center gap-2 w-[90%] max-w-sm"
+    ></div>
+
+    <script>
+      const API_URL =
+        window.location.hostname === '' ? 'http://127.0.0.1:5000' : `http://${window.location.hostname}:5000`
+      let apartamentoLogado = null
+      let moradorToken = ''
+      let timerInterval, pollingInterval
+      let cachedPackages = []
+      let currentQrToken = ''
+      let aptRecuperacao = ''
+
+      function applyDarkPreference() {
+        const salvo = localStorage.getItem('docks_theme')
+        const escuro = salvo === 'dark'
+        document.documentElement.classList.toggle('dark', escuro)
+        const svgPath = escuro
+          ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>'
+          : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>'
+        ;['icon-dark', 'icon-dark-2'].forEach((id) => {
+          const icon = document.getElementById(id)
+          if (icon) icon.innerHTML = svgPath
+        })
+      }
+      function toggleDarkMode() {
+        const escuro = !document.documentElement.classList.contains('dark')
+        localStorage.setItem('docks_theme', escuro ? 'dark' : 'light')
+        applyDarkPreference()
+      }
+      applyDarkPreference()
+
+      function fetchMorador(path, options = {}) {
+        options.headers = { ...(options.headers || {}), 'X-Morador-Token': moradorToken }
+        return fetch(`${API_URL}${path}`, options)
+      }
+
+      function toast(message, type = 'info') {
+        const palette = {
+          info: 'bg-ink text-white',
+          success: 'bg-teal text-white',
+          error: 'bg-brick text-white',
+        }
+        const el = document.createElement('div')
+        el.className = `toast ${palette[type] || palette.info} px-5 py-3 rounded-xl shadow-xl text-sm font-semibold text-center w-full`
+        el.innerText = message
+        document.getElementById('toast-root').appendChild(el)
+        setTimeout(() => {
+          el.style.transition = 'opacity .3s'
+          el.style.opacity = '0'
+          setTimeout(() => el.remove(), 300)
+        }, 3200)
+      }
+
+      function togglePwd(id, btn) {
+        const input = document.getElementById(id)
+        const show = input.type === 'password'
+        input.type = show ? 'text' : 'password'
+        btn.innerText = show ? 'Ocultar' : 'Ver'
+      }
+
+      window.onload = () => {
+        const savedApt = localStorage.getItem('docks_apt')
+        const savedName = localStorage.getItem('docks_name')
+        const savedToken = localStorage.getItem('docks_token')
+        if (savedApt && savedName && savedToken) {
+          apartamentoLogado = savedApt
+          moradorToken = savedToken
+          document.getElementById('user-name-display').innerText = `Olá, ${savedName.split(' ')[0]}!`
+          document.getElementById('user-apt-display').innerText = apartamentoLogado
+          showView('area-logada')
+          carregarEncomendas()
+        }
+      }
+
+      function showView(viewId) {
+        document.getElementById('view-login').classList.add('hidden-view')
+        document.getElementById('area-logada').classList.add('hidden-view')
+        if (['area-logada', 'view-dashboard', 'view-qr', 'view-retirada'].includes(viewId)) {
+          document.getElementById('area-logada').classList.remove('hidden-view')
+          document.getElementById('view-dashboard').classList.add('hidden-view')
+          document.getElementById('view-qr').classList.add('hidden-view')
+          document.getElementById('view-retirada').classList.add('hidden-view')
+          document
+            .getElementById(viewId === 'area-logada' ? 'view-dashboard' : viewId)
+            .classList.remove('hidden-view')
+        } else {
+          document.getElementById(viewId).classList.remove('hidden-view')
+        }
+      }
+
+      async function fazerLogin() {
+        const user = document.getElementById('login-user').value
+        const pwd = document.getElementById('login-pwd').value
+        const btn = document.getElementById('btn-login')
+        const err = document.getElementById('login-error')
+        err.classList.add('hidden')
+        if (!user || !pwd) {
+          err.innerText = 'Preencha usuário e senha.'
+          err.classList.remove('hidden')
+          return
+        }
+        btn.innerText = 'Autenticando…'
+        try {
+          const res = await fetch(`${API_URL}/api/morador/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usuario: user, senha: pwd }),
+          })
+          const data = await res.json()
+          if (data.success) {
+            apartamentoLogado = data.apartamento
+            moradorToken = data.token
+            localStorage.setItem('docks_apt', data.apartamento)
+            localStorage.setItem('docks_name', data.nome)
+            localStorage.setItem('docks_token', data.token)
+            if (data.primeiro_login) {
+              abrirModalTrocaSenha(true)
+            } else {
+              document.getElementById('user-name-display').innerText = `Olá, ${data.nome.split(' ')[0]}!`
+              document.getElementById('user-apt-display').innerText = apartamentoLogado
+              showView('area-logada')
+              carregarEncomendas()
+            }
+          } else {
+            err.innerText = data.message || 'Usuário ou senha incorretos.'
+            err.classList.remove('hidden')
+          }
+        } catch (e) {
+          err.innerText = 'Falha de conexão com o servidor Docks.'
+          err.classList.remove('hidden')
+        }
+        btn.innerText = 'Acessar conta'
+      }
+
+      function fazerLogout() {
+        apartamentoLogado = null
+        moradorToken = ''
+        localStorage.removeItem('docks_apt')
+        localStorage.removeItem('docks_name')
+        localStorage.removeItem('docks_token')
+        document.getElementById('login-pwd').value = ''
+        document.getElementById('modal-config').classList.add('hidden-view')
+        showView('view-login')
+      }
+
+      function abrirConfiguracoes() {
+        document.getElementById('modal-config').classList.remove('hidden-view')
+      }
+
+      function abrirModalTrocaSenha(force = false) {
+        document.getElementById('modal-config').classList.add('hidden-view')
+        document.getElementById('modal-senha').classList.remove('hidden-view')
+        document.getElementById('senha-atual-input').value = ''
+        document.getElementById('nova-senha').value = ''
+        document.getElementById('senha-modal-erro').classList.add('hidden')
+        const btnFechar = document.getElementById('btn-fechar-senha')
+        if (force) {
+          btnFechar.classList.add('hidden')
+          document.getElementById('modal-senha-desc').innerText =
+            'Este é o seu primeiro acesso. Digite a senha provisória recebida e crie uma nova (mín. 8 caracteres).'
+        } else {
+          btnFechar.classList.remove('hidden')
+          document.getElementById('modal-senha-desc').innerText =
+            'Digite sua senha atual e a nova senha (mín. 8 caracteres).'
+        }
+      }
+
+      function fecharModalSenha() {
+        document.getElementById('modal-senha').classList.add('hidden-view')
+      }
+
+      async function salvarNovaSenha() {
+        const senhaAtual = document.getElementById('senha-atual-input').value
+        const novaSenha = document.getElementById('nova-senha').value
+        const erro = document.getElementById('senha-modal-erro')
+        erro.classList.add('hidden')
+        if (!senhaAtual) {
+          erro.innerText = 'Informe sua senha atual.'
+          erro.classList.remove('hidden')
+          return
+        }
+        if (!novaSenha || novaSenha.length < 8) {
+          erro.innerText = 'A nova senha deve ter no mínimo 8 caracteres.'
+          erro.classList.remove('hidden')
+          return
+        }
+        try {
+          const res = await fetch(`${API_URL}/api/morador/mudar_senha`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              apartamento: apartamentoLogado,
+              senha_atual: senhaAtual,
+              nova_senha: novaSenha,
+            }),
+          })
+          const data = await res.json()
+          if (res.ok) {
+            fecharModalSenha()
+            toast('Senha atualizada com sucesso.', 'success')
+            document.getElementById('user-name-display').innerText =
+              `Olá, ${localStorage.getItem('docks_name').split(' ')[0]}!`
+            document.getElementById('user-apt-display').innerText = apartamentoLogado
+            showView('area-logada')
+            carregarEncomendas()
+          } else {
+            erro.innerText = data.error || 'Não foi possível salvar a senha.'
+            erro.classList.remove('hidden')
+          }
+        } catch (e) {
+          erro.innerText = 'Erro ao salvar senha.'
+          erro.classList.remove('hidden')
+        }
+      }
+
+      function abrirModalEsqueci() {
+        document.getElementById('modal-esqueci').classList.remove('hidden-view')
+        document.getElementById('esqueci-passo1').classList.remove('hidden-view')
+        document.getElementById('esqueci-passo2').classList.add('hidden-view')
+        document.getElementById('esqueci-apt').value = ''
+        document.getElementById('esqueci-codigo').value = ''
+        document.getElementById('esqueci-nova-senha').value = ''
+        document.getElementById('esqueci-erro1').classList.add('hidden')
+        document.getElementById('esqueci-erro2').classList.add('hidden')
+      }
+      function fecharModalEsqueci() {
+        document.getElementById('modal-esqueci').classList.add('hidden-view')
+      }
+
+      async function enviarCodigoRecuperacao() {
+        const apt = document.getElementById('esqueci-apt').value.trim()
+        const erro = document.getElementById('esqueci-erro1')
+        erro.classList.add('hidden')
+        if (!apt) {
+          erro.innerText = 'Informe o número do apartamento.'
+          erro.classList.remove('hidden')
+          return
+        }
+        const btn = document.getElementById('btn-enviar-codigo')
+        btn.innerText = 'Enviando…'
+        try {
+          await fetch(`${API_URL}/api/morador/${apt}/solicitar_codigo`, { method: 'POST' })
+          aptRecuperacao = apt
+          document.getElementById('esqueci-passo1').classList.add('hidden-view')
+          document.getElementById('esqueci-passo2').classList.remove('hidden-view')
+          toast('Se o apartamento existir, um código foi enviado por WhatsApp.', 'info')
+        } catch (e) {
+          erro.innerText = 'Erro de conexão com o servidor Docks.'
+          erro.classList.remove('hidden')
+        }
+        btn.innerText = 'Enviar código por WhatsApp'
+      }
+
+      async function confirmarRecuperacao() {
+        const codigo = document.getElementById('esqueci-codigo').value.trim()
+        const novaSenha = document.getElementById('esqueci-nova-senha').value
+        const erro = document.getElementById('esqueci-erro2')
+        erro.classList.add('hidden')
+        if (!codigo) {
+          erro.innerText = 'Informe o código recebido no WhatsApp.'
+          erro.classList.remove('hidden')
+          return
+        }
+        if (!novaSenha || novaSenha.length < 8) {
+          erro.innerText = 'A nova senha deve ter no mínimo 8 caracteres.'
+          erro.classList.remove('hidden')
+          return
+        }
+        try {
+          const res = await fetch(`${API_URL}/api/morador/mudar_senha`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              apartamento: aptRecuperacao,
+              codigo_verificacao: codigo,
+              nova_senha: novaSenha,
+            }),
+          })
+          const data = await res.json()
+          if (res.ok) {
+            fecharModalEsqueci()
+            toast('Senha atualizada! Faça login com a nova senha.', 'success')
+          } else {
+            erro.innerText = data.error || 'Código inválido ou expirado.'
+            erro.classList.remove('hidden')
+          }
+        } catch (e) {
+          erro.innerText = 'Erro de conexão com o servidor Docks.'
+          erro.classList.remove('hidden')
+        }
+      }
+
+      function sizeLabel(t) {
+        const map = {
+          pequeno: ['P', 'bg-teal-light text-teal-dark'],
+          médio: ['M', 'bg-blue-light text-blue-dark'],
+          grande: ['G', 'bg-brick-light text-brick-dark'],
+        }
+        return map[t] || ['?', 'bg-line text-muted']
+      }
+
+      async function carregarEncomendas() {
+        if (!apartamentoLogado) return
+        try {
+          const res = await fetchMorador(`/api/morador/${apartamentoLogado}/encomendas`)
+          const data = await res.json()
+          cachedPackages = data.encomendas
+          document.getElementById('qtd-encomendas').innerText = cachedPackages.length
+          const listaContainer = document.getElementById('lista-encomendas')
+          listaContainer.innerHTML = ''
+          if (cachedPackages.length === 0) {
+            listaContainer.innerHTML = `
+                        <div class="text-center py-10 bg-white rounded-2xl border border-dashed border-line">
+                            <p class="text-sm font-semibold text-muted">Nenhuma encomenda por aqui.</p>
+                            <p class="text-xs text-muted/70 mt-1">Assim que chegar algo, você verá aqui.</p>
+                        </div>`
+            document.getElementById('btn-gerar').disabled = true
+          } else {
+            document.getElementById('btn-gerar').disabled = false
+            cachedPackages.forEach((enc) => {
+              const [label, cls] = sizeLabel(enc.tamanho)
+              listaContainer.innerHTML += `
+                            <div class="bg-white p-4 rounded-2xl shadow-sm border border-line flex items-center gap-4">
+                                <span class="size-pill ${cls} flex-shrink-0">${label}</span>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-bold text-ink capitalize truncate">Pacote ${enc.tamanho}</p>
+                                    <p class="text-[11px] font-semibold text-muted uppercase tracking-wide font-mono">Chegou em ${enc.data.split(' ')[0]}</p>
+                                </div>
+                            </div>`
+            })
+          }
+        } catch (err) {
+          toast('Não foi possível carregar suas encomendas.', 'error')
+        }
+      }
+
+      async function solicitarQRCode() {
+        const btn = document.getElementById('btn-gerar')
+        const btnText = document.getElementById('btn-gerar-text')
+        btnText.innerText = 'Gerando segurança…'
+        btn.disabled = true
+        try {
+          const res = await fetchMorador(`/api/morador/${apartamentoLogado}/gerar_qr`, { method: 'POST' })
+          const data = await res.json()
+          if (data.success) {
+            currentQrToken = data.token
+            gerarImagemQR(data.token)
+            iniciarTimer(300)
+            iniciarPollingQR()
+            showView('view-qr')
+          } else {
+            toast('Não foi possível gerar o QR Code.', 'error')
+          }
+        } catch (err) {
+          toast('Erro de conexão com o servidor Docks.', 'error')
+        }
+        btnText.innerText = 'Abrir sala (gerar QR Code)'
+        btn.disabled = false
+      }
+
+      function gerarImagemQR(token) {
+        document.getElementById('qrcode-canvas').innerHTML = ''
+        new QRCode(document.getElementById('qrcode-canvas'), {
+          text: token,
+          width: 220,
+          height: 220,
+          colorDark: '#10192B',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.H,
+        })
+      }
+
+      function iniciarPollingQR() {
+        clearInterval(pollingInterval)
+        pollingInterval = setInterval(async () => {
+          try {
+            const res = await fetch(`${API_URL}/api/qr_status/${currentQrToken}`)
+            const data = await res.json()
+            if (data.validated) {
+              clearInterval(pollingInterval)
+              clearInterval(timerInterval)
+              exibirRetiradaFinal()
+            }
+          } catch (e) {}
+        }, 1500)
+      }
+
+      function exibirRetiradaFinal() {
+        showView('view-retirada')
+        const container = document.getElementById('retirada-photos-container')
+        container.innerHTML = ''
+        cachedPackages.forEach((enc) => {
+          const imgSrc =
+            enc.foto ||
+            'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PHJlY3Qgd2lkdGg9IjIwIiBoZWlnaHQ9IjIwIiBmaWxsPSIjZTFlOWU2Ii8+PC9zdmc+'
+          container.innerHTML += `
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-line flex gap-4 items-center">
+                        <img src="${imgSrc}" class="w-16 h-16 rounded-xl object-cover border border-line flex-shrink-0">
+                        <div class="flex-1">
+                            <p class="font-bold text-muted uppercase tracking-widest text-[10px] mb-1">Localização</p>
+                            <div class="dock-tag bg-ink text-blue -rotate-1">${enc.prateleira}</div>
+                        </div>
+                    </div>`
+        })
+      }
+
+      function iniciarTimer(segundos) {
+        clearInterval(timerInterval)
+        let timeLeft = segundos
+        timerInterval = setInterval(() => {
+          timeLeft--
+          const m = Math.floor(timeLeft / 60)
+            .toString()
+            .padStart(2, '0')
+          const s = (timeLeft % 60).toString().padStart(2, '0')
+          document.getElementById('timer').innerText = `${m}:${s}`
+          if (timeLeft <= 0) voltarInicio()
+        }, 1000)
+      }
+
+      function voltarInicio() {
+        clearInterval(timerInterval)
+        clearInterval(pollingInterval)
+        carregarEncomendas()
+        showView('view-dashboard')
+      }
+    </script>
+  </body>
+</html>

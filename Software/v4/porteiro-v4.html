@@ -328,7 +328,6 @@
         const nome = document.getElementById('input-nome').value
         const apt = document.getElementById('input-apt').value
 
-        // Verifica se os três dados estão preenchidos
         if (!nome || !apt || !selectedSize) {
           alert('Os dados estão incompletos. Selecione o morador e o tamanho.')
           return
@@ -342,7 +341,6 @@
           const response = await fetch(`${API_URL}/api/encomendas`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            // CORREÇÃO: Agora o 'nome' está sendo enviado para a API!
             body: JSON.stringify({
               nome: nome,
               apartamento: apt,

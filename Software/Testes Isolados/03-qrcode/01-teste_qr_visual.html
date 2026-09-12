@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+
+    <title>Teste Isolado - QR Code</title>
+
+    <!--
+      Biblioteca utilizada somente para gerar visualmente o QR Code.
+      Neste teste não existe autenticação ou comunicação com o backend.
+    -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  </head>
+
+  <body>
+    <h1>Teste Isolado - QR Code</h1>
+
+    <hr />
+
+    <label for="texto-token"> Digite o conteúdo do QR Code: </label>
+
+    <br />
+
+    <!--
+      String fictícia utilizada apenas para demonstrar a geração visual do código.
+    -->
+    <input type="text" id="texto-token" value="DOCKS-TESTE-3404" size="50" />
+
+    <br /><br />
+
+    <button onclick="gerarTeste()">GERAR IMAGEM DO QR CODE</button>
+
+    <br /><br />
+
+    <!-- O QR Code gerado será inserido neste elemento. -->
+    <div id="qrcode"></div>
+
+    <script>
+      function gerarTeste() {
+        // Obtém o conteúdo informado pelo usuário.
+        const texto = document.getElementById('texto-token').value
+
+        // Obtém o elemento no qual o QR Code será exibido.
+        const container = document.getElementById('qrcode')
+
+        // Remove um QR Code anterior, caso exista.
+        container.innerHTML = ''
+
+        // Gera uma nova imagem QR a partir da string fornecida.
+        new QRCode(container, texto)
+
+        // Apenas para acompanhamento durante o teste.
+        console.log('QR Code gerado com sucesso para a string: ' + texto)
+      }
+    </script>
+  </body>
+</html>

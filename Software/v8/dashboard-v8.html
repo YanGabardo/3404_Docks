@@ -1,0 +1,990 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Docks · Painel Administrativo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              ink: '#10192B',
+              inkalt: '#182640',
+              paper: '#FAF8F3',
+              blue: { DEFAULT: '#2563EB', dark: '#1D4ED8', light: '#DBEAFE' },
+              teal: { DEFAULT: '#2E9C6C', dark: '#1F7A54', light: '#DDF3E9' },
+              brick: { DEFAULT: '#D14343', dark: '#AC3232', light: '#FBE1E1' },
+              line: '#E6E1D3',
+              muted: '#8C8571',
+            },
+            fontFamily: {
+              display: ['"Space Grotesk"', 'sans-serif'],
+              body: ['Inter', 'sans-serif'],
+              mono: ['"IBM Plex Mono"', 'monospace'],
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      .hidden-view {
+        display: none !important;
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      .font-display {
+        font-family: 'Space Grotesk', sans-serif;
+      }
+      .font-mono {
+        font-family: 'IBM Plex Mono', monospace;
+      }
+
+      .dock-tag {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-family: 'IBM Plex Mono', monospace;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        padding: 0.3rem 0.7rem 0.3rem 1.4rem;
+        border-radius: 0.4rem;
+        font-size: 0.72rem;
+      }
+      .dock-tag::before {
+        content: '';
+        position: absolute;
+        left: 0.55rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 0.28rem;
+        height: 0.28rem;
+        border-radius: 50%;
+        background: currentColor;
+        opacity: 0.4;
+      }
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #e6e1d3;
+        border-radius: 999px;
+      }
+      input:focus,
+      button:focus-visible {
+        outline: 2px solid #2563eb;
+        outline-offset: 2px;
+      }
+      @keyframes toast-in {
+        from {
+          opacity: 0;
+          transform: translate(-50%, 12px);
+        }
+        to {
+          opacity: 1;
+          transform: translate(-50%, 0);
+        }
+      }
+      .toast {
+        animation: toast-in 0.25s ease-out;
+      }
+      .skeleton {
+        background: linear-gradient(90deg, #f1ede3 25%, #e6e1d3 37%, #f1ede3 63%);
+        background-size: 400% 100%;
+        animation: sk 1.4s ease infinite;
+      }
+      @keyframes sk {
+        0% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0 50%;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      html.dark body {
+        background-color: #0b1220;
+      }
+      html.dark .bg-paper {
+        background-color: #0b1220 !important;
+      }
+      html.dark .bg-white {
+        background-color: #16213a !important;
+      }
+      html.dark .border-line {
+        border-color: #26324a !important;
+      }
+      html.dark .text-ink {
+        color: #f1ede3 !important;
+      }
+      html.dark .text-muted {
+        color: #9ca8bf !important;
+      }
+      html.dark input,
+      html.dark textarea {
+        background-color: #1c2740 !important;
+        color: #f1ede3 !important;
+      }
+      html.dark header.bg-white\/80 {
+        background-color: rgba(22, 33, 58, 0.85) !important;
+      }
+      html.dark ::-webkit-scrollbar-thumb {
+        background: #26324a;
+      }
+    </style>
+  </head>
+  <body class="bg-paper font-body text-ink flex h-screen overflow-hidden">
+    <div id="view-dashboard-login" class="w-full h-full flex items-center justify-center bg-ink">
+      <div class="bg-white p-8 rounded-[2rem] shadow-2xl w-full max-w-sm border border-line">
+        <div class="text-center mb-6">
+          <div
+            class="w-12 h-12 rounded-2xl bg-blue flex items-center justify-center text-white font-display font-bold text-xl mx-auto mb-3"
+          >
+            D
+          </div>
+          <h1 class="text-2xl font-display font-bold text-ink">Docks</h1>
+          <p class="text-muted font-medium tracking-wide uppercase text-xs mt-1">Acesso ao Painel</p>
+        </div>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-muted uppercase tracking-wide mb-2">Usuário</label>
+            <input
+              id="dash-login-user"
+              type="text"
+              class="w-full bg-paper border border-line rounded-xl p-3.5 outline-none focus:border-blue transition-all font-medium"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-muted uppercase tracking-wide mb-2">Senha</label>
+            <input
+              id="dash-login-pwd"
+              type="password"
+              class="w-full bg-paper border border-line rounded-xl p-3.5 outline-none focus:border-blue transition-all font-medium"
+            />
+          </div>
+          <p
+            id="dash-login-error"
+            class="hidden bg-brick-light text-brick-dark text-sm font-semibold text-center p-3 rounded-xl"
+          ></p>
+          <button
+            onclick="fazerLoginDashboard()"
+            class="w-full bg-ink hover:bg-inkalt text-white font-bold py-3.5 rounded-xl mt-1 shadow-md transition-all active:scale-95"
+          >
+            Entrar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="app-shell" class="hidden-view w-full h-full flex">
+      <aside class="w-64 bg-ink text-white flex flex-col shadow-2xl z-20 flex-shrink-0">
+        <div class="p-6 border-b border-white/10 flex items-center gap-3">
+          <div
+            class="w-9 h-9 rounded-xl bg-blue flex items-center justify-center text-white font-display font-bold"
+          >
+            D
+          </div>
+          <div>
+            <h1 class="text-lg font-display font-bold leading-none">Docks</h1>
+            <span class="text-[11px] font-medium text-white/40 block mt-1">Painel Administrativo</span>
+          </div>
+        </div>
+        <nav class="flex-1 p-4 space-y-1.5">
+          <button
+            onclick="switchView('view-overview', this)"
+            class="nav-btn active w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition"
+          >
+            <svg
+              class="w-4.5 h-4.5 flex-shrink-0"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+              />
+            </svg>
+            Painel Central
+          </button>
+          <button
+            onclick="switchView('view-moradores', this)"
+            class="nav-btn w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition"
+          >
+            <svg
+              class="w-4.5 h-4.5 flex-shrink-0"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-5.13a4 4 0 11-8 0 4 4 0 018 0zm6 3a4 4 0 10-8 0"
+              />
+            </svg>
+            Gerenciar Moradores
+          </button>
+          <button
+            onclick="
+              switchView('view-shelves', this)
+              carregarPrateleiras()
+            "
+            class="nav-btn w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition"
+          >
+            <svg
+              class="w-4.5 h-4.5 flex-shrink-0"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+              />
+            </svg>
+            Mapeamento Físico
+          </button>
+          <button
+            onclick="
+              switchView('view-logs', this)
+              carregarLogs()
+            "
+            class="nav-btn w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition"
+          >
+            <svg
+              class="w-4.5 h-4.5 flex-shrink-0"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+            Auditoria de Sistema
+          </button>
+          <button
+            onclick="switchView('view-camera', this)"
+            class="nav-btn w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition"
+          >
+            <svg
+              class="w-4.5 h-4.5 flex-shrink-0"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+              />
+            </svg>
+            Câmera IP (DVR)
+          </button>
+        </nav>
+        <div class="p-4 border-t border-white/10 flex items-center justify-between gap-2">
+          <div id="conn-status" class="text-xs font-mono flex items-center gap-2 text-white/40">
+            <span class="w-2 h-2 rounded-full bg-white/20"></span>
+            Verificando servidor…
+          </div>
+          <button
+            onclick="toggleDarkMode()"
+            id="btn-dark-toggle"
+            aria-label="Alternar modo escuro"
+            class="text-white/60 hover:text-white bg-white/5 border border-white/10 p-2 rounded-full transition-colors flex-shrink-0"
+          >
+            <svg id="icon-dark" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+              />
+            </svg>
+          </button>
+        </div>
+      </aside>
+
+      <main class="flex-1 flex flex-col h-full overflow-y-auto relative">
+        <header
+          class="bg-white/80 backdrop-blur p-4 px-6 shadow-sm border-b border-line flex justify-between items-center z-10 sticky top-0"
+        >
+          <h2 id="header-title" class="text-lg font-display font-bold text-ink tracking-tight">
+            Painel Central de Monitoramento
+          </h2>
+          <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 bg-paper px-3 py-1.5 rounded-lg border border-line">
+              <span class="text-[10px] font-bold text-muted uppercase">Trava da Sala:</span>
+              <div id="hw-door-status" class="flex items-center gap-1.5 text-xs font-bold text-brick">
+                <span class="w-1.5 h-1.5 rounded-full bg-brick"></span> BLOQUEADA
+              </div>
+            </div>
+            <span class="text-xs font-mono text-muted" id="clock-display"></span>
+          </div>
+        </header>
+
+        <div id="view-overview" class="view-section p-6 flex flex-col gap-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5 w-full">
+            <div
+              class="bg-white p-6 rounded-2xl shadow-sm border border-line flex items-center justify-between"
+            >
+              <div>
+                <p class="text-xs text-muted font-bold uppercase tracking-wide">Aguardando retirada</p>
+                <p class="text-4xl font-display font-bold text-ink mt-2" id="stat-aguardando">
+                  <span class="skeleton inline-block w-12 h-9 rounded-lg align-middle"></span>
+                </p>
+              </div>
+              <div class="bg-blue-light p-3.5 rounded-2xl text-blue-dark">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div
+              class="bg-white p-6 rounded-2xl shadow-sm border border-line flex items-center justify-between"
+            >
+              <div>
+                <p class="text-xs text-muted font-bold uppercase tracking-wide">Retiradas hoje</p>
+                <p class="text-4xl font-display font-bold text-ink mt-2" id="stat-retiradas">
+                  <span class="skeleton inline-block w-12 h-9 rounded-lg align-middle"></span>
+                </p>
+              </div>
+              <div class="bg-teal-light p-3.5 rounded-2xl text-teal-dark">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div
+              class="bg-white p-6 rounded-2xl shadow-sm border border-line flex items-center justify-between"
+            >
+              <div class="w-full">
+                <p class="text-xs text-muted font-bold uppercase tracking-wide">Prateleiras livres</p>
+                <p class="text-4xl font-display font-bold text-ink mt-2" id="stat-livres">
+                  <span class="skeleton inline-block w-20 h-9 rounded-lg align-middle"></span>
+                </p>
+                <div class="w-full h-1.5 bg-line rounded-full mt-3 overflow-hidden">
+                  <div
+                    id="stat-livres-bar"
+                    class="h-full bg-blue rounded-full transition-all"
+                    style="width: 0%"
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 flex-1">
+            <div
+              class="xl:col-span-2 bg-ink rounded-2xl shadow-sm overflow-hidden relative flex flex-col min-h-[320px]"
+            >
+              <div class="absolute top-4 left-4 z-10 flex gap-2">
+                <span
+                  id="badge-rec-home"
+                  class="text-xs bg-white/10 text-white/50 px-3 py-1 rounded-full font-bold border border-white/10 transition-colors"
+                  >STANDBY</span
+                >
+              </div>
+              <div class="flex-1 flex items-center justify-center relative">
+                <img
+                  id="camera-img-home"
+                  src=""
+                  class="w-full h-full object-contain"
+                  alt="Feed da câmera IP Docks"
+                  onerror="
+                    this.classList.add('hidden-view')
+                    document.getElementById('camera-offline-home').classList.remove('hidden-view')
+                  "
+                />
+                <div
+                  id="camera-offline-home"
+                  class="hidden-view text-center text-white/40 text-sm font-semibold px-6"
+                >
+                  Sinal da câmera indisponível no momento.
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="xl:col-span-1 bg-white rounded-2xl shadow-sm border border-line flex flex-col min-h-[320px]"
+            >
+              <div class="p-5 border-b border-line flex items-center justify-between">
+                <h3 class="font-display font-bold text-ink">Eventos recentes</h3>
+                <button
+                  onclick="switchViewById('view-logs')"
+                  class="text-xs font-bold text-blue-dark hover:underline"
+                >
+                  Ver tudo
+                </button>
+              </div>
+              <div class="p-0 flex-1 overflow-y-auto">
+                <ul class="divide-y divide-line" id="lista-logs-home">
+                  <li class="p-6"><div class="skeleton h-10 rounded-lg"></div></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="view-moradores" class="view-section hidden-view p-6">
+          <div class="bg-white p-8 rounded-2xl shadow-sm border border-line max-w-xl mx-auto">
+            <h3 class="font-display font-bold text-ink text-2xl mb-1">Cadastrar novo morador</h3>
+            <p class="text-sm text-muted mb-6">O acesso ao Portal do Morador é gerado automaticamente.</p>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-xs font-bold text-muted uppercase mb-2">Nome completo</label>
+                <input
+                  type="text"
+                  id="cad-nome"
+                  class="w-full bg-paper border border-line rounded-xl p-4 outline-none focus:border-blue"
+                  placeholder="Ex: Yan Gabardo"
+                />
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-muted uppercase mb-2">Apartamento</label>
+                  <input
+                    type="text"
+                    id="cad-apt"
+                    class="w-full bg-paper border border-line rounded-xl p-4 outline-none focus:border-blue font-mono"
+                    placeholder="Ex: 567"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-muted uppercase mb-2"
+                    >WhatsApp (DDD + número)</label
+                  >
+                  <input
+                    type="text"
+                    id="cad-tel"
+                    class="w-full bg-paper border border-line rounded-xl p-4 outline-none focus:border-blue font-mono"
+                    placeholder="Ex: 35999998888"
+                  />
+                  <p class="text-[11px] mt-1.5 text-muted">
+                    O código do Brasil (+55) é adicionado automaticamente.
+                  </p>
+                </div>
+              </div>
+              <button
+                onclick="salvarMorador()"
+                id="btn-salvar-morador"
+                class="w-full bg-ink hover:bg-inkalt text-white font-bold py-4 rounded-xl mt-2 shadow-md transition-all"
+              >
+                Finalizar cadastro
+              </button>
+            </div>
+          </div>
+
+          <div
+            id="credenciais-box"
+            class="hidden-view bg-white p-8 rounded-2xl shadow-sm border border-teal/30 max-w-xl mx-auto mt-6"
+          >
+            <div class="flex items-center gap-3 mb-4">
+              <div class="bg-teal-light text-teal-dark p-2 rounded-xl">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <h4 class="font-display font-bold text-ink">Morador cadastrado com sucesso</h4>
+            </div>
+            <p class="text-sm text-muted mb-4">
+              Repasse estas credenciais provisórias — o morador deverá trocar a senha no primeiro acesso.
+            </p>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="bg-paper border border-line rounded-xl p-4">
+                <p class="text-[10px] font-bold text-muted uppercase tracking-wide mb-1">Usuário</p>
+                <p class="font-mono font-bold text-ink" id="cred-usuario">—</p>
+              </div>
+              <div class="bg-paper border border-line rounded-xl p-4">
+                <p class="text-[10px] font-bold text-muted uppercase tracking-wide mb-1">Senha provisória</p>
+                <p class="font-mono font-bold text-ink" id="cred-senha">—</p>
+              </div>
+            </div>
+            <button
+              onclick="document.getElementById('credenciais-box').classList.add('hidden-view')"
+              class="mt-5 text-sm font-bold text-muted hover:text-ink"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+
+        <div id="view-shelves" class="view-section hidden-view p-6">
+          <div class="bg-white p-6 rounded-2xl shadow-sm border border-line">
+            <div class="flex justify-between items-center mb-6 flex-wrap gap-3">
+              <h3 class="font-display font-bold text-ink text-lg">Mapeamento físico de prateleiras</h3>
+              <div class="flex items-center gap-4 text-xs font-semibold text-muted">
+                <span class="flex items-center gap-1.5"
+                  ><span class="w-2.5 h-2.5 rounded-sm bg-blue"></span> Ocupada</span
+                >
+                <span class="flex items-center gap-1.5"
+                  ><span class="w-2.5 h-2.5 rounded-sm bg-line"></span> Livre</span
+                >
+              </div>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-10 gap-3" id="grid-prateleiras"></div>
+          </div>
+        </div>
+
+        <div id="view-logs" class="view-section hidden-view p-6">
+          <div class="bg-white rounded-2xl shadow-sm border border-line overflow-hidden">
+            <div class="p-5 border-b border-line flex justify-between items-center flex-wrap gap-3">
+              <h3 class="font-display font-bold text-ink text-lg">Histórico de auditoria</h3>
+              <input
+                id="log-filter"
+                oninput="filtrarLogs()"
+                type="text"
+                placeholder="Filtrar por tipo ou descrição…"
+                class="border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-blue w-64 max-w-full"
+              />
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-paper text-muted text-xs uppercase tracking-wider border-b border-line">
+                    <th class="p-4 font-bold">Data/Hora</th>
+                    <th class="p-4 font-bold">Evento</th>
+                    <th class="p-4 font-bold">Descrição detalhada</th>
+                  </tr>
+                </thead>
+                <tbody class="text-sm divide-y divide-line" id="tabela-logs-full"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="view-camera" class="view-section hidden-view p-6 flex-1 flex flex-col">
+          <div
+            class="bg-ink rounded-2xl shadow-2xl overflow-hidden flex-1 flex flex-col relative min-h-[420px]"
+          >
+            <div
+              class="p-4 border-b border-white/10 flex justify-between items-center bg-ink/50 backdrop-blur z-10 absolute top-0 left-0 right-0"
+            >
+              <h3 class="font-display font-bold text-white text-lg">Monitoramento DVR IP</h3>
+              <span
+                class="text-xs bg-brick/20 text-brick px-3 py-1 rounded-full font-bold border border-brick/40 flex items-center gap-2"
+              >
+                <span class="w-2 h-2 rounded-full bg-brick animate-pulse"></span> LIVE
+              </span>
+            </div>
+            <div class="flex-1 flex items-center justify-center relative">
+              <div
+                class="border border-white/10 w-3/4 max-w-4xl aspect-video rounded-xl flex items-center justify-center bg-black shadow-2xl overflow-hidden z-10 mt-10"
+              >
+                <img
+                  id="camera-img"
+                  src=""
+                  class="w-full h-full object-contain"
+                  alt="Feed da câmera IP Docks"
+                  onerror="
+                    this.classList.add('hidden-view')
+                    document.getElementById('camera-offline').classList.remove('hidden-view')
+                  "
+                />
+                <div
+                  id="camera-offline"
+                  class="hidden-view text-center text-white/40 text-sm font-semibold px-6"
+                >
+                  Sinal da câmera indisponível no momento.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <div
+      id="toast-root"
+      class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 w-[90%] max-w-sm"
+    ></div>
+
+    <script>
+      const API_URL =
+        window.location.hostname === '' ? 'http://127.0.0.1:5000' : `http://${window.location.hostname}:5000`
+      let allLogs = []
+      let serverOk = null
+      let dashboardToken = ''
+      let hardware_leds_ativos = []
+
+      function applyDarkPreference() {
+        const salvo = localStorage.getItem('docks_theme')
+        const escuro = salvo === 'dark'
+        document.documentElement.classList.toggle('dark', escuro)
+        const icon = document.getElementById('icon-dark')
+        if (icon) {
+          icon.innerHTML = escuro
+            ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>'
+            : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>'
+        }
+      }
+      function toggleDarkMode() {
+        const escuro = !document.documentElement.classList.contains('dark')
+        localStorage.setItem('docks_theme', escuro ? 'dark' : 'light')
+        applyDarkPreference()
+      }
+      applyDarkPreference()
+
+      async function fazerLoginDashboard() {
+        const usuario = document.getElementById('dash-login-user').value
+        const senha = document.getElementById('dash-login-pwd').value
+        const erro = document.getElementById('dash-login-error')
+        erro.classList.add('hidden')
+        try {
+          const res = await fetch(`${API_URL}/api/dashboard/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usuario, senha }),
+          })
+          const data = await res.json()
+          if (data.success) {
+            dashboardToken = data.token
+            document.getElementById('view-dashboard-login').classList.add('hidden-view')
+            document.getElementById('app-shell').classList.remove('hidden-view')
+            iniciarPainel()
+          } else {
+            erro.innerText = data.message || 'Usuário ou senha incorretos'
+            erro.classList.remove('hidden')
+          }
+        } catch (e) {
+          erro.innerText = 'Falha de conexão com o servidor.'
+          erro.classList.remove('hidden')
+        }
+      }
+
+      function fetchDashboard(path, options = {}) {
+        options.headers = { ...(options.headers || {}), 'X-Dashboard-Token': dashboardToken }
+        return fetch(`${API_URL}${path}`, options)
+      }
+
+      function toast(message, type = 'info') {
+        const palette = {
+          info: 'bg-ink text-white',
+          success: 'bg-teal text-white',
+          error: 'bg-brick text-white',
+        }
+        const el = document.createElement('div')
+        el.className = `toast ${palette[type] || palette.info} px-5 py-3 rounded-xl shadow-xl text-sm font-semibold text-center w-full`
+        el.innerText = message
+        document.getElementById('toast-root').appendChild(el)
+        setTimeout(() => {
+          el.style.transition = 'opacity .3s'
+          el.style.opacity = '0'
+          setTimeout(() => el.remove(), 300)
+        }, 3200)
+      }
+
+      function switchView(viewId, btnElement) {
+        document.querySelectorAll('.view-section').forEach((el) => el.classList.add('hidden-view'))
+        document.getElementById(viewId).classList.remove('hidden-view')
+        document.querySelectorAll('.nav-btn').forEach((btn) => btn.classList.remove('active'))
+        btnElement.classList.add('active')
+
+        const camHome = document.getElementById('camera-img-home')
+        const camFull = document.getElementById('camera-img')
+
+        const offlineHome = document.getElementById('camera-offline-home')
+        const offlineFull = document.getElementById('camera-offline')
+
+        if (viewId === 'view-camera') {
+          camHome.removeAttribute('src')
+
+          camFull.classList.remove('hidden-view')
+          offlineFull.classList.add('hidden-view')
+
+          camFull.src = `${API_URL}/api/camera_stream?token=${dashboardToken}&t=${Date.now()}`
+        } else if (viewId === 'view-overview') {
+          camFull.removeAttribute('src')
+
+          camHome.classList.remove('hidden-view')
+          offlineHome.classList.add('hidden-view')
+
+          camHome.src = `${API_URL}/api/camera_stream?token=${dashboardToken}&t=${Date.now()}`
+        } else {
+          camHome.removeAttribute('src')
+          camFull.removeAttribute('src')
+        }
+
+        const titles = {
+          'view-overview': 'Painel Central de Monitoramento',
+          'view-moradores': 'Gestão de Moradores',
+          'view-shelves': 'Mapeamento Físico de Prateleiras',
+          'view-logs': 'Auditoria de Sistema',
+          'view-camera': 'Monitoramento DVR IP',
+        }
+        document.getElementById('header-title').innerText = titles[viewId] || ''
+      }
+      function switchViewById(viewId) {
+        const map = {
+          'view-overview': 0,
+          'view-moradores': 1,
+          'view-shelves': 2,
+          'view-logs': 3,
+          'view-camera': 4,
+        }
+        const btn = document.querySelectorAll('.nav-btn')[map[viewId]]
+        switchView(viewId, btn)
+        if (viewId === 'view-logs') carregarLogs()
+        if (viewId === 'view-shelves') carregarPrateleiras()
+      }
+
+      function setConnStatus(ok) {
+        if (serverOk === ok) return
+        serverOk = ok
+        const box = document.getElementById('conn-status')
+        box.innerHTML = ok
+          ? '<span class="w-2 h-2 rounded-full bg-teal animate-pulse"></span> Servidor conectado'
+          : '<span class="w-2 h-2 rounded-full bg-brick animate-pulse"></span> Servidor offline'
+        box.className = `text-xs font-mono flex items-center gap-2 ${ok ? 'text-teal' : 'text-brick'}`
+      }
+
+      async function atualizarStatus() {
+        try {
+          const res = await fetchDashboard('/api/dashboard/status')
+          const data = await res.json()
+          document.getElementById('stat-aguardando').innerText = data.aguardando
+          document.getElementById('stat-retiradas').innerText = data.retiradas_hoje
+          document.getElementById('stat-livres').innerText = data.livres
+          const livresNum = parseInt(String(data.livres).split('/')[0].trim())
+          const pct = isNaN(livresNum) ? 0 : Math.max(0, Math.min(100, (livresNum / 50) * 100))
+          document.getElementById('stat-livres-bar').style.width = `${pct}%`
+          setConnStatus(true)
+        } catch (e) {
+          setConnStatus(false)
+        }
+      }
+
+      async function carregarPrateleiras() {
+        try {
+          const res = await fetchDashboard('/api/dashboard/prateleiras')
+          const data = await res.json()
+          const container = document.getElementById('grid-prateleiras')
+          container.innerHTML = ''
+          data.forEach((p) => {
+            const isOcupada = p.status === 'ocupada'
+            const isAtivaHardware = hardware_leds_ativos.includes(p.id)
+            let border = isOcupada ? 'border-blue bg-blue-light' : 'border-line bg-paper'
+            let text = isOcupada ? 'text-blue-dark' : 'text-muted/50'
+            if (isAtivaHardware) {
+              border =
+                'border-teal bg-teal-light shadow-[0_0_15px_rgba(46,156,108,0.4)] scale-105 transition-all'
+              text = 'text-teal-dark'
+            }
+            const sub = isOcupada ? `Apt ${p.apt}` : 'Livre'
+            container.innerHTML += `<div class="border-2 ${border} rounded-xl p-3 text-center transition-all"><p class="font-mono font-bold ${text} text-sm">${p.id}</p><p class="text-[10px] mt-1 ${isAtivaHardware ? 'text-teal-dark' : isOcupada ? 'text-blue-dark' : 'text-muted/50'} font-bold">${sub}</p></div>`
+          })
+          setConnStatus(true)
+        } catch (e) {
+          setConnStatus(false)
+        }
+      }
+
+      async function syncHardware() {
+        try {
+          const res = await fetch(`${API_URL}/api/hardware/sync`)
+          const state = await res.json()
+          hardware_leds_ativos = state.leds_ativos
+
+          const doorUI = document.getElementById('hw-door-status')
+          if (state.porta_destravada) {
+            doorUI.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-teal animate-pulse"></span> ABERTA (${state.segundos_restantes}s)`
+            doorUI.className = 'flex items-center gap-1.5 text-xs font-bold text-teal-dark'
+          } else {
+            doorUI.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-brick"></span> BLOQUEADA'
+            doorUI.className = 'flex items-center gap-1.5 text-xs font-bold text-brick'
+          }
+
+          const badgeHome = document.getElementById('badge-rec-home')
+          if (badgeHome) {
+            if (state.gravar_dvr) {
+              badgeHome.className =
+                'text-xs bg-brick/20 text-brick px-3 py-1 rounded-full font-bold border border-brick/40 animate-pulse'
+              badgeHome.innerText = '● GRAVANDO EVENTO'
+            } else {
+              badgeHome.className =
+                'text-xs bg-white/10 text-white/50 px-3 py-1 rounded-full font-bold border border-white/10 transition-colors'
+              badgeHome.innerText = 'STANDBY'
+            }
+          }
+
+          if (!document.getElementById('view-shelves').classList.contains('hidden-view')) {
+            carregarPrateleiras()
+          }
+        } catch (e) {}
+      }
+
+      function logColor(tipo) {
+        if (tipo.includes('RETIRADA')) return ['text-teal-dark', 'bg-teal-light']
+        if (tipo.includes('ALERTA')) return ['text-brick-dark', 'bg-brick-light']
+        if (tipo.includes('CADASTRO')) return ['text-blue-dark', 'bg-blue-light']
+        return ['text-ink', 'bg-line']
+      }
+
+      async function carregarLogs() {
+        try {
+          const res = await fetchDashboard('/api/dashboard/logs')
+          allLogs = await res.json()
+          renderLogs(allLogs)
+          setConnStatus(true)
+        } catch (e) {
+          setConnStatus(false)
+        }
+      }
+
+      function renderLogs(logs) {
+        const listaHome = document.getElementById('lista-logs-home')
+        const tabFull = document.getElementById('tabela-logs-full')
+        listaHome.innerHTML = ''
+        tabFull.innerHTML = ''
+        if (logs.length === 0) {
+          listaHome.innerHTML =
+            '<p class="p-6 text-sm text-muted text-center">Nenhum evento registrado ainda.</p>'
+          tabFull.innerHTML =
+            '<tr><td colspan="3" class="p-6 text-sm text-muted text-center">Nenhum evento encontrado.</td></tr>'
+          return
+        }
+        logs.forEach((log, index) => {
+          const [c1, c2] = logColor(log.tipo)
+          if (index < 5) {
+            listaHome.innerHTML += `<li class="p-5 hover:bg-paper transition"><div class="flex justify-between items-start gap-3"><div class="min-w-0"><span class="inline-block px-2 py-1 rounded-md text-[10px] font-bold ${c1} ${c2} mb-1">${log.tipo}</span><p class="text-sm font-medium text-ink mt-1 truncate">${log.descricao}</p></div><span class="text-xs text-muted font-mono flex-shrink-0">${(log.horario || '').split(' ')[1] || ''}</span></div></li>`
+          }
+          tabFull.innerHTML += `<tr class="hover:bg-paper transition"><td class="p-4 text-muted font-mono whitespace-nowrap">${log.horario}</td><td class="p-4"><span class="px-2 py-1 rounded-md text-[10px] font-bold ${c1} ${c2}">${log.tipo}</span></td><td class="p-4 text-ink font-medium">${log.descricao}</td></tr>`
+        })
+      }
+
+      function filtrarLogs() {
+        const q = document.getElementById('log-filter').value.trim().toLowerCase()
+        if (!q) return renderLogs(allLogs)
+        renderLogs(
+          allLogs.filter((l) => l.tipo.toLowerCase().includes(q) || l.descricao.toLowerCase().includes(q)),
+        )
+      }
+
+      async function salvarMorador() {
+        const nome = document.getElementById('cad-nome').value.trim()
+        const apt = document.getElementById('cad-apt').value.trim()
+        const tel = document.getElementById('cad-tel').value.trim()
+        if (!nome || !apt || !tel) return toast('Preencha todos os campos obrigatórios.', 'error')
+
+        const btn = document.getElementById('btn-salvar-morador')
+        btn.disabled = true
+        btn.innerText = 'Salvando…'
+        try {
+          const res = await fetchDashboard('/api/dashboard/moradores', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome, apartamento: apt, telefone: tel }),
+          })
+          const data = await res.json()
+          if (data.success) {
+            toast('Morador cadastrado com sucesso.', 'success')
+            document.getElementById('cred-usuario').innerText = data.usuario
+            document.getElementById('cred-senha').innerText = data.senha
+            document.getElementById('credenciais-box').classList.remove('hidden-view')
+            document.getElementById('cad-nome').value = ''
+            document.getElementById('cad-apt').value = ''
+            document.getElementById('cad-tel').value = ''
+            carregarLogs()
+          } else {
+            toast(data.error || 'Não foi possível cadastrar o morador.', 'error')
+          }
+        } catch (e) {
+          toast('Erro ao conectar com o servidor Docks.', 'error')
+        }
+        btn.disabled = false
+        btn.innerText = 'Finalizar cadastro'
+      }
+
+      function tickClock() {
+        const now = new Date()
+        document.getElementById('clock-display').innerText = now.toLocaleString('pt-BR', {
+          dateStyle: 'short',
+          timeStyle: 'medium',
+        })
+      }
+
+      function iniciarPainel() {
+        atualizarStatus()
+        carregarLogs()
+        carregarPrateleiras()
+        tickClock()
+
+        document.getElementById('camera-img-home').src =
+          `${API_URL}/api/camera_stream?token=${dashboardToken}&t=${Date.now()}`
+
+        setInterval(atualizarStatus, 5000)
+        setInterval(carregarLogs, 5000)
+        setInterval(carregarPrateleiras, 5000)
+        setInterval(tickClock, 1000)
+        setInterval(syncHardware, 1000)
+      }
+    </script>
+    <style>
+      .nav-btn {
+        color: rgba(255, 255, 255, 0.6);
+      }
+      .nav-btn:hover {
+        background: rgba(255, 255, 255, 0.06);
+        color: white;
+      }
+      .nav-btn.active {
+        background: #2563eb;
+        color: #ffffff;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </body>
+</html>

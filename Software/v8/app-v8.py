@@ -1,7 +1,9 @@
 import os
 import secrets
+import random
 from functools import wraps
-from flask import Flask, request, jsonify
+import requests
+from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -19,18 +21,17 @@ app = Flask(__name__)
 CORS(app)
 
 basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'condlog.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'docks.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
-
 
 class Morador(db.Model):
     __tablename__ = 'moradores'
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String, nullable=False)
     apartamento = db.Column(db.String, nullable=False)
-    telefone = db.Column(db.String)
+    telefone = db.Column(db.String, nullable=False)
     usuario = db.Column(db.String, nullable=False)
     senha = db.Column(db.String, nullable=False)
     primeiro_login = db.Column(db.Boolean, default=True)
@@ -77,7 +78,7 @@ dashboard_sessions = set()
 def dashboard_auth_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        token = request.headers.get('X-Dashboard-Token', '')
+        token = request.headers.get('X-Dashboard-Token', '') or request.args.get('token', '')
         if token not in dashboard_sessions:
             return jsonify({'error': 'Não autorizado. Faça login novamente.'}), 401
         return f(*args, **kwargs)
@@ -94,31 +95,49 @@ def morador_auth_required(f):
         return f(apartamento, *args, **kwargs)
     return wrapper
 
+codigos_verificacao = {}
+
 def remover_acentos(texto):
     return ''.join(c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn')
 
 def init_db():
     db.create_all()
-    if Morador.query.count() == 0:
-        moradores_fixos = [
-            ("Iury Gonçalves", "202"), ("Yan Gabardo", "567"), ("Caio Augusto", "999"),
-            ("Tuany Pereira", "396"), ("José Andery", "275"), ("Daniel Mosca", "777"),
-            ("Ana Letícia", "765"), ("Matheus Gatti", "204")
-        ]
-        for nome, apt in moradores_fixos:
-            parts = nome.split(' ')
-            usuario = f"{remover_acentos(parts[0].lower())}.{remover_acentos(parts[-1].lower())}"
-            senha = f"senha{apt}"
-            novo_morador = Morador(nome=nome, apartamento=apt, usuario=usuario, senha=generate_password_hash(senha))
-            db.session.add(novo_morador)
-        db.session.commit()
 
 with app.app_context():
     init_db()
 
-print("Carregando EasyOCR (Inteligência Artificial)...")
+print("Carregando modelo EasyOCR (Inteligência Artificial)...")
 reader = easyocr.Reader(['pt', 'en'], gpu=False)
-print("Servidor CondLog v7 Operacional!")
+print("Servidor Docks Operacional!")
+
+def enviar_whatsapp(telefone, mensagem):
+    numero_destino = f"55{telefone}"
+    url = "http://localhost:3000/enviar"
+
+    payload = {
+        "numero": numero_destino,
+        "mensagem": mensagem
+    }
+
+    try:
+        response = requests.post(url, json=payload, timeout=5)
+        if response.status_code == 200:
+            print(f"\n[WhatsApp] Mensagem enviada para {numero_destino}")
+            return True
+        else:
+            print(f"\n[WhatsApp] Erro de comunicação com o Node.js: {response.text}")
+            return False
+    except Exception as e:
+        print(f"\n[WhatsApp] O Python não conseguiu achar o Node.js: {e}")
+        return False
+
+def disparar_notificacao_whatsapp(nome, apartamento, telefone):
+    mensagem = f"*Docks Informa:* 📦✨\n\nOlá, {nome}! Uma nova encomenda acabou de ser registrada para o apartamento {apartamento}.\n\nAcesse o Portal do Morador para gerar seu QR Code de retirada e liberar a sala."
+    enviar_whatsapp(telefone, mensagem)
+
+def disparar_codigo_verificacao(nome, telefone, codigo):
+    mensagem = f"*Docks - Recuperação de senha* 🔐\n\nOlá, {nome}! Seu código de verificação é *{codigo}*.\n\nEle é válido por 10 minutos e não deve ser compartilhado com ninguém."
+    enviar_whatsapp(telefone, mensagem)
 
 def acionar_hardware_tuya():
     print("\n[IoT TUYA] -> Fechadura 12V: DESTRAVADA | Iluminação: LIGADA")
@@ -160,29 +179,31 @@ def process_ocr():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/moradores/buscar', methods=['GET'])
-def buscar_moradores():
-    q = remover_acentos(request.args.get('q', '').strip().lower())
-    if not q: return jsonify([])
-    
-    todos = Morador.query.all()
-    results = [{'nome': r.nome, 'apartamento': r.apartamento} for r in todos if q in remover_acentos(r.nome.lower())]
-    return jsonify(results[:10])
-
-@app.route('/api/moradores', methods=['POST'])
+@app.route('/api/dashboard/moradores', methods=['POST'])
 @dashboard_auth_required
 def cadastrar_morador():
     data = request.json
     nome = data.get('nome')
     apartamento = data.get('apartamento')
-    if not nome or not apartamento: return jsonify({'error': 'Dados incompletos'}), 400
-
+    telefone = data.get('telefone')
+    
+    if not nome or not apartamento or not telefone:
+        return jsonify({'error': 'Preencha todos os campos'}), 400
+        
+    if Morador.query.filter_by(apartamento=apartamento).first():
+        return jsonify({'error': 'Apartamento já possui morador cadastrado'}), 400
+        
     parts = nome.split(' ')
-    usuario = f"{remover_acentos(parts[0].lower())}.{remover_acentos(parts[-1].lower()) if len(parts) > 1 else 'morador'}"
+    usuario = f"{remover_acentos(parts[0].lower())}.{remover_acentos(parts[-1].lower())}"
     senha_gerada = f"senha{apartamento}"
-
-    novo_morador = Morador(nome=nome, apartamento=apartamento, usuario=usuario, senha=generate_password_hash(senha_gerada))
+    
+    novo_morador = Morador(nome=nome, apartamento=apartamento, telefone=telefone, usuario=usuario, senha=generate_password_hash(senha_gerada))
     db.session.add(novo_morador)
+    
+    agora = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    novo_log = Log(tipo='CADASTRO', descricao=f"Apt {apartamento} registrado no sistema", horario=agora)
+    db.session.add(novo_log)
+    
     db.session.commit()
     return jsonify({'success': True, 'usuario': usuario, 'senha': senha_gerada})
 
@@ -197,6 +218,15 @@ def dashboard_login():
         return jsonify({'success': True, 'token': token})
     return jsonify({'success': False, 'message': 'Usuário ou senha incorretos'}), 401
 
+@app.route('/api/moradores/buscar', methods=['GET'])
+def buscar_moradores():
+    q = remover_acentos(request.args.get('q', '').strip().lower())
+    if not q: return jsonify([])
+    
+    todos = Morador.query.all()
+    results = [{'nome': r.nome, 'apartamento': r.apartamento} for r in todos if q in remover_acentos(r.nome.lower())]
+    return jsonify(results[:10])
+
 @app.route('/api/morador/login', methods=['POST'])
 def morador_login():
     data = request.json
@@ -210,19 +240,55 @@ def morador_login():
         return jsonify({'success': True, 'apartamento': morador.apartamento, 'nome': morador.nome, 'primeiro_login': morador.primeiro_login, 'token': token})
     return jsonify({'success': False, 'message': 'Usuário ou senha incorretos'}), 401
 
+@app.route('/api/morador/<apartamento>/solicitar_codigo', methods=['POST'])
+def solicitar_codigo_verificacao(apartamento):
+    morador = Morador.query.filter_by(apartamento=apartamento).first()
+    if not morador:
+        return jsonify({'success': True})
+
+    codigo = f"{random.randint(0, 999999):06d}"
+    codigos_verificacao[apartamento] = {
+        'codigo': codigo,
+        'expira_em': datetime.datetime.now() + datetime.timedelta(minutes=10),
+    }
+    disparar_codigo_verificacao(morador.nome, morador.telefone, codigo)
+    return jsonify({'success': True})
+
+def _codigo_verificacao_valido(apartamento, codigo):
+    registro = codigos_verificacao.get(apartamento)
+    if not registro or not codigo:
+        return False
+    if registro['codigo'] != codigo:
+        return False
+    if datetime.datetime.now() > registro['expira_em']:
+        return False
+    return True
+
 @app.route('/api/morador/mudar_senha', methods=['POST'])
 def mudar_senha():
     data = request.json
     apt = data.get('apartamento')
     senha_atual = data.get('senha_atual')
+    codigo_verificacao = data.get('codigo_verificacao')
     nova_senha = data.get('nova_senha')
-    if not apt or not senha_atual or not nova_senha: return jsonify({'error': 'Dados inválidos'}), 400
-    if len(nova_senha) < 8: return jsonify({'error': 'A senha deve ter no mínimo 8 caracteres'}), 400
+
+    if not apt or not nova_senha or not (senha_atual or codigo_verificacao):
+        return jsonify({'error': 'Informe a senha atual ou o código enviado por WhatsApp'}), 400
+    if len(nova_senha) < 8:
+        return jsonify({'error': 'A senha deve ter no mínimo 8 caracteres'}), 400
 
     morador = Morador.query.filter_by(apartamento=apt).first()
     if not morador: return jsonify({'error': 'Morador não encontrado'}), 404
-    if not check_password_hash(morador.senha, senha_atual):
-        return jsonify({'error': 'Senha atual incorreta'}), 401
+
+    autorizado = False
+    if senha_atual and check_password_hash(morador.senha, senha_atual):
+        autorizado = True
+    elif codigo_verificacao and _codigo_verificacao_valido(apt, codigo_verificacao):
+        autorizado = True
+        codigos_verificacao.pop(apt, None)
+
+    if not autorizado:
+        return jsonify({'error': 'Senha atual ou código de verificação incorretos'}), 401
 
     morador.senha = generate_password_hash(nova_senha)
     morador.primeiro_login = False
@@ -263,6 +329,8 @@ def salvar_encomenda():
         db.session.add(novo_log)
         db.session.commit()
 
+        disparar_notificacao_whatsapp(morador.nome, morador.apartamento, morador.telefone)
+        
         return jsonify({'success': True, 'prateleira': prateleira_alocada})
     except Exception as e: 
         db.session.rollback()
@@ -396,6 +464,29 @@ def get_dashboard_prateleiras():
         
     return jsonify(prateleiras)
 
+RTSP_URL = "rtsp://admin:admin@192.168.0.249:554/cam/realmonitor?channel=1&subtype=1"
+
+def gerar_frames_camera():
+    camera = cv2.VideoCapture(RTSP_URL)
+    while True:
+        success, frame = camera.read()
+        if not success:
+            camera = cv2.VideoCapture(RTSP_URL)
+            time.sleep(1)
+            continue
+        
+        ret, buffer = cv2.imencode('.jpg', frame)
+        frame_bytes = buffer.tobytes()
+        
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+
+@app.route('/api/camera_stream')
+@dashboard_auth_required
+def camera_stream():
+    return Response(gerar_frames_camera(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
 if __name__ == '__main__':
     debug_mode = os.environ.get('FLASK_DEBUG', '0') == '1'
     app.run(host='0.0.0.0', port=5000, debug=debug_mode, threaded=True)
+    

@@ -5,9 +5,8 @@ import random
 from datetime import datetime
 
 app = Flask(__name__)
-CORS(app) # Permite que os HTMLs locais façam requisições para o Flask
+CORS(app)
 
-# --- INICIALIZAÇÃO DO BANCO DE DADOS ---
 def init_db():
     conn = sqlite3.connect('condlog.db')
     cursor = conn.cursor()
@@ -35,8 +34,6 @@ def init_db():
 
 init_db()
 
-# --- ROTAS DA API ---
-
 @app.route('/api/encomendas', methods=['POST'])
 def registrar_encomenda():
     data = request.json
@@ -50,12 +47,10 @@ def registrar_encomenda():
     conn = sqlite3.connect('condlog.db')
     cursor = conn.cursor()
     
-    # Salva a encomenda
     cursor.execute('''INSERT INTO encomendas (nome, apartamento, tamanho, prateleira, status, data_chegada) 
                       VALUES (?, ?, ?, ?, 'Aguardando', ?)''', 
                    (nome, apartamento, tamanho, prateleira, agora))
     
-    # Registra o Log
     descricao_log = f"Porteiro (Apt {apartamento})"
     cursor.execute('''INSERT INTO logs (tipo, descricao, status_log, horario) 
                       VALUES ('Cadastro Encomenda', ?, 'Info', ?)''', 
@@ -84,11 +79,9 @@ def dashboard_status():
     cursor.execute("SELECT COUNT(*) FROM encomendas WHERE status = 'Aguardando'")
     aguardando = cursor.fetchone()[0]
     
-    # Simulação de retiradas
     cursor.execute("SELECT COUNT(*) FROM encomendas WHERE status = 'Retirada'")
     retiradas = cursor.fetchone()[0]
     
-    # Quantidade de prateleiras ocupadas vs livres (Total 50)
     cursor.execute("SELECT COUNT(DISTINCT prateleira) FROM encomendas WHERE status = 'Aguardando'")
     ocupadas = cursor.fetchone()[0]
     livres = 50 - ocupadas
