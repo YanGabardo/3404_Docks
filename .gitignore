@@ -1,17 +1,20 @@
 # Docks — .gitignore
 
-# Bancos SQLite gerados localmente
+# Bancos de dados SQLite
 *.db
 *.db-journal
 *.db-shm
 *.db-wal
 *.sqlite
 *.sqlite3
+*.sqlite-journal
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite3-journal
+*.sqlite3-shm
+*.sqlite3-wal
 
-# Pasta padrão criada pelo Flask / Flask-SQLAlchemy
-instance/
-
-#  Python
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -19,8 +22,8 @@ __pycache__/
 .Python
 build/
 dist/
-*.egg
 *.egg-info/
+*.egg
 .eggs/
 pip-log.txt
 pip-delete-this-directory.txt
@@ -35,101 +38,112 @@ ENV/
 
 # Testes / cobertura
 .pytest_cache/
-.coverage
-.coverage.*
-htmlcov/
 .mypy_cache/
 .ruff_cache/
+.pytype/
+.hypothesis/
+.tox/
+.nox/
+.ipynb_checkpoints/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+instance/
 
 # Node.js
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 .npm/
+.pnpm-store/
+.nyc_output/
+.cache/
+.parcel-cache/
+.turbo/
+.eslintcache
+coverage/
 
-# WhatsApp Web.js
+# Expo / React Native / builds móveis
+.expo/
+.expo-shared/
+.eas-archive/
+web-build/
+.metro-health-check*
+expo-env.d.ts
+*.tsbuildinfo
+.gradle/
+.kotlin/
+local.properties
+**/android/
+**/ios/
+*.apk
+*.aab
+*.ipa
+*.orig.*
+*.jks
+*.keystore
+*.p8
+*.p12
+*.mobileprovision
+
+# Sessão e cache do WhatsApp Web.js
 .wwebjs_auth/
 .wwebjs_cache/
-**/.wwebjs_auth/
-**/.wwebjs_cache/
 
-# Tuya / TinyTuya
+# Variáveis de ambiente e segredos
+.env
+.env.*
+!.env.example
+!.env.template
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Descoberta local e credenciais de dispositivos Tuya
 devices.json
 snapshot.json
 tinytuya.json
 tuya-raw.json
-**/devices.json
-**/snapshot.json
-**/tinytuya.json
-**/tuya-raw.json
 
-# Variáveis de Ambiente e Credenciais
-.env
-.env.*
-*.env
-!.env.example
-
-# Chaves e certificados privados
-*.pem
-*.key
-*.p12
-*.pfx
-
-# Arquivos locais de configurações privadas
-secrets.json
-credentials.json
-config.local.json
-**/secrets.json
-**/credentials.json
-**/config.local.json
-
-# Câmera IP
-captura.jpg
-gravacao_*.avi
-*.avi
-gravacao_*.mp4
-recordings/
-gravacoes/
-
-# Uploads e Arquivos Temporários
+# Imagens e uploads temporários (fotos de etiqueta/pacote via OCR)
 uploads/
 tmp/
-temp/
 *.tmp
-*.temp
+*.pid
+*.pid.lock
+*.bak
+*.orig
+
+# Gravações e capturas
+**/gravacoes/*
+!**/gravacoes/.gitkeep
+Software/Testes Isolados/**/captura.jpg
+Software/Testes Isolados/**/gravacao_*.avi
+Software/Testes Isolados/11-react/DocksReactTeste/example
 
 # Logs
 *.log
 logs/
 
-# PID / processos locais
-*.pid
-*.pid.lock
-
-# Arquivos de cache
-.cache/
-cache/
-
-# IDEs
+# Editor / IDE
 .vscode/
 .idea/
+.vs/
 *.swp
 *.swo
 *.sublime-workspace
 
-# Sistema Operacional
+# Sistema operacional
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# Documentos
+# Arquivos gerados pela conversão de documentos (relatórios)
 ~$*.docx
 ~$*.xlsx
-~$*.pptx
 
-# Backups
-*.bak
-*.backup
-*.old
-*.orig
+*.lnk

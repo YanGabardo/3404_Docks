@@ -1,66 +1,79 @@
-import time
-
 import tinytuya
+import socket
+import ipaddress
 
-# SUBSTITUA pelos dados do dispositivo utilizado no teste.
-TUYA_DEVICE_ID = "DEVICE_ID_TUYA"   # Device ID do dispositivo.
-TUYA_IP = "IP_TUYA"                 # Endereço IP local do dispositivo. Exemplo: 192.168.0.100
-TUYA_LOCAL_KEY = "LOCAL_KEY_TUYA"   # Local Key obtida para o dispositivo.
-TUYA_VERSION = 3.5                  # Confirme a versão do protocolo utilizada pelo equipamento.
+# SUBSTITUA pelos dados do módulo Tuya utilizado no teste.
+DEVICE_ID = "DEVICE_ID"
+LOCAL_KEY = "LOCAL_KEY_ATUALIZADA"
+VERSION = 3.5
 
-def testar_tuya_interativo():
-    """
-    Realiza um teste manual de comunicação e acionamento de um dispositivo Tuya através da rede local.
-    """
+def achar_ip_tuya():
+    print("🔎 Procurando o Tuya na rede...")
 
-    print("🔌 Conectando ao módulo Tuya localmente...")
+    # Descobre o IP atual do computador.
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    # Cria a representação do dispositivo Tuya.
-    dispositivo = tinytuya.OutletDevice(TUYA_DEVICE_ID, TUYA_IP, TUYA_LOCAL_KEY)
+    try:
+        sock.connect(("8.8.8.8", 80))
+        ip_pc = sock.getsockname()[0]
+    finally:
+        sock.close()
 
-    # Define a versão do protocolo utilizada.
-    dispositivo.set_version(TUYA_VERSION)
+    # Considera uma rede /24, como 10.39.154.0 até 10.39.154.255.
+    rede = ipaddress.ip_network(f"{ip_pc}/24", strict=False)
 
-    # Pequeno intervalo antes da primeira consulta.
-    time.sleep(1)
+    for endereco in rede.hosts():
+        ip = str(endereco)
 
-    # Consulta o estado atual do equipamento.
-    status = dispositivo.status()
+        teste = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        teste.settimeout(0.05)
 
-    # TinyTuya pode retornar um dicionário contendo "Error" em caso de falha.
-    if (isinstance(status, dict) and "Error" in status):
-        print("❌ Erro de comunicação.")
-        print("Verifique IP, Device ID, Local Key e versão do protocolo.")
+        try:
+            if teste.connect_ex((ip, 6668)) == 0:
+                print(f"✅ Possível Tuya encontrado: {ip}")
+                return ip
+        finally:
+            teste.close()
+
+    return None
+
+def testar_rele_interativo():
+    ip = achar_ip_tuya()
+
+    if not ip:
+        print("❌ Tuya não encontrado na rede.")
         return
-    
-    print("📡 Comunicação estabelecida!")
-    print(f"Status inicial: {status}")
+    print("🔌 Conectando ao módulo Tuya...")
 
+    rele = tinytuya.OutletDevice(DEVICE_ID, ip, LOCAL_KEY)
+
+    rele.set_version(VERSION)
     print("\n" + "=" * 35)
-    print("      CONTROLE MANUAL TUYA")
+    print("   CONTROLE MANUAL DO RELÉ TUYA")
     print("=" * 35)
 
     while True:
         print("\nOpções:")
-        print("[ 0 ] Ligar dispositivo")
-        print("[ 1 ] Desligar dispositivo")
-        print("[ 2 ] Sair do teste")
+        print("[ 0 ] Ligar")
+        print("[ 1 ] Desligar")
+        print("[ 2 ] Sair")
 
         opcao = input("Escolha uma opção: ").strip()
 
         if opcao == "0":
-            print("🟢 Enviando comando para ligar...")
-            resultado = dispositivo.turn_on()
-            print(f"Resposta: {resultado}")
+            print("🟢 Ligando o relé...")
+            resposta = rele.turn_on()
+            print(resposta)
         elif opcao == "1":
-            print("🔴 Enviando comando para desligar...")
-            resultado = dispositivo.turn_off()
-            print(f"Resposta: {resultado}")
+            print("🔴 Desligando o relé...")
+            resposta = rele.turn_off()
+            print(resposta)
         elif opcao == "2":
             print("🚪 Encerrando o teste...")
             break
         else:
-            print("❌ Opção inválida. Digite 0, 1 ou 2.")
+            print("❌ Opção inválida.")
 
 if __name__ == "__main__":
-    testar_tuya_interativo()
+    testar_rele_interativo()
+    

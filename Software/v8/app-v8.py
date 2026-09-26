@@ -26,6 +26,12 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
+# SUBSTITUA pelos dados da câmera utilizada
+CAMERA_USUARIO = "USUARIO_CAMERA"      # Ex.: admin
+CAMERA_SENHA = "SENHA_CAMERA"          # Substitua pela senha real
+CAMERA_IP = "IP_CAMERA"                # Ex.: 192.168.0.100
+CAMERA_PORTA = 554
+
 class Morador(db.Model):
     __tablename__ = 'moradores'
     id = db.Column(db.Integer, primary_key=True)
@@ -464,7 +470,11 @@ def get_dashboard_prateleiras():
         
     return jsonify(prateleiras)
 
-RTSP_URL = "rtsp://admin:admin@192.168.0.249:554/cam/realmonitor?channel=1&subtype=1"
+RTSP_URL = (
+    f"rtsp://{CAMERA_USUARIO}:{CAMERA_SENHA}"
+    f"@{CAMERA_IP}:{CAMERA_PORTA}"
+    "/cam/realmonitor?channel=1&subtype=1"
+)
 
 def gerar_frames_camera():
     camera = cv2.VideoCapture(RTSP_URL)
