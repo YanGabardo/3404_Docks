@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Docks Teste de Rede",
+    "slug": "docks-teste-rede-local",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "platforms": ["android", "ios"],
+    "userInterfaceStyle": "light",
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "android": {
+      "package": "br.com.grupo3404.docks.testerede"
+    },
+    "ios": {
+      "bundleIdentifier": "br.com.grupo3404.docks.testerede"
+    }
+  }
+}
