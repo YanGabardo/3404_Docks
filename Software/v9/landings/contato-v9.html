@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="description" content="Fale com a equipe Docks" />
+    <title>Docks · Fale conosco</title>
+    <link rel="icon" href="/assets/favicon.png" type="image/png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --navy: #001135;
+        --navy2: #08265d;
+        --blue: #1098ff;
+        --ink: #10203b;
+        --muted: #6a778d;
+        --paper: #f5f8fc;
+        --card: #fff;
+        --line: #e2e9f2;
+        --ok: #147553;
+        --danger: #b5363d;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        min-height: 100%;
+        margin: 0;
+      }
+      body {
+        font-family:
+          Inter,
+          Segoe UI,
+          Arial,
+          sans-serif;
+        background: var(--paper);
+        color: var(--ink);
+      }
+      button,
+      input,
+      textarea {
+        font: inherit;
+      }
+      a {
+        text-decoration: none;
+        color: inherit;
+      }
+      .container {
+        width: min(1120px, calc(100% - 32px));
+        margin: auto;
+      }
+      .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: var(--navy);
+        color: #fff;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .nav {
+        height: 74px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+      .logo {
+        width: 165px;
+      }
+      .links {
+        display: flex;
+        gap: 4px;
+        margin-left: auto;
+      }
+      .links a {
+        padding: 10px 9px;
+        border-radius: 10px;
+        color: rgba(255, 255, 255, 0.65);
+        font-weight: 700;
+        font-size: 13px;
+      }
+      .links a:hover,
+      .links a.active {
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+      }
+      .theme {
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        border-radius: 11px;
+        width: 39px;
+        height: 39px;
+        padding: 0;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+      }
+      .theme svg {
+        width: 17px;
+        height: 17px;
+      }
+      .login-area {
+        position: relative;
+        margin-left: 4px;
+      }
+      .login-btn {
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        padding: 10px 13px;
+        border-radius: 11px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 800;
+      }
+      .login-btn:hover {
+        border-color: rgba(65, 199, 255, 0.8);
+        background: rgba(16, 152, 255, 0.16);
+      }
+      .login-panel {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 14px);
+        width: 355px;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.28);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-8px);
+        transition: 0.2s;
+        color: var(--ink);
+      }
+      .login-panel.open {
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+      }
+      .login-panel h3 {
+        margin: 0 0 5px;
+        font:
+          700 18px 'Space Grotesk',
+          sans-serif;
+      }
+      .login-panel .hint {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+        margin: 0 0 15px;
+      }
+      .login-panel .field {
+        margin: 11px 0;
+      }
+      .login-submit {
+        width: 100%;
+        border: 0;
+        background: var(--navy);
+        color: #fff;
+        border-radius: 11px;
+        padding: 12px 14px;
+        font-weight: 800;
+        cursor: pointer;
+        margin-top: 7px;
+      }
+      .login-error {
+        display: none;
+        margin-top: 10px;
+        background: #fff1f0;
+        color: #b42318;
+        border: 1px solid #ffd8d3;
+        border-radius: 10px;
+        padding: 9px 10px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      main {
+        min-height: calc(100vh - 147px);
+        display: grid;
+        place-items: center;
+        padding: clamp(22px, 4vh, 46px) 0;
+        background: radial-gradient(circle at 15% 15%, rgba(16, 152, 255, 0.13), transparent 30%);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 0.95fr 1.05fr;
+        gap: 24px;
+        align-items: stretch;
+      }
+      .intro {
+        background: linear-gradient(145deg, var(--navy), var(--navy2));
+        color: #fff;
+        border-radius: 26px;
+        padding: clamp(28px, 5vw, 48px);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        overflow: hidden;
+        position: relative;
+      }
+      .intro:after {
+        content: '';
+        position: absolute;
+        width: 280px;
+        height: 280px;
+        border-radius: 50%;
+        background: rgba(16, 152, 255, 0.15);
+        right: -110px;
+        bottom: -130px;
+      }
+      .tag {
+        display: inline-flex;
+        width: max-content;
+        background: rgba(16, 152, 255, 0.14);
+        border: 1px solid rgba(77, 199, 255, 0.25);
+        color: #b9eaff;
+        border-radius: 999px;
+        padding: 8px 11px;
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.09em;
+      }
+      .intro h1 {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: clamp(38px, 4.4vw, 54px);
+        line-height: 0.98;
+        letter-spacing: -0.045em;
+        margin: 25px 0 16px;
+      }
+      .intro p {
+        color: rgba(255, 255, 255, 0.66);
+        line-height: 1.7;
+        margin: 0;
+      }
+      .points {
+        display: grid;
+        gap: 11px;
+        margin-top: 30px;
+        font-size: 13px;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.8);
+      }
+      .form-card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 26px;
+        padding: clamp(24px, 4vw, 38px);
+        box-shadow: 0 24px 70px rgba(0, 17, 53, 0.1);
+      }
+      .form-card h2 {
+        margin: 0 0 5px;
+        font-size: 25px;
+      }
+      .form-card > p {
+        margin: 0 0 22px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .fields {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      .field.full {
+        grid-column: 1/-1;
+      }
+      .field label {
+        display: block;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 0 0 6px;
+      }
+      .field input,
+      .field textarea {
+        width: 100%;
+        border: 1px solid var(--line);
+        background: var(--paper);
+        color: var(--ink);
+        border-radius: 12px;
+        padding: 12px 13px;
+        outline: none;
+      }
+      .field textarea {
+        height: 95px;
+        resize: none;
+      }
+      .field input:focus,
+      .field textarea:focus {
+        border-color: var(--blue);
+        box-shadow: 0 0 0 3px rgba(16, 152, 255, 0.12);
+      }
+      .submit {
+        width: 100%;
+        border: 0;
+        background: var(--navy);
+        color: #fff;
+        font-weight: 900;
+        padding: 14px;
+        border-radius: 12px;
+        margin-top: 16px;
+        cursor: pointer;
+      }
+      .submit:disabled {
+        opacity: 0.55;
+      }
+      .message {
+        display: none;
+        margin-top: 12px;
+        border-radius: 11px;
+        padding: 11px 12px;
+        font-size: 12px;
+        font-weight: 800;
+      }
+      .message.ok {
+        display: block;
+        background: #e8f7f0;
+        color: var(--ok);
+      }
+      .message.err {
+        display: block;
+        background: #fff0f0;
+        color: var(--danger);
+      }
+      html.dark {
+        --ink: #f1f5fb;
+        --muted: #a5b0c2;
+        --paper: #0b1425;
+        --card: #15213a;
+        --line: #293852;
+      }
+      html.dark .form-card {
+        box-shadow: none;
+      }
+      html.dark .login-error {
+        background: rgba(181, 54, 61, 0.16);
+        border-color: rgba(255, 133, 140, 0.28);
+        color: #ffb2b7;
+      }
+      .footer {
+        background: var(--navy);
+        color: rgba(255, 255, 255, 0.5);
+        padding: 16px 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .footer-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        font-size: 12px;
+      }
+      .footer img {
+        width: 135px;
+      }
+      @media (max-width: 820px) {
+        .links {
+          display: none;
+        }
+        .login-panel {
+          position: fixed;
+          left: 12px;
+          right: 12px;
+          top: 78px;
+          width: auto;
+        }
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        .intro {
+          display: none;
+        }
+        main {
+          align-items: start;
+        }
+        .fields {
+          grid-template-columns: 1fr;
+        }
+        .field.full {
+          grid-column: auto;
+        }
+        .footer-row {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container nav">
+        <a href="/"><img class="logo" src="/assets/docks-logo.png" alt="Docks" /></a>
+        <nav class="links">
+          <a href="/">Início</a><a href="/solucao">Solução</a><a href="/funcionamento">Como funciona</a
+          ><a href="/seguranca">Segurança</a><a href="/comercial">Para condomínios</a
+          ><a class="active" href="/contato">Fale conosco</a>
+        </nav>
+        <button class="theme" id="theme" type="button" aria-label="Ativar modo escuro">
+          <svg id="theme-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+            />
+          </svg>
+        </button>
+        <div class="login-area">
+          <button class="login-btn" id="login-toggle" type="button" aria-expanded="false">
+            Área do cliente <span>↗</span>
+          </button>
+          <div class="login-panel" id="login-panel">
+            <h3>Acessar o Docks</h3>
+            <p class="hint">Use suas credenciais de condomínio ou administração.</p>
+            <form id="login-form">
+              <div class="field">
+                <label for="login-user">Usuário</label><input id="login-user" autocomplete="username" required />
+              </div>
+              <div class="field">
+                <label for="login-password">Senha</label
+                ><input id="login-password" type="password" autocomplete="current-password" required />
+              </div>
+              <div id="login-error" class="login-error"></div>
+              <button id="login-submit" class="login-submit" type="submit">Entrar</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </header>
+    <main>
+      <div class="container grid">
+        <section class="intro">
+          <div>
+            <span class="tag">CONVERSE COM O DOCKS</span>
+            <h1>Uma operação mais simples começa aqui.</h1>
+            <p>
+              Conte um pouco sobre o seu condomínio. A equipe Docks poderá entender a rotina da portaria e apresentar a
+              implantação adequada.
+            </p>
+          </div>
+          <div class="points">
+            <span>✓ Atendimento direto e organizado</span><span>✓ Dados armazenados localmente no sistema</span
+            ><span>✓ Sem compromisso nesta etapa</span>
+          </div>
+        </section>
+        <section class="form-card">
+          <h2>Fale conosco</h2>
+          <p>Os campos marcados com * são obrigatórios.</p>
+          <form id="contact-form">
+            <div class="fields">
+              <div class="field">
+                <label for="nome">Seu nome *</label><input id="nome" required autocomplete="name" />
+              </div>
+              <div class="field"><label for="condominio">Condomínio *</label><input id="condominio" required /></div>
+              <div class="field"><label for="cidade">Cidade</label><input id="cidade" /></div>
+              <div class="field">
+                <label for="telefone">Telefone/WhatsApp *</label><input id="telefone" required inputmode="tel" />
+              </div>
+              <div class="field full">
+                <label for="email">E-mail *</label><input id="email" type="email" required autocomplete="email" />
+              </div>
+              <div class="field full">
+                <label for="mensagem">Como podemos ajudar? *</label
+                ><textarea
+                  id="mensagem"
+                  required
+                  placeholder="Conte brevemente sobre a rotina de encomendas do condomínio."
+                ></textarea>
+              </div>
+            </div>
+            <button class="submit" id="submit">Enviar para a equipe Docks</button>
+            <div class="message" id="form-message" role="status"></div>
+          </form>
+        </section>
+      </div>
+    </main>
+    <footer class="footer">
+      <div class="container footer-row">
+        <img src="/assets/docks-logo.png" alt="Docks" />
+        <span>Gestão inteligente de encomendas para condomínios</span>
+        <span>Grupo 3404 · ETE FMC · PROJETE 2026</span>
+      </div>
+    </footer>
+    <script>
+      const API_URL = window.location.protocol === 'file:' ? 'http://127.0.0.1:5000' : window.location.origin;
+      const themeButton = document.getElementById('theme');
+      let dark = localStorage.getItem('docks-theme') === 'dark';
+      document.documentElement.classList.toggle('dark', dark);
+      function renderThemeIcon() {
+        document.getElementById('theme-icon').innerHTML = dark
+          ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>'
+          : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>';
+        themeButton.setAttribute('aria-label', dark ? 'Ativar modo claro' : 'Ativar modo escuro');
+      }
+      themeButton.addEventListener('click', () => {
+        dark = !dark;
+        document.documentElement.classList.toggle('dark', dark);
+        localStorage.setItem('docks-theme', dark ? 'dark' : 'light');
+        renderThemeIcon();
+      });
+      renderThemeIcon();
+      const loginToggle = document.getElementById('login-toggle');
+      const loginPanel = document.getElementById('login-panel');
+      const loginForm = document.getElementById('login-form');
+      const loginError = document.getElementById('login-error');
+      const loginSubmit = document.getElementById('login-submit');
+      function closeLogin() {
+        loginPanel.classList.remove('open');
+        loginToggle.setAttribute('aria-expanded', 'false');
+      }
+      loginToggle.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const opening = !loginPanel.classList.contains('open');
+        loginPanel.classList.toggle('open', opening);
+        loginToggle.setAttribute('aria-expanded', String(opening));
+        if (opening) setTimeout(() => document.getElementById('login-user').focus(), 60);
+      });
+      loginPanel.addEventListener('click', (event) => event.stopPropagation());
+      document.addEventListener('click', closeLogin);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') closeLogin();
+      });
+      loginForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        loginError.style.display = 'none';
+        loginSubmit.disabled = true;
+        loginSubmit.textContent = 'Validando acesso…';
+        try {
+          const response = await fetch(`${API_URL}/api/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              usuario: document.getElementById('login-user').value.trim(),
+              senha: document.getElementById('login-password').value,
+            }),
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok || !data.success) throw new Error(data.message || 'Usuário ou senha incorretos.');
+          if (data.access_type === 'admin') {
+            sessionStorage.setItem('docks_admin_token', data.token);
+            location.assign(`${API_URL}/admin`);
+          } else {
+            sessionStorage.setItem('docks_dashboard_token', data.token);
+            location.assign(`${API_URL}/dashboard`);
+          }
+        } catch (error) {
+          loginError.textContent = error.message || 'Não foi possível conectar ao Docks.';
+          loginError.style.display = 'block';
+        } finally {
+          loginSubmit.disabled = false;
+          loginSubmit.textContent = 'Entrar';
+        }
+      });
+      document.getElementById('contact-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const button = document.getElementById('submit');
+        const message = document.getElementById('form-message');
+        message.className = 'message';
+        button.disabled = true;
+        button.textContent = 'Enviando…';
+        const body = {
+          nome: document.getElementById('nome').value.trim(),
+          condominio: document.getElementById('condominio').value.trim(),
+          cidade: document.getElementById('cidade').value.trim(),
+          telefone: document.getElementById('telefone').value.trim(),
+          email: document.getElementById('email').value.trim(),
+          mensagem: document.getElementById('mensagem').value.trim(),
+        };
+        try {
+          const response = await fetch('/api/contatos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || 'Não foi possível enviar.');
+          message.textContent = data.message;
+          message.className = 'message ok';
+          event.target.reset();
+        } catch (error) {
+          message.textContent = error.message || 'Falha de conexão com o Docks.';
+          message.className = 'message err';
+        } finally {
+          button.disabled = false;
+          button.textContent = 'Enviar para a equipe Docks';
+        }
+      });
+    </script>
+    <script src="/assets/acessibilidade-v9.js" defer></script>
+  </body>
+</html>

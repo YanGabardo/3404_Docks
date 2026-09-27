@@ -1,0 +1,1070 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Docks · Administração</title>
+    <link rel="icon" href="/assets/favicon.png" type="image/png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --navy: #001135;
+        --blue: #1098ff;
+        --ink: #10203b;
+        --muted: #6b778b;
+        --paper: #f5f8fc;
+        --card: #fff;
+        --line: #e2e8f1;
+        --green: #15815a;
+        --red: #c23d45;
+        --shadow: 0 18px 55px rgba(0, 17, 53, 0.1);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        font-family:
+          Inter,
+          Segoe UI,
+          Arial,
+          sans-serif;
+        background: var(--paper);
+        color: var(--ink);
+        overflow: hidden;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      .hidden {
+        display: none !important;
+      }
+      .mono {
+        font-family: 'IBM Plex Mono', monospace;
+      }
+      .hero h1,
+      .panel-head h2,
+      .message-view h2,
+      .modal-card h3,
+      .stat strong {
+        font-family: 'Space Grotesk', sans-serif;
+      }
+      #loading {
+        position: fixed;
+        inset: 0;
+        background: var(--navy);
+        display: grid;
+        place-items: center;
+        color: #fff;
+        z-index: 100;
+      }
+      .loading-box {
+        text-align: center;
+      }
+      .loading-box img {
+        width: 220px;
+      }
+      .spinner {
+        width: 42px;
+        height: 42px;
+        border: 4px solid rgba(255, 255, 255, 0.16);
+        border-top-color: var(--blue);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin: 22px auto;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      #app {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+      .topbar {
+        height: 72px;
+        background: var(--navy);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+        flex: none;
+      }
+      .topbar-inner {
+        width: min(1320px, calc(100% - 32px));
+        margin: auto;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+      .brand img {
+        width: 145px;
+      }
+      .brand strong {
+        font-size: 15px;
+      }
+      .top-actions {
+        margin-left: auto;
+        display: flex;
+        gap: 9px;
+        align-items: center;
+      }
+      .badge {
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        color: #b7e8ff;
+        background: rgba(16, 152, 255, 0.12);
+        border: 1px solid rgba(16, 152, 255, 0.22);
+        padding: 8px 10px;
+        border-radius: 999px;
+      }
+      .icon-button,
+      .logout {
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: rgba(255, 255, 255, 0.07);
+        color: #fff;
+        padding: 9px 12px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 800;
+      }
+      .icon-button {
+        width: 38px;
+        height: 38px;
+        padding: 0;
+        display: grid;
+        place-items: center;
+      }
+      .icon-button svg {
+        width: 17px;
+        height: 17px;
+      }
+      .workspace {
+        width: min(1320px, calc(100% - 32px));
+        margin: 0 auto;
+        min-height: 0;
+        flex: 1;
+        padding: 18px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+      .hero {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        flex: none;
+      }
+      .hero h1 {
+        font-size: clamp(27px, 3vw, 38px);
+        letter-spacing: -0.035em;
+        margin: 0;
+      }
+      .hero p {
+        margin: 5px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .tabs {
+        display: flex;
+        gap: 6px;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        padding: 5px;
+      }
+      .tab {
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        font-weight: 850;
+        padding: 9px 13px;
+        border-radius: 9px;
+        cursor: pointer;
+      }
+      .tab.active {
+        background: var(--navy);
+        color: #fff;
+      }
+      .count {
+        display: inline-grid;
+        place-items: center;
+        min-width: 20px;
+        height: 20px;
+        border-radius: 999px;
+        background: rgba(16, 152, 255, 0.15);
+        color: var(--blue);
+        font-size: 10px;
+        margin-left: 5px;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        flex: none;
+      }
+      .stat {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 15px 18px;
+        box-shadow: 0 7px 24px rgba(0, 17, 53, 0.04);
+      }
+      .stat small {
+        display: block;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+      }
+      .stat strong {
+        display: block;
+        font-size: 27px;
+        margin-top: 5px;
+      }
+      .view {
+        min-height: 0;
+        flex: 1;
+      }
+      .layout {
+        height: 100%;
+        display: grid;
+        grid-template-columns: 360px 1fr;
+        gap: 15px;
+      }
+      .panel {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        min-height: 0;
+      }
+      .panel-head {
+        padding: 16px 18px;
+        border-bottom: 1px solid var(--line);
+      }
+      .panel-head h2 {
+        font-size: 18px;
+        margin: 0;
+      }
+      .panel-head p {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .form {
+        padding: 17px;
+        overflow: auto;
+        height: calc(100% - 65px);
+      }
+      .field {
+        margin-bottom: 11px;
+      }
+      .field label {
+        display: block;
+        font-size: 9px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        margin-bottom: 5px;
+      }
+      .field input {
+        width: 100%;
+        border: 1px solid var(--line);
+        background: var(--paper);
+        color: var(--ink);
+        border-radius: 10px;
+        padding: 10px 11px;
+        outline: none;
+      }
+      .field input:focus {
+        border-color: var(--blue);
+        box-shadow: 0 0 0 3px rgba(16, 152, 255, 0.11);
+      }
+      .password-wrap {
+        position: relative;
+      }
+      .password-wrap input {
+        padding-right: 70px;
+      }
+      .password-toggle {
+        position: absolute;
+        right: 7px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: 0;
+        border-radius: 7px;
+        background: transparent;
+        color: var(--blue);
+        padding: 6px 7px;
+        font-size: 10px;
+        font-weight: 900;
+        cursor: pointer;
+      }
+      .submit {
+        width: 100%;
+        border: 0;
+        border-radius: 11px;
+        background: var(--navy);
+        color: #fff;
+        padding: 12px;
+        font-weight: 900;
+        cursor: pointer;
+      }
+      .form-msg {
+        display: none;
+        margin-top: 10px;
+        border-radius: 9px;
+        padding: 9px 10px;
+        font-size: 11px;
+        font-weight: 800;
+      }
+      .form-msg.ok {
+        display: block;
+        background: #e8f7f0;
+        color: #126b4a;
+      }
+      .form-msg.err {
+        display: block;
+        background: #fff0f0;
+        color: #a92f38;
+      }
+      .table-wrap {
+        height: calc(100% - 65px);
+        overflow: auto;
+      }
+      .condo-row {
+        display: grid;
+        grid-template-columns: 1.45fr 1fr 1fr 100px 95px;
+        gap: 12px;
+        align-items: center;
+        padding: 14px 17px;
+        border-bottom: 1px solid var(--line);
+        font-size: 12px;
+      }
+      .condo-row.header {
+        position: sticky;
+        top: 0;
+        background: var(--paper);
+        z-index: 2;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+      }
+      .name {
+        font-weight: 850;
+      }
+      .sub {
+        display: block;
+        color: var(--muted);
+        font-size: 10px;
+        margin-top: 3px;
+      }
+      .status {
+        display: inline-flex;
+        padding: 5px 7px;
+        border-radius: 999px;
+        font-size: 9px;
+        font-weight: 900;
+      }
+      .status.on {
+        background: #e7f6ef;
+        color: var(--green);
+      }
+      .status.off {
+        background: #f0f2f5;
+        color: var(--muted);
+      }
+      .action {
+        border: 1px solid var(--line);
+        background: var(--card);
+        color: var(--ink);
+        padding: 7px 8px;
+        border-radius: 8px;
+        font-size: 10px;
+        font-weight: 900;
+        cursor: pointer;
+        margin: 2px;
+      }
+      .empty {
+        padding: 35px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .inbox {
+        height: 100%;
+        display: grid;
+        grid-template-columns: 330px 1fr;
+      }
+      .conversation-list {
+        border-right: 1px solid var(--line);
+        overflow: auto;
+      }
+      .conversation {
+        width: 100%;
+        border: 0;
+        border-bottom: 1px solid var(--line);
+        background: transparent;
+        color: var(--ink);
+        text-align: left;
+        padding: 15px;
+        cursor: pointer;
+      }
+      .conversation:hover,
+      .conversation.active {
+        background: var(--paper);
+      }
+      .conversation strong {
+        display: block;
+      }
+      .contact-status {
+        display: inline-flex;
+        margin-bottom: 7px;
+        padding: 4px 7px;
+        border-radius: 999px;
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+      .contact-status.novo {
+        background: #dbeafe;
+        color: #1d4ed8;
+      }
+      .contact-status.em_atendimento {
+        background: #fff2d9;
+        color: #8a5708;
+      }
+      .contact-status.concluido {
+        background: #e7f6ef;
+        color: #126b4a;
+      }
+      .conversation p {
+        margin: 5px 0 0;
+        color: var(--muted);
+        font-size: 11px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .conversation.unread strong:after {
+        content: '';
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--blue);
+        margin-left: 7px;
+      }
+      .message-view {
+        padding: 22px;
+        overflow: auto;
+      }
+      .message-view h2 {
+        margin: 0;
+      }
+      .lead-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin: 12px 0 18px;
+      }
+      .lead-meta span {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        padding: 7px 9px;
+        border-radius: 9px;
+        font-size: 11px;
+      }
+      .bubble {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 4px 17px 17px 17px;
+        padding: 16px;
+        line-height: 1.65;
+        font-size: 13px;
+        white-space: pre-wrap;
+      }
+      .inbox-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 15px;
+      }
+      .inbox-actions button {
+        border: 1px solid var(--line);
+        background: var(--card);
+        color: var(--ink);
+        border-radius: 10px;
+        padding: 9px 11px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+      .inbox-actions button.primary {
+        background: var(--navy);
+        color: #fff;
+        border-color: var(--navy);
+      }
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 20px;
+        transform: translateX(-50%);
+        background: var(--navy);
+        color: #fff;
+        padding: 11px 16px;
+        border-radius: 11px;
+        font-size: 12px;
+        font-weight: 800;
+        box-shadow: 0 14px 45px rgba(0, 0, 0, 0.22);
+        z-index: 90;
+      }
+      .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 17, 53, 0.7);
+        display: grid;
+        place-items: center;
+        padding: 18px;
+        z-index: 80;
+      }
+      .modal-card {
+        width: min(430px, 100%);
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 23px;
+        box-shadow: 0 30px 90px rgba(0, 0, 0, 0.25);
+      }
+      .modal-card h3 {
+        margin: 0 0 8px;
+      }
+      .modal-card p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.6;
+        font-size: 13px;
+      }
+      #confirm-fields {
+        margin-top: 14px;
+      }
+      #confirm-fields .field + .field {
+        margin-top: 10px;
+      }
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 9px;
+        margin-top: 20px;
+      }
+      .modal-actions button {
+        border: 1px solid var(--line);
+        background: var(--card);
+        color: var(--ink);
+        border-radius: 10px;
+        padding: 9px 13px;
+        font-weight: 850;
+        cursor: pointer;
+      }
+      .modal-actions .danger {
+        background: var(--red);
+        border-color: var(--red);
+        color: #fff;
+      }
+      .modal-actions .primary {
+        background: var(--blue);
+        border-color: var(--blue);
+        color: #fff;
+      }
+      html.dark {
+        --ink: #eef3fb;
+        --muted: #a4afc1;
+        --paper: #0b1425;
+        --card: #15213a;
+        --line: #293852;
+        --shadow: none;
+      }
+      html.dark .status.off {
+        background: #253149;
+      }
+      html.dark .status.on {
+        background: rgba(21, 129, 90, 0.2);
+      }
+      html.dark .contact-status.novo {
+        background: rgba(37, 99, 235, 0.22);
+        color: #bfdbfe;
+      }
+      html.dark .contact-status.em_atendimento {
+        background: rgba(233, 162, 59, 0.2);
+        color: #fcd79b;
+      }
+      html.dark .contact-status.concluido {
+        background: rgba(21, 129, 90, 0.22);
+        color: #a7f3d0;
+      }
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+          grid-template-rows: minmax(250px, 0.8fr) minmax(300px, 1.2fr);
+          overflow: auto;
+        }
+        .condo-row {
+          grid-template-columns: 1.5fr 1fr 90px;
+        }
+        .condo-row > *:nth-child(3),
+        .condo-row.header > *:nth-child(3) {
+          display: none;
+        }
+        .inbox {
+          grid-template-columns: 280px 1fr;
+        }
+      }
+      @media (max-width: 650px) {
+        .workspace {
+          width: min(100% - 18px, 1320px);
+        }
+        .badge {
+          display: none;
+        }
+        .stats {
+          grid-template-columns: repeat(3, 1fr);
+        }
+        .stat {
+          padding: 11px;
+        }
+        .stat strong {
+          font-size: 22px;
+        }
+        .hero {
+          align-items: flex-start;
+        }
+        .hero p {
+          display: none;
+        }
+        .condo-row {
+          grid-template-columns: 1fr 70px 70px;
+        }
+        .condo-row > *:nth-child(2),
+        .condo-row.header > *:nth-child(2) {
+          display: none;
+        }
+        .inbox {
+          grid-template-columns: 1fr;
+          grid-template-rows: minmax(125px, 0.8fr) minmax(0, 1.2fr);
+        }
+        .conversation-list {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .brand strong {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="loading">
+      <div class="loading-box">
+        <img src="/assets/docks-logo.png" alt="Docks" />
+        <div class="spinner"></div>
+        <p>Validando acesso administrativo…</p>
+      </div>
+    </div>
+    <div id="app" class="hidden">
+      <header class="topbar">
+        <div class="topbar-inner">
+          <div class="brand">
+            <img src="/assets/docks-logo.png" alt="Docks" /><strong>Administração</strong>
+          </div>
+          <div class="top-actions">
+            <span class="badge">ACESSO ADMINISTRATIVO</span
+            ><button
+              id="admin-theme-button"
+              class="icon-button"
+              onclick="toggleTheme()"
+              aria-label="Ativar modo escuro"
+            >
+              <svg
+                id="admin-theme-icon"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+                />
+              </svg></button
+            ><button class="logout" onclick="logoutAdmin()">Sair</button>
+          </div>
+        </div>
+      </header>
+      <main class="workspace">
+        <div class="hero">
+          <div>
+            <h1>Central Docks</h1>
+            <p>Gerencie condomínios e acompanhe as solicitações comerciais em um só lugar.</p>
+          </div>
+          <div class="tabs">
+            <button id="tab-condos" class="tab active" onclick="showView('condos')">Condomínios</button
+            ><button id="tab-inbox" class="tab" onclick="showView('inbox')">
+              Fale conosco <span id="inbox-count" class="count">0</span>
+            </button>
+          </div>
+        </div>
+        <section class="stats" id="stats">
+          <div class="stat"><small>Total de condomínios</small><strong id="stat-total">—</strong></div>
+          <div class="stat"><small>Acessos ativos</small><strong id="stat-ativos">—</strong></div>
+          <div class="stat"><small>Novos nesta sessão</small><strong id="stat-novos">0</strong></div>
+        </section>
+        <section id="view-condos" class="view">
+          <div class="layout">
+            <div class="panel">
+              <div class="panel-head">
+                <h2>Novo condomínio</h2>
+                <p>Crie o acesso inicial do responsável.</p>
+              </div>
+              <form class="form" id="condo-form">
+                <div class="field"><label>Nome do condomínio</label><input id="condo-nome" required /></div>
+                <div class="field"><label>Responsável</label><input id="condo-responsavel" /></div>
+                <div class="field"><label>E-mail</label><input id="condo-email" type="email" /></div>
+                <div class="field">
+                  <label>WhatsApp para recuperação</label
+                  ><input id="condo-telefone" inputmode="tel" placeholder="DDD + número" required />
+                </div>
+                <div class="field">
+                  <label>Usuário de acesso</label><input id="condo-usuario" required autocomplete="off" />
+                </div>
+                <div class="field">
+                  <label>Senha inicial</label>
+                  <div class="password-wrap">
+                    <input
+                      id="condo-senha"
+                      type="password"
+                      minlength="8"
+                      required
+                      autocomplete="new-password"
+                    /><button
+                      class="password-toggle"
+                      type="button"
+                      onclick="toggleInitialPassword(this)"
+                      aria-label="Mostrar senha inicial"
+                    >
+                      Ver
+                    </button>
+                  </div>
+                  <span class="sub">Use maiúscula, minúscula, número e caractere especial.</span>
+                </div>
+                <button class="submit" id="btn-cadastrar">Cadastrar condomínio</button>
+                <div id="form-msg" class="form-msg"></div>
+              </form>
+            </div>
+            <div class="panel">
+              <div class="panel-head">
+                <h2>Condomínios cadastrados</h2>
+                <p>Contas autorizadas a utilizar a plataforma.</p>
+              </div>
+              <div class="table-wrap">
+                <div class="condo-row header">
+                  <span>Condomínio</span><span>Usuário</span><span>Responsável</span><span>Status</span
+                  ><span>Ação</span>
+                </div>
+                <div id="condo-list"><div class="empty">Carregando…</div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section id="view-inbox" class="view hidden">
+          <div class="panel inbox">
+            <div id="contact-list" class="conversation-list">
+              <div class="empty">Carregando mensagens…</div>
+            </div>
+            <div id="contact-detail" class="message-view">
+              <div class="empty">Selecione uma conversa para visualizar.</div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <div id="confirm-modal" class="modal hidden">
+      <div class="modal-card">
+        <h3 id="confirm-title">Confirmar ação</h3>
+        <p id="confirm-text"></p>
+        <div id="confirm-fields"></div>
+        <div class="modal-actions">
+          <button onclick="closeConfirm()">Cancelar</button
+          ><button id="confirm-action" class="danger">Confirmar</button>
+        </div>
+      </div>
+    </div>
+    <script>
+      const API_URL = window.location.protocol === 'file:' ? 'http://127.0.0.1:5000' : window.location.origin
+      let adminToken = sessionStorage.getItem('docks_admin_token') || '',
+        novos = 0,
+        condominios = [],
+        contacts = [],
+        selectedContact = null,
+        confirmCallback = null,
+        dark = localStorage.getItem('docks-theme') === 'dark'
+      document.documentElement.classList.toggle('dark', dark)
+      const esc = (value) =>
+        String(value ?? '').replace(
+          /[&<>"']/g,
+          (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char],
+        )
+      const headers = (extra = {}) => ({ ...extra, 'X-Admin-Token': adminToken })
+      function applyAdminTheme() {
+        document.documentElement.classList.toggle('dark', dark)
+        const icon = document.getElementById('admin-theme-icon')
+        icon.innerHTML = dark
+          ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>'
+          : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>'
+        document
+          .getElementById('admin-theme-button')
+          .setAttribute('aria-label', dark ? 'Ativar modo claro' : 'Ativar modo escuro')
+      }
+      function toggleTheme() {
+        dark = !dark
+        localStorage.setItem('docks-theme', dark ? 'dark' : 'light')
+        applyAdminTheme()
+      }
+      applyAdminTheme()
+      function toggleInitialPassword(button) {
+        const input = document.getElementById('condo-senha')
+        const showing = input.type === 'text'
+        input.type = showing ? 'password' : 'text'
+        button.textContent = showing ? 'Ver' : 'Ocultar'
+        button.setAttribute('aria-label', showing ? 'Mostrar senha inicial' : 'Ocultar senha inicial')
+      }
+      function toast(message) {
+        const el = document.createElement('div')
+        el.className = 'toast'
+        el.textContent = message
+        document.body.appendChild(el)
+        setTimeout(() => el.remove(), 3200)
+      }
+      async function validarAdmin() {
+        if (!adminToken) return location.replace(`${API_URL}/?login=1`)
+        try {
+          const response = await fetch(`${API_URL}/api/admin/session`, { headers: headers() })
+          if (!response.ok) throw new Error()
+          document.getElementById('loading').classList.add('hidden')
+          document.getElementById('app').classList.remove('hidden')
+          await Promise.all([carregarCondominios(), carregarContatos()])
+        } catch (error) {
+          sessionStorage.removeItem('docks_admin_token')
+          location.replace(`${API_URL}/?login=1`)
+        }
+      }
+      function showView(view) {
+        document.getElementById('view-condos').classList.toggle('hidden', view !== 'condos')
+        document.getElementById('view-inbox').classList.toggle('hidden', view !== 'inbox')
+        document.getElementById('stats').classList.toggle('hidden', view !== 'condos')
+        document.getElementById('tab-condos').classList.toggle('active', view === 'condos')
+        document.getElementById('tab-inbox').classList.toggle('active', view === 'inbox')
+        if (view === 'inbox') carregarContatos()
+      }
+      async function carregarCondominios() {
+        const response = await fetch(`${API_URL}/api/admin/condominios`, { headers: headers() })
+        if (response.status === 401) return logoutAdmin(false)
+        const data = await response.json()
+        condominios = data
+        document.getElementById('stat-total').textContent = data.length
+        document.getElementById('stat-ativos').textContent = data.filter((item) => item.ativo).length
+        document.getElementById('stat-novos').textContent = novos
+        const list = document.getElementById('condo-list')
+        list.innerHTML = data.length
+          ? data
+              .map(
+                (item) =>
+                  `<div class="condo-row"><span><span class="name">${esc(item.nome)}</span><span class="sub">${esc(item.telefone || 'WhatsApp não informado')}</span></span><span class="mono">${esc(item.usuario)}</span><span>${esc(item.responsavel || '—')}</span><span><span class="status ${item.ativo ? 'on' : 'off'}">● ${item.ativo ? 'ATIVO' : 'INATIVO'}</span></span><span><button class="action" onclick="editContact(${item.id})">Contato</button>${item.usuario === 'sindico' ? '' : `<button class="action" onclick="askStatus(${item.id},${!item.ativo})">${item.ativo ? 'Desativar' : 'Ativar'}</button>`}</span></div>`,
+              )
+              .join('')
+          : '<div class="empty">Nenhum condomínio cadastrado.</div>'
+      }
+      function askStatus(id, active) {
+        const item = condominios.find((condominio) => condominio.id === id)
+        const name = item ? item.nome : 'Este condomínio'
+        const action = document.getElementById('confirm-action')
+        action.className = active ? 'primary' : 'danger'
+        action.textContent = active ? 'Reativar' : 'Desativar'
+        document.getElementById('confirm-title').textContent = active
+          ? 'Reativar condomínio'
+          : 'Desativar condomínio'
+        document.getElementById('confirm-text').textContent = active
+          ? `${name} voltará a acessar o dashboard.`
+          : `${name} e seus usuários perderão o acesso até a reativação.`
+        confirmCallback = () => alterarStatus(id, active)
+        document.getElementById('confirm-fields').innerHTML = ''
+        document.getElementById('confirm-modal').classList.remove('hidden')
+      }
+      function editContact(id) {
+        const item = condominios.find((condominio) => condominio.id === id)
+        if (!item) return
+        const action = document.getElementById('confirm-action')
+        action.className = 'primary'
+        action.textContent = 'Salvar'
+        document.getElementById('confirm-title').textContent = 'Contato para recuperação'
+        document.getElementById('confirm-text').textContent =
+          'Este WhatsApp receberá códigos para recuperar o acesso do condomínio.'
+        document.getElementById('confirm-fields').innerHTML =
+          `<div class="field"><label>Responsável</label><input id="edit-condo-responsavel" value="${esc(item.responsavel || '')}"></div><div class="field"><label>E-mail</label><input id="edit-condo-email" type="email" value="${esc(item.email || '')}"></div><div class="field"><label>WhatsApp</label><input id="edit-condo-telefone" inputmode="tel" value="${esc(item.telefone || '')}" placeholder="DDD + número"></div>`
+        confirmCallback = () => saveContact(id)
+        document.getElementById('confirm-modal').classList.remove('hidden')
+      }
+      async function saveContact(id) {
+        const response = await fetch(`${API_URL}/api/admin/condominios/${id}/contato`, {
+          method: 'PATCH',
+          headers: headers({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({
+            responsavel: document.getElementById('edit-condo-responsavel').value.trim(),
+            email: document.getElementById('edit-condo-email').value.trim(),
+            telefone: document.getElementById('edit-condo-telefone').value.trim(),
+          }),
+        })
+        const data = await response.json()
+        if (!response.ok) return toast(data.error || 'Não foi possível atualizar o contato.')
+        closeConfirm()
+        toast('Contato de recuperação atualizado.')
+        carregarCondominios()
+      }
+      function closeConfirm() {
+        document.getElementById('confirm-modal').classList.add('hidden')
+        document.getElementById('confirm-fields').innerHTML = ''
+        confirmCallback = null
+      }
+      document.getElementById('confirm-action').onclick = () => {
+        const action = confirmCallback
+        if (action) action()
+      }
+      async function alterarStatus(id, ativo) {
+        const response = await fetch(`${API_URL}/api/admin/condominios/${id}/status`, {
+          method: 'PATCH',
+          headers: headers({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ ativo }),
+        })
+        const data = await response.json()
+        if (!response.ok) return toast(data.error || 'Não foi possível alterar o status.')
+        closeConfirm()
+        toast(ativo ? 'Condomínio reativado.' : 'Condomínio desativado.')
+        carregarCondominios()
+      }
+      document.getElementById('condo-form').addEventListener('submit', async (event) => {
+        event.preventDefault()
+        const button = document.getElementById('btn-cadastrar'),
+          message = document.getElementById('form-msg')
+        message.className = 'form-msg'
+        button.disabled = true
+        button.textContent = 'Cadastrando…'
+        const body = {
+          nome: document.getElementById('condo-nome').value.trim(),
+          responsavel: document.getElementById('condo-responsavel').value.trim(),
+          email: document.getElementById('condo-email').value.trim(),
+          telefone: document.getElementById('condo-telefone').value.trim(),
+          usuario: document.getElementById('condo-usuario').value.trim(),
+          senha: document.getElementById('condo-senha').value,
+        }
+        try {
+          const response = await fetch(`${API_URL}/api/admin/condominios`, {
+            method: 'POST',
+            headers: headers({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify(body),
+          })
+          const data = await response.json()
+          if (!response.ok) throw new Error(data.error || 'Não foi possível cadastrar.')
+          novos++
+          message.textContent = `${data.condominio.nome} cadastrado com sucesso.`
+          message.className = 'form-msg ok'
+          event.target.reset()
+          await carregarCondominios()
+        } catch (error) {
+          message.textContent = error.message
+          message.className = 'form-msg err'
+        } finally {
+          button.disabled = false
+          button.textContent = 'Cadastrar condomínio'
+        }
+      })
+      async function carregarContatos() {
+        try {
+          const response = await fetch(`${API_URL}/api/admin/contatos`, { headers: headers() })
+          contacts = await response.json()
+          document.getElementById('inbox-count').textContent = contacts.filter(
+            (item) => item.status === 'novo',
+          ).length
+          renderContacts()
+        } catch (error) {
+          document.getElementById('contact-list').innerHTML =
+            '<div class="empty">Não foi possível carregar as mensagens.</div>'
+        }
+      }
+      function renderContacts() {
+        const list = document.getElementById('contact-list')
+        list.innerHTML = contacts.length
+          ? contacts
+              .map(
+                (item) =>
+                  `<button class="conversation ${item.status === 'novo' ? 'unread' : ''} ${selectedContact === item.id ? 'active' : ''}" onclick="openContact(${item.id})"><span class="contact-status ${esc(item.status)}">${item.status === 'novo' ? 'Novo' : item.status === 'em_atendimento' ? 'Em atendimento' : 'Concluído'}</span><strong>${esc(item.nome)}</strong><span class="sub">${esc(item.condominio)} · ${esc(item.criado_em)}</span><p>${esc(item.mensagem)}</p></button>`,
+              )
+              .join('')
+          : '<div class="empty">Nenhuma solicitação recebida.</div>'
+      }
+      function openContact(id) {
+        selectedContact = id
+        const item = contacts.find((contact) => contact.id === id)
+        if (!item) return
+        renderContacts()
+        document.getElementById('contact-detail').innerHTML =
+          `<span class="status ${item.status === 'concluido' ? 'on' : 'off'}">${esc(item.status.replace('_', ' ').toUpperCase())}</span><h2>${esc(item.nome)}</h2><p class="sub">${esc(item.condominio)} · ${esc(item.cidade || 'Cidade não informada')}</p><div class="lead-meta"><span>${esc(item.telefone)}</span><span>${esc(item.email)}</span><span>${esc(item.criado_em)}</span></div><div class="bubble">${esc(item.mensagem)}</div><div class="inbox-actions"><button class="primary" onclick="setContactStatus(${item.id},'em_atendimento')">Em atendimento</button><button onclick="setContactStatus(${item.id},'concluido')">Concluir</button></div>`
+      }
+      async function setContactStatus(id, status) {
+        const response = await fetch(`${API_URL}/api/admin/contatos/${id}/status`, {
+          method: 'PATCH',
+          headers: headers({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ status }),
+        })
+        if (!response.ok) return toast('Não foi possível atualizar a conversa.')
+        await carregarContatos()
+        openContact(id)
+      }
+      async function logoutAdmin(callApi = true) {
+        const token = adminToken
+        sessionStorage.removeItem('docks_admin_token')
+        adminToken = ''
+        if (callApi && token)
+          fetch(`${API_URL}/api/admin/logout`, { method: 'POST', headers: { 'X-Admin-Token': token } }).catch(
+            () => {},
+          )
+        location.replace(`${API_URL}/?login=1`)
+      }
+      document.addEventListener('DOMContentLoaded', validarAdmin)
+    </script>
+  </body>
+</html>

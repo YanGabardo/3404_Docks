@@ -1,0 +1,1671 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Docks · Portal do Morador</title>
+    <link rel="icon" href="/assets/favicon.png" type="image/png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              ink: '#10192B',
+              inkalt: '#182640',
+              paper: '#FAF8F3',
+              blue: { DEFAULT: '#2563EB', dark: '#1D4ED8', light: '#DBEAFE' },
+              teal: { DEFAULT: '#2E9C6C', dark: '#1F7A54', light: '#DDF3E9' },
+              brick: { DEFAULT: '#D14343', dark: '#AC3232', light: '#FBE1E1' },
+              line: '#E6E1D3',
+              muted: '#8C8571',
+            },
+            fontFamily: {
+              display: ['"Space Grotesk"', 'sans-serif'],
+              body: ['Inter', 'sans-serif'],
+              mono: ['"IBM Plex Mono"', 'monospace'],
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      .hidden-view {
+        display: none !important;
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      .font-display {
+        font-family: 'Space Grotesk', sans-serif;
+      }
+      .font-mono {
+        font-family: 'IBM Plex Mono', monospace;
+      }
+      .qr-term {
+        font-style: italic;
+      }
+      .password-eye {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        color: #10192b;
+      }
+      .password-eye:hover,
+      .password-eye:focus-visible {
+        background: rgba(16, 25, 43, 0.08);
+      }
+      .password-eye svg {
+        width: 20px;
+        height: 20px;
+      }
+      html.dark .password-eye {
+        color: #fff;
+      }
+      html.dark .password-eye:hover,
+      html.dark .password-eye:focus-visible {
+        background: rgba(255, 255, 255, 0.1);
+      }
+      #view-login {
+        background: radial-gradient(circle at 78% 12%, rgba(16, 152, 255, 0.2), transparent 32%), #001135;
+      }
+      #view-login > .text-center img {
+        filter: none !important;
+      }
+      #view-login > .text-center p {
+        color: rgba(255, 255, 255, 0.72) !important;
+      }
+
+      .dock-tag {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-family: 'IBM Plex Mono', monospace;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        padding: 0.4rem 0.85rem 0.4rem 1.6rem;
+        border-radius: 0.5rem;
+      }
+      .dock-tag::before {
+        content: '';
+        position: absolute;
+        left: 0.65rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 0.3rem;
+        height: 0.3rem;
+        border-radius: 50%;
+        background: currentColor;
+        opacity: 0.4;
+      }
+      .size-pill {
+        font-family: 'IBM Plex Mono', monospace;
+        font-weight: 700;
+        font-size: 0.65rem;
+        letter-spacing: 0.05em;
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
+        text-transform: uppercase;
+      }
+
+      @keyframes toast-in {
+        from {
+          opacity: 0;
+          transform: translate(-50%, 12px);
+        }
+        to {
+          opacity: 1;
+          transform: translate(-50%, 0);
+        }
+      }
+      .toast {
+        animation: toast-in 0.25s ease-out;
+      }
+      input:focus,
+      button:focus-visible {
+        outline: 2px solid #2563eb;
+        outline-offset: 2px;
+      }
+
+      .flow-step {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        padding: 0.4rem 0.7rem;
+        border-radius: 999px;
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        color: #8c8571;
+        background: rgba(255, 255, 255, 0.75);
+        border: 1px solid #e6e1d3;
+        transition: all 0.2s ease;
+      }
+      .flow-step.active {
+        color: #1d4ed8;
+        background: #dbeafe;
+        border-color: rgba(37, 99, 235, 0.28);
+      }
+      .flow-step.done {
+        color: #1f7a54;
+        background: #ddf3e9;
+        border-color: rgba(46, 156, 108, 0.25);
+      }
+      .terms-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: #cfc7b8 transparent;
+      }
+      .terms-section h4 {
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 700;
+        color: #10192b;
+        margin-bottom: 0.35rem;
+      }
+      .terms-section p,
+      .terms-section li {
+        color: #6f6a5f;
+        font-size: 0.78rem;
+        line-height: 1.55;
+      }
+      html.dark .flow-step {
+        background: #16213a;
+        border-color: #26324a;
+        color: #9ca8bf;
+      }
+      html.dark .flow-step.active {
+        background: rgba(37, 99, 235, 0.18);
+        color: #93b4ff;
+        border-color: rgba(37, 99, 235, 0.45);
+      }
+      html.dark .flow-step.done {
+        background: rgba(46, 156, 108, 0.16);
+        color: #7bd2a8;
+        border-color: rgba(46, 156, 108, 0.35);
+      }
+      html.dark .terms-section h4 {
+        color: #f1ede3;
+      }
+      html.dark .terms-section p,
+      html.dark .terms-section li {
+        color: #9ca8bf;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      html.dark body {
+        background-color: #0b1220;
+      }
+      html.dark .bg-paper {
+        background-color: #0b1220 !important;
+      }
+      html.dark .bg-white {
+        background-color: #16213a !important;
+      }
+      html.dark .border-line {
+        border-color: #26324a !important;
+      }
+      html.dark .text-ink {
+        color: #f1ede3 !important;
+      }
+      html.dark .text-muted {
+        color: #9ca8bf !important;
+      }
+      html.dark input,
+      html.dark textarea,
+      html.dark select {
+        background-color: #1c2740 !important;
+        color: #f1ede3 !important;
+      }
+      html.dark .bg-blue-light {
+        background-color: rgba(37, 99, 235, 0.18) !important;
+      }
+      html.dark .text-blue-dark {
+        color: #93c5fd !important;
+      }
+      html.dark .bg-teal-light {
+        background-color: rgba(46, 156, 108, 0.18) !important;
+      }
+      html.dark .text-teal-dark {
+        color: #86efac !important;
+      }
+      html.dark .bg-brick-light {
+        background-color: rgba(209, 67, 67, 0.18) !important;
+      }
+      html.dark .text-brick-dark {
+        color: #fca5a5 !important;
+      }
+      html.dark .terms-section p,
+      html.dark .terms-section li {
+        color: #cbd5e5 !important;
+      }
+      html.dark #modal-termos .text-muted {
+        color: #d8e1ee !important;
+      }
+      html.dark #modal-termos .text-blue-dark {
+        color: #c8ecff !important;
+      }
+      html.dark #modal-termos h3 {
+        color: #ffffff !important;
+      }
+      html.dark #view-login {
+        background: radial-gradient(circle at 78% 12%, rgba(16, 152, 255, 0.14), transparent 32%), #07111f;
+      }
+      #qrcode-canvas {
+        background: #fff;
+        width: 208px;
+        height: 208px;
+        padding: 0;
+        border-radius: 0;
+        overflow: hidden;
+        line-height: 0;
+      }
+      #qr-code-frame {
+        box-sizing: content-box;
+        width: 208px;
+        height: 208px;
+        padding: 12px;
+        border: 0;
+        border-radius: 12px;
+        background: #fff !important;
+        box-shadow: 0 20px 45px rgba(16, 25, 43, 0.18);
+      }
+      #qrcode-canvas img,
+      #qrcode-canvas canvas {
+        margin: 0 auto;
+        width: 208px !important;
+        height: 208px !important;
+      }
+      #qrcode-canvas canvas {
+        display: block !important;
+      }
+      #qrcode-canvas img {
+        display: none !important;
+      }
+      @media (max-height: 700px) {
+        #view-qr > :not([hidden]) ~ :not([hidden]) {
+          margin-top: 0.55rem !important;
+        }
+        #qrcode-canvas,
+        #qrcode-canvas canvas,
+        #qrcode-canvas img {
+          width: 176px !important;
+          height: 176px !important;
+        }
+        #qr-code-frame {
+          width: 176px;
+          height: 176px;
+          padding: 10px;
+        }
+        #view-qr .qr-security-note {
+          padding-top: 0.65rem !important;
+          padding-bottom: 0.65rem !important;
+        }
+      }
+      .condo-results {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 100%;
+        margin-top: 5px;
+        z-index: 80;
+        background: #fff;
+        border: 1px solid #e6e1d3;
+        border-radius: 12px;
+        box-shadow: 0 15px 40px rgba(0, 17, 53, 0.16);
+        max-height: 150px;
+        overflow: auto;
+      }
+      .condo-result {
+        display: block;
+        width: 100%;
+        border: 0;
+        border-bottom: 1px solid #eee;
+        background: #fff;
+        text-align: left;
+        padding: 11px 12px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .condo-result:hover {
+        background: #f5f8fc;
+      }
+    </style>
+  </head>
+  <body class="bg-paper font-body text-ink h-[100dvh] overflow-hidden flex flex-col relative">
+    <div
+      id="view-login"
+      class="flex flex-col items-center justify-center flex-1 p-6 space-y-6 overflow-y-auto relative"
+    >
+      <button
+        onclick="toggleDarkMode()"
+        id="btn-dark-toggle"
+        aria-label="Alternar modo escuro"
+        class="absolute top-4 right-4 text-muted hover:text-ink bg-white border border-line p-2 rounded-full transition-colors"
+      >
+        <svg id="icon-dark" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+          />
+        </svg>
+      </button>
+      <div class="text-center">
+        <img src="/assets/docks-logo.png" alt="Docks" class="w-40 mx-auto mb-3" />
+        <p class="text-muted font-medium tracking-wide uppercase text-xs mt-1">Portal do Morador</p>
+      </div>
+
+      <div class="bg-white p-6 rounded-[2rem] shadow-xl shadow-ink/5 border border-line w-full max-w-sm">
+        <div class="space-y-4">
+          <div
+            id="login-error"
+            class="hidden bg-brick-light text-brick-dark text-sm font-semibold text-center p-3 rounded-xl"
+          ></div>
+          <div>
+            <label class="block text-xs font-bold text-muted uppercase tracking-wide mb-2">Usuário</label>
+            <input
+              type="text"
+              id="login-user"
+              class="w-full bg-paper border border-line rounded-xl p-3.5 outline-none focus:border-blue transition-all font-medium"
+              placeholder="ex: iury.goncalves"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-muted uppercase tracking-wide mb-2">Senha</label>
+            <div class="relative">
+              <input
+                type="password"
+                id="login-pwd"
+                class="w-full bg-paper border border-line rounded-xl p-3.5 pr-12 outline-none focus:border-blue transition-all font-medium"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onclick="togglePwd('login-pwd', this)"
+                class="password-eye"
+                aria-label="Mostrar senha"
+              >
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.269 2.943 9.542 7-1.273 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                  <circle cx="12" cy="12" r="3" stroke-width="2" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <button
+            onclick="fazerLogin()"
+            id="btn-login"
+            class="w-full bg-ink hover:bg-inkalt text-white font-bold py-3.5 rounded-xl mt-2 shadow-md transition-all active:scale-95"
+          >
+            Acessar conta
+          </button>
+          <button
+            type="button"
+            onclick="abrirModalEsqueci()"
+            class="w-full text-muted hover:text-ink text-xs font-bold text-center"
+          >
+            Esqueci minha senha
+          </button>
+        </div>
+      </div>
+      <p class="text-xs text-muted text-center max-w-xs">
+        Ainda não tem uma conta? Fale com a portaria para receber seu usuário e senha provisória.
+      </p>
+    </div>
+
+    <div id="area-logada" class="hidden-view flex flex-col flex-1 min-h-0">
+      <header class="bg-ink p-5 shadow-lg rounded-b-[2rem] text-white flex-shrink-0">
+        <div class="max-w-md mx-auto flex justify-between items-start pt-1">
+          <div class="flex items-center gap-3">
+            <img src="/assets/docks-logo2.png" alt="Docks" class="w-20 h-auto flex-shrink-0" />
+            <div>
+              <p class="text-blue text-[10px] font-bold tracking-wider uppercase mb-0.5">Docks Residencial</p>
+              <h2 class="text-lg font-display font-bold" id="user-name-display">Olá!</h2>
+              <p class="text-white/60 font-medium mt-0.5 text-xs font-mono">
+                Apto <span id="user-apt-display">--</span>
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              onclick="toggleDarkMode()"
+              class="text-white hover:text-blue bg-white/10 p-2.5 rounded-xl transition-colors"
+              aria-label="Alternar modo escuro"
+            >
+              <svg id="icon-dark-2" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+                />
+              </svg>
+            </button>
+            <button
+              onclick="abrirConfiguracoes()"
+              class="text-white hover:text-blue bg-white/10 p-2.5 rounded-xl transition-colors"
+              aria-label="Configurações"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                ></path>
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                ></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div class="flex-shrink-0 px-4 pt-3">
+        <div class="max-w-md mx-auto flex items-center justify-center gap-2" aria-label="Etapas da retirada">
+          <span id="flow-dashboard" class="flow-step active"><span>1</span> • Encomendas</span>
+          <span id="flow-qr" class="flow-step"><span>2</span> • <em class="qr-term">QR Code</em></span>
+          <span id="flow-retirada" class="flow-step"><span>3</span> • Retirada</span>
+        </div>
+      </div>
+
+      <main class="flex-1 min-h-0 w-full max-w-md mx-auto p-5 flex flex-col overflow-y-auto">
+        <div id="view-dashboard" class="flex flex-col flex-1 space-y-4">
+          <div
+            class="bg-white rounded-3xl p-5 shadow-sm border border-line flex items-center justify-between"
+          >
+            <div>
+              <p class="text-muted font-bold text-xs uppercase tracking-wide mb-1">Pacotes pendentes</p>
+              <p class="text-4xl font-display font-bold text-ink" id="qtd-encomendas">0</p>
+            </div>
+            <div class="bg-blue-light p-3.5 rounded-2xl text-blue-dark">
+              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                ></path>
+              </svg>
+            </div>
+          </div>
+
+          <div class="space-y-2.5 flex-1 min-h-0">
+            <h3 class="font-display font-bold text-ink text-base">Suas encomendas</h3>
+            <div id="lista-encomendas" class="space-y-2.5">
+              <div class="animate-pulse space-y-2.5">
+                <div class="h-14 bg-line/50 rounded-2xl"></div>
+                <div class="h-14 bg-line/50 rounded-2xl"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-auto pt-3 flex-shrink-0">
+            <button
+              id="btn-gerar"
+              onclick="solicitarQRCode()"
+              class="w-full bg-ink hover:bg-inkalt text-white font-bold py-4 rounded-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <svg class="w-5 h-5 text-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+                ></path>
+              </svg>
+              <span id="btn-gerar-text">Abrir sala (gerar <em class="qr-term">QR Code</em>)</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="view-qr" class="hidden-view flex-col items-center justify-center flex-1 space-y-4">
+          <div class="text-center space-y-2">
+            <h2 class="text-xl font-display font-bold text-ink">Passe no leitor</h2>
+            <p
+              class="text-sm font-semibold text-muted bg-white border border-line px-3 py-1.5 rounded-full inline-flex items-center gap-2 font-mono"
+            >
+              <span class="w-1.5 h-1.5 rounded-full bg-blue animate-pulse"></span>
+              <span id="timer">05:00</span>
+            </p>
+          </div>
+
+          <div id="qr-code-frame" class="flex justify-center items-center max-w-full mx-auto">
+            <div id="qrcode-canvas"></div>
+          </div>
+
+          <div class="qr-security-note text-center bg-ink p-3.5 rounded-2xl w-full">
+            <p class="text-xs font-bold text-blue uppercase tracking-wide mb-1">Este código é pessoal</p>
+            <p class="text-xs text-white/70">Não compartilhe. A retirada fica registrada em vídeo.</p>
+          </div>
+
+          <button
+            onclick="abrirConfirmacaoCancelamento()"
+            class="w-full text-center text-brick font-bold hover:text-brick-dark transition-colors py-2"
+          >
+            Cancelar retirada
+          </button>
+        </div>
+
+        <div id="view-retirada" class="hidden-view flex-col items-center justify-center flex-1 space-y-4">
+          <div class="text-center space-y-1.5 w-full">
+            <div class="bg-teal-light text-teal-dark p-3.5 rounded-full inline-block mb-1">
+              <svg class="w-9 h-9" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="3"
+                  d="M5 13l4 4L19 7"
+                ></path>
+              </svg>
+            </div>
+            <h2 class="text-2xl font-display font-bold text-ink">Acesso liberado!</h2>
+            <p class="text-muted font-medium text-sm">A porta foi liberada. Suas encomendas estão em:</p>
+          </div>
+
+          <div
+            id="retirada-photos-container"
+            class="w-full flex flex-col gap-2.5 overflow-y-auto max-h-56 pb-2"
+          ></div>
+
+          <div
+            class="w-full bg-blue-light text-blue-dark border border-blue/20 rounded-2xl p-4 text-sm font-semibold leading-relaxed"
+          >
+            Ao sair da sala, confirme a retirada no tablet do validador. Essa confirmação encerra o processo e
+            a gravação de segurança.
+          </div>
+
+          <button
+            onclick="voltarInicio()"
+            class="w-full bg-ink hover:bg-inkalt text-white font-bold py-4 rounded-2xl shadow-xl transition-all mt-2 active:scale-95"
+          >
+            Voltar ao início
+          </button>
+        </div>
+      </main>
+    </div>
+
+    <div
+      id="modal-termos"
+      class="absolute inset-0 bg-ink/85 backdrop-blur-sm hidden-view flex items-center justify-center z-[70] p-4"
+    >
+      <div class="bg-white rounded-3xl w-full max-w-lg shadow-2xl border border-line overflow-hidden">
+        <div class="p-6 border-b border-line bg-paper/60">
+          <div class="flex items-start gap-3">
+            <div
+              class="w-11 h-11 rounded-2xl bg-blue-light text-blue-dark flex items-center justify-center flex-shrink-0"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+            </div>
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-blue-dark">Primeiro acesso</p>
+              <h3 class="text-xl font-display font-bold text-ink mt-1">Termos de Uso e Privacidade</h3>
+              <p class="text-xs text-muted mt-1">Leia antes de continuar no Portal do Morador.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="terms-scroll max-h-[52vh] overflow-y-auto p-6 space-y-5 terms-section">
+          <div>
+            <h4>1. Finalidade do Docks</h4>
+            <p>
+              O Docks é um sistema de gerenciamento de encomendas para condomínios. O aplicativo permite
+              consultar pacotes, receber avisos, gerar <em class="qr-term">QR Codes</em> para retirada e
+              acompanhar informações relacionadas ao acesso à sala de encomendas.
+            </p>
+          </div>
+          <div>
+            <h4>2. Dados utilizados</h4>
+            <p>
+              Para operar o serviço, o Docks pode tratar dados como nome, apartamento, telefone, usuário,
+              credenciais, registros de encomendas, fotografias dos pacotes, horários de acesso, logs do
+              sistema e informações necessárias para a validação de <em class="qr-term">QR Codes</em>.
+            </p>
+          </div>
+          <div>
+            <h4>3. Câmera e gravações de segurança</h4>
+            <p>
+              A sala pode ser monitorada por câmera. Quando uma retirada é autorizada, o sistema pode iniciar
+              uma gravação vinculada à operação. As gravações ficam disponíveis por até 7 dias e podem ser
+              acessadas pelo administrador para segurança, auditoria e esclarecimento de ocorrências.
+            </p>
+          </div>
+          <div>
+            <h4>4. WhatsApp e comunicações</h4>
+            <p>
+              O número cadastrado pode ser utilizado para avisos sobre novas encomendas e códigos de
+              recuperação de senha. O usuário deve manter seu telefone atualizado junto à administração para
+              receber essas comunicações corretamente.
+            </p>
+          </div>
+          <div>
+            <h4>5. Segurança e responsabilidade do usuário</h4>
+            <ul class="list-disc pl-5 space-y-1">
+              <li>
+                Não compartilhe sua senha, códigos de recuperação ou <em class="qr-term">QR Codes</em> de
+                retirada.
+              </li>
+              <li>Utilize o acesso somente para retirar encomendas autorizadas para o seu cadastro.</li>
+              <li>Ao sair da sala, confirme a retirada no tablet para concluir corretamente a operação.</li>
+            </ul>
+          </div>
+          <div>
+            <h4>6. Privacidade e LGPD</h4>
+            <p>
+              Os dados devem ser utilizados apenas para as finalidades relacionadas ao gerenciamento de
+              encomendas, segurança, autenticação, comunicação e auditoria. O acesso deve ser limitado aos
+              usuários e administradores autorizados. Em uma implantação real, solicitações de correção,
+              acesso ou outras questões relativas a dados pessoais deverão ser encaminhadas à administração
+              responsável pelo condomínio.
+            </p>
+          </div>
+          <div>
+            <h4>7. Ciência e atualizações</h4>
+            <p>
+              Ao prosseguir, você confirma que leu os Termos de Uso e declara ciência deste Aviso de
+              Privacidade. Caso uma versão futura altere de forma relevante estas condições, o sistema poderá
+              solicitar uma nova confirmação.
+            </p>
+          </div>
+          <div class="bg-blue-light/70 border border-blue/20 rounded-2xl p-4">
+            <p class="text-blue-dark font-semibold">
+              Este texto foi elaborado para o protótipo educacional do Docks e deve passar por revisão
+              jurídica antes de uma implantação comercial ou condominial real.
+            </p>
+          </div>
+        </div>
+
+        <div class="p-6 pt-4 border-t border-line bg-white">
+          <label class="flex items-start gap-3 cursor-pointer select-none">
+            <input
+              id="check-termos"
+              type="checkbox"
+              onchange="atualizarBotaoTermos()"
+              class="mt-1 w-4 h-4 accent-blue"
+            />
+            <span class="text-sm text-ink font-semibold leading-relaxed"
+              >Li e aceito os Termos de Uso e declaro ciência do Aviso de Privacidade e das informações
+              relacionadas à LGPD.</span
+            >
+          </label>
+          <p
+            id="termos-erro"
+            class="hidden mt-3 bg-brick-light text-brick-dark text-xs font-semibold p-3 rounded-xl"
+          ></p>
+          <button
+            id="btn-aceitar-termos"
+            onclick="aceitarTermos()"
+            disabled
+            class="w-full mt-4 bg-blue hover:bg-blue-dark text-white font-bold py-4 rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Aceitar e continuar
+          </button>
+          <button
+            type="button"
+            onclick="recusarTermos()"
+            class="w-full mt-2 text-muted hover:text-ink text-xs font-bold py-2 transition"
+          >
+            Não concordo · sair da conta
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="modal-senha"
+      class="absolute inset-0 bg-ink/80 backdrop-blur-sm hidden-view flex items-center justify-center z-50 p-4"
+    >
+      <div class="bg-white p-8 rounded-3xl w-full max-w-sm shadow-2xl">
+        <h3 class="text-2xl font-display font-bold text-ink mb-2" id="modal-senha-title">Atualizar senha</h3>
+        <p class="text-sm text-muted mb-6" id="modal-senha-desc">Digite sua senha atual e a nova senha.</p>
+        <div class="space-y-4">
+          <div class="relative">
+            <input
+              type="password"
+              id="senha-atual-input"
+              class="w-full bg-paper border border-line rounded-xl p-4 pr-12 outline-none focus:border-blue font-medium"
+              placeholder="Senha atual…"
+            />
+            <button
+              type="button"
+              onclick="togglePwd('senha-atual-input', this)"
+              class="password-eye"
+              aria-label="Mostrar senha"
+            >
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.269 2.943 9.542 7-1.273 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                />
+                <circle cx="12" cy="12" r="3" stroke-width="2" />
+              </svg>
+            </button>
+          </div>
+          <div class="relative">
+            <input
+              type="password"
+              id="nova-senha"
+              class="w-full bg-paper border border-line rounded-xl p-4 pr-12 outline-none focus:border-blue font-medium"
+              placeholder="Nova senha…"
+            />
+            <button
+              type="button"
+              onclick="togglePwd('nova-senha', this)"
+              class="password-eye"
+              aria-label="Mostrar senha"
+            >
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.269 2.943 9.542 7-1.273 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                />
+                <circle cx="12" cy="12" r="3" stroke-width="2" />
+              </svg>
+            </button>
+          </div>
+          <p class="text-xs text-muted -mt-2">
+            Use 8 caracteres, com maiúscula, minúscula, número e um especial (@ # ! * $ % & ? + - / \ =).
+          </p>
+          <p
+            id="senha-modal-erro"
+            class="hidden bg-brick-light text-brick-dark text-xs font-semibold p-2.5 rounded-lg"
+          ></p>
+          <button
+            onclick="salvarNovaSenha()"
+            class="w-full bg-ink hover:bg-inkalt text-white font-bold py-4 rounded-xl transition-all shadow-md"
+          >
+            Salvar e continuar
+          </button>
+          <button
+            onclick="fecharModalSenha()"
+            id="btn-fechar-senha"
+            class="w-full text-muted font-bold py-2 hidden"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="modal-esqueci"
+      class="absolute inset-0 bg-ink/80 backdrop-blur-sm hidden-view flex items-center justify-center z-50 p-4"
+    >
+      <div class="bg-white p-8 rounded-3xl w-full max-w-sm shadow-2xl">
+        <h3 class="text-2xl font-display font-bold text-ink mb-2">Recuperar acesso</h3>
+
+        <div id="esqueci-passo1">
+          <p class="text-sm text-muted mb-6">
+            Informe seu condomínio, usuário e apartamento. Enviaremos um código de 6 dígitos ao WhatsApp
+            correto.
+          </p>
+          <div class="space-y-4">
+            <div class="relative">
+              <input
+                type="text"
+                id="esqueci-condominio"
+                oninput="buscarCondominiosRecuperacao(this.value)"
+                autocomplete="off"
+                class="w-full bg-paper border border-line rounded-xl p-4 outline-none focus:border-blue font-medium"
+                placeholder="Nome do condomínio"
+              />
+              <div id="esqueci-condominios" class="condo-results hidden"></div>
+            </div>
+            <input
+              type="text"
+              id="esqueci-usuario"
+              class="w-full bg-paper border border-line rounded-xl p-4 outline-none focus:border-blue font-medium"
+              placeholder="Seu usuário"
+              autocomplete="username"
+            />
+            <input
+              type="text"
+              id="esqueci-apt"
+              class="w-full bg-paper border border-line rounded-xl p-4 outline-none focus:border-blue font-mono font-medium"
+              placeholder="Número do apartamento"
+            />
+            <p
+              id="esqueci-erro1"
+              class="hidden bg-brick-light text-brick-dark text-xs font-semibold p-2.5 rounded-lg"
+            ></p>
+            <button
+              onclick="enviarCodigoRecuperacao()"
+              id="btn-enviar-codigo"
+              class="w-full bg-ink hover:bg-inkalt text-white font-bold py-4 rounded-xl transition-all shadow-md"
+            >
+              Enviar código por WhatsApp
+            </button>
+            <button onclick="fecharModalEsqueci()" class="w-full text-muted font-bold py-2">Cancelar</button>
+          </div>
+        </div>
+
+        <div id="esqueci-passo2" class="hidden-view">
+          <p class="text-sm text-muted mb-6">
+            Digite o código recebido no WhatsApp e escolha uma nova senha.
+          </p>
+          <div class="space-y-4">
+            <input
+              type="text"
+              id="esqueci-codigo"
+              inputmode="numeric"
+              maxlength="6"
+              class="w-full bg-paper border border-line rounded-xl p-4 outline-none focus:border-blue font-mono text-center text-xl tracking-[0.4em]"
+              placeholder="000000"
+            />
+            <div class="relative">
+              <input
+                type="password"
+                id="esqueci-nova-senha"
+                class="w-full bg-paper border border-line rounded-xl p-4 pr-12 outline-none focus:border-blue font-medium"
+                placeholder="Nova senha (mín. 8 caracteres)…"
+              />
+              <button
+                type="button"
+                onclick="togglePwd('esqueci-nova-senha', this)"
+                class="password-eye"
+                aria-label="Mostrar senha"
+              >
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.269 2.943 9.542 7-1.273 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                  <circle cx="12" cy="12" r="3" stroke-width="2" />
+                </svg>
+              </button>
+            </div>
+            <p class="text-xs text-muted">
+              Inclua maiúscula, minúscula, número e um especial (@ # ! * $ % & ? + - / \ =).
+            </p>
+            <p
+              id="esqueci-erro2"
+              class="hidden bg-brick-light text-brick-dark text-xs font-semibold p-2.5 rounded-lg"
+            ></p>
+            <button
+              onclick="confirmarRecuperacao()"
+              class="w-full bg-ink hover:bg-inkalt text-white font-bold py-4 rounded-xl transition-all shadow-md"
+            >
+              Confirmar e trocar senha
+            </button>
+            <button onclick="fecharModalEsqueci()" class="w-full text-muted font-bold py-2">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="modal-config"
+      class="absolute inset-0 bg-ink/80 backdrop-blur-sm hidden-view flex items-center justify-center z-50 p-4"
+    >
+      <div class="bg-white p-8 rounded-3xl w-full max-w-sm shadow-2xl text-center">
+        <h3 class="text-xl font-display font-bold text-ink mb-6">Configurações da conta</h3>
+        <div class="space-y-3">
+          <button
+            onclick="abrirModalTrocaSenha()"
+            class="w-full bg-paper text-ink font-bold py-3.5 rounded-xl transition hover:bg-line/60"
+          >
+            Alterar minha senha
+          </button>
+          <button
+            onclick="fazerLogout()"
+            class="w-full bg-brick-light text-brick-dark font-bold py-3.5 rounded-xl transition hover:bg-brick/20"
+          >
+            Sair da conta
+          </button>
+        </div>
+        <button
+          onclick="document.getElementById('modal-config').classList.add('hidden-view')"
+          class="mt-6 text-muted font-bold"
+        >
+          Voltar
+        </button>
+      </div>
+    </div>
+
+    <div
+      id="modal-cancelar-retirada"
+      class="absolute inset-0 bg-ink/80 backdrop-blur-sm hidden-view flex items-center justify-center z-[65] p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="cancelar-retirada-titulo"
+    >
+      <div class="bg-white p-7 rounded-3xl w-full max-w-sm shadow-2xl text-center border border-line">
+        <div
+          class="w-12 h-12 mx-auto rounded-full bg-brick-light text-brick-dark flex items-center justify-center mb-4"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </div>
+        <h3 id="cancelar-retirada-titulo" class="text-xl font-display font-bold text-ink">
+          Cancelar retirada?
+        </h3>
+        <p class="text-sm text-muted mt-2">
+          O QR Code atual deixará de ser exibido e você voltará para suas encomendas.
+        </p>
+        <div class="grid grid-cols-2 gap-3 mt-6">
+          <button
+            onclick="fecharConfirmacaoCancelamento()"
+            class="border border-line text-ink font-bold py-3 rounded-xl"
+          >
+            Continuar aqui
+          </button>
+          <button
+            onclick="confirmarCancelamentoRetirada()"
+            class="bg-brick text-white font-bold py-3 rounded-xl"
+          >
+            Sim, cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="toast-root"
+      class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center gap-2 w-[90%] max-w-sm"
+    ></div>
+
+    <script>
+      const API_URL =
+        window.location.hostname === '' ? 'http://127.0.0.1:5000' : `http://${window.location.hostname}:5000`
+      let apartamentoLogado = null
+      let moradorId = null
+      let moradorToken = ''
+      let primeiroLoginPendente = false
+      let termosVersaoAtual = '1.0'
+      let timerInterval, pollingInterval, packagesRefreshInterval
+      let cachedPackages = []
+      let loadingPackages = false
+      let currentQrToken = ''
+      let aptRecuperacao = ''
+      let usuarioRecuperacao = ''
+      let condominioRecuperacao = null
+      let darkModeMorador = localStorage.getItem('docks-theme') === 'dark'
+      function applyDarkPreference() {
+        const escuro = darkModeMorador
+        document.documentElement.classList.toggle('dark', escuro)
+        const svgPath = escuro
+          ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>'
+          : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>'
+        ;['icon-dark', 'icon-dark-2'].forEach((id) => {
+          const icon = document.getElementById(id)
+          if (icon) icon.innerHTML = svgPath
+        })
+        document
+          .getElementById('btn-dark-toggle')
+          ?.setAttribute('aria-label', escuro ? 'Alternar para modo claro' : 'Alternar para modo escuro')
+      }
+      function toggleDarkMode() {
+        darkModeMorador = !darkModeMorador
+        localStorage.setItem('docks-theme', darkModeMorador ? 'dark' : 'light')
+        applyDarkPreference()
+      }
+      applyDarkPreference()
+      function fetchMorador(path, options = {}) {
+        options.headers = { ...(options.headers || {}), 'X-Morador-Token': moradorToken }
+        return fetch(`${API_URL}${path}`, options)
+      }
+
+      function toast(message, type = 'info') {
+        const palette = {
+          info: 'bg-ink text-white',
+          success: 'bg-teal text-white',
+          error: 'bg-brick text-white',
+        }
+        const el = document.createElement('div')
+        el.className = `toast ${palette[type] || palette.info} px-5 py-3 rounded-xl shadow-xl text-sm font-semibold text-center w-full`
+        el.innerText = message
+        document.getElementById('toast-root').appendChild(el)
+        setTimeout(() => {
+          el.style.transition = 'opacity .3s'
+          el.style.opacity = '0'
+          setTimeout(() => el.remove(), 300)
+        }, 3200)
+      }
+
+      function togglePwd(id, btn) {
+        const input = document.getElementById(id)
+        const show = input.type === 'password'
+        input.type = show ? 'text' : 'password'
+        btn.setAttribute('aria-label', show ? 'Ocultar senha' : 'Mostrar senha')
+        btn.innerHTML = show
+          ? '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18M10.6 10.7a2 2 0 002.7 2.7M9.9 4.2A10.8 10.8 0 0112 4c5 0 9.3 3.1 10.8 8a11.8 11.8 0 01-2.2 4.1M6.6 6.6A11.8 11.8 0 001.2 12C2.7 16.9 7 20 12 20a10.8 10.8 0 005.4-1.4"/></svg>'
+          : '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.269 2.943 9.542 7-1.273 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/><circle cx="12" cy="12" r="3" stroke-width="2"/></svg>'
+      }
+
+      window.onload = async () => {
+        const savedApt = localStorage.getItem('docks_apt')
+        const savedName = localStorage.getItem('docks_name')
+        const savedToken = localStorage.getItem('docks_token')
+        const savedMoradorId = localStorage.getItem('docks_morador_id')
+        if (savedApt && savedName && savedToken) {
+          apartamentoLogado = savedApt
+          moradorId = savedMoradorId ? Number(savedMoradorId) : null
+          moradorToken = savedToken
+          document.getElementById('user-name-display').innerText = `Olá, ${savedName.split(' ')[0]}!`
+          document.getElementById('user-apt-display').innerText = apartamentoLogado
+
+          try {
+            const res = await fetchMorador(`/api/morador/${apartamentoLogado}/estado_conta`)
+            if (!res.ok) throw new Error('Sessão inválida')
+            const estado = await res.json()
+            primeiroLoginPendente = !!estado.primeiro_login
+            termosVersaoAtual = estado.termos_versao || '1.0'
+
+            if (!estado.termos_aceitos) {
+              abrirModalTermos()
+            } else if (primeiroLoginPendente) {
+              abrirModalTrocaSenha(true)
+            } else {
+              showView('area-logada')
+              carregarEncomendas()
+            }
+          } catch (e) {
+            fazerLogout()
+          }
+        }
+      }
+
+      function showView(viewId) {
+        document.getElementById('view-login').classList.add('hidden-view')
+        document.getElementById('area-logada').classList.add('hidden-view')
+        if (['area-logada', 'view-dashboard', 'view-qr', 'view-retirada'].includes(viewId)) {
+          document.getElementById('area-logada').classList.remove('hidden-view')
+          document.getElementById('view-dashboard').classList.add('hidden-view')
+          document.getElementById('view-qr').classList.add('hidden-view')
+          document.getElementById('view-retirada').classList.add('hidden-view')
+          document
+            .getElementById(viewId === 'area-logada' ? 'view-dashboard' : viewId)
+            .classList.remove('hidden-view')
+        } else {
+          document.getElementById(viewId).classList.remove('hidden-view')
+        }
+        atualizarFluxoMorador(viewId)
+        if (viewId === 'area-logada' || viewId === 'view-dashboard') iniciarAtualizacaoEncomendas()
+        else pararAtualizacaoEncomendas()
+      }
+
+      function atualizarFluxoMorador(viewId) {
+        const steps = ['flow-dashboard', 'flow-qr', 'flow-retirada']
+        const index = viewId === 'view-qr' ? 1 : viewId === 'view-retirada' ? 2 : 0
+        steps.forEach((id, i) => {
+          const el = document.getElementById(id)
+          if (!el) return
+          el.classList.remove('active', 'done')
+          if (i === index) el.classList.add('active')
+          else if (i < index) el.classList.add('done')
+        })
+      }
+
+      async function fazerLogin() {
+        const user = document.getElementById('login-user').value
+        const pwd = document.getElementById('login-pwd').value
+        const btn = document.getElementById('btn-login')
+        const err = document.getElementById('login-error')
+        err.classList.add('hidden')
+        if (!user || !pwd) {
+          err.innerText = 'Preencha usuário e senha.'
+          err.classList.remove('hidden')
+          return
+        }
+        btn.innerText = 'Autenticando…'
+        try {
+          const res = await fetch(`${API_URL}/api/morador/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usuario: user, senha: pwd }),
+          })
+          const data = await res.json()
+          if (data.success) {
+            apartamentoLogado = data.apartamento
+            moradorId = data.morador_id
+            moradorToken = data.token
+            localStorage.setItem('docks_apt', data.apartamento)
+            localStorage.setItem('docks_name', data.nome)
+            localStorage.setItem('docks_token', data.token)
+            localStorage.setItem('docks_morador_id', String(data.morador_id))
+            primeiroLoginPendente = !!data.primeiro_login
+            termosVersaoAtual = data.termos_versao || '1.0'
+            document.getElementById('user-name-display').innerText = `Olá, ${data.nome.split(' ')[0]}!`
+            document.getElementById('user-apt-display').innerText = apartamentoLogado
+
+            if (!data.termos_aceitos) {
+              abrirModalTermos()
+            } else if (primeiroLoginPendente) {
+              abrirModalTrocaSenha(true)
+            } else {
+              showView('area-logada')
+              carregarEncomendas()
+            }
+          } else {
+            err.innerText = data.message || 'Usuário ou senha incorretos.'
+            err.classList.remove('hidden')
+          }
+        } catch (e) {
+          err.innerText = 'Falha de conexão com o servidor Docks.'
+          err.classList.remove('hidden')
+        }
+        btn.innerText = 'Acessar conta'
+      }
+
+      function fazerLogout() {
+        pararAtualizacaoEncomendas()
+        if (moradorToken)
+          fetch(`${API_URL}/api/morador/logout`, {
+            method: 'POST',
+            headers: { 'X-Morador-Token': moradorToken },
+          }).catch(() => {})
+        apartamentoLogado = null
+        moradorId = null
+        moradorToken = ''
+        localStorage.removeItem('docks_apt')
+        localStorage.removeItem('docks_name')
+        localStorage.removeItem('docks_token')
+        localStorage.removeItem('docks_morador_id')
+        document.getElementById('login-pwd').value = ''
+        document.getElementById('modal-config').classList.add('hidden-view')
+        showView('view-login')
+      }
+
+      function recusarTermos() {
+        document.getElementById('modal-termos').classList.add('hidden-view')
+        fazerLogout()
+        const err = document.getElementById('login-error')
+        err.innerText = 'É necessário aceitar os Termos de Uso para utilizar o Portal do Morador.'
+        err.classList.remove('hidden')
+      }
+
+      function abrirModalTermos() {
+        document.getElementById('modal-termos').classList.remove('hidden-view')
+        document.getElementById('check-termos').checked = false
+        document.getElementById('termos-erro').classList.add('hidden')
+        atualizarBotaoTermos()
+      }
+
+      function atualizarBotaoTermos() {
+        document.getElementById('btn-aceitar-termos').disabled =
+          !document.getElementById('check-termos').checked
+      }
+
+      async function aceitarTermos() {
+        const checkbox = document.getElementById('check-termos')
+        const erro = document.getElementById('termos-erro')
+        const btn = document.getElementById('btn-aceitar-termos')
+        erro.classList.add('hidden')
+        if (!checkbox.checked) return
+
+        btn.disabled = true
+        btn.innerText = 'Registrando aceite…'
+        try {
+          const res = await fetchMorador(`/api/morador/${apartamentoLogado}/aceitar_termos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ aceito: true, versao: termosVersaoAtual }),
+          })
+          const data = await res.json()
+          if (!res.ok) {
+            erro.innerText = data.error || 'Não foi possível registrar o aceite.'
+            erro.classList.remove('hidden')
+            return
+          }
+
+          document.getElementById('modal-termos').classList.add('hidden-view')
+          toast('Termos registrados com sucesso.', 'success')
+
+          if (primeiroLoginPendente) {
+            abrirModalTrocaSenha(true)
+          } else {
+            showView('area-logada')
+            carregarEncomendas()
+          }
+        } catch (e) {
+          erro.innerText = 'Falha de conexão ao registrar os termos.'
+          erro.classList.remove('hidden')
+        } finally {
+          btn.innerText = 'Aceitar e continuar'
+          atualizarBotaoTermos()
+        }
+      }
+
+      function abrirConfiguracoes() {
+        document.getElementById('modal-config').classList.remove('hidden-view')
+      }
+
+      function abrirModalTrocaSenha(force = false) {
+        document.getElementById('modal-config').classList.add('hidden-view')
+        document.getElementById('modal-senha').classList.remove('hidden-view')
+        document.getElementById('senha-atual-input').value = ''
+        document.getElementById('nova-senha').value = ''
+        document.getElementById('senha-modal-erro').classList.add('hidden')
+        const btnFechar = document.getElementById('btn-fechar-senha')
+        if (force) {
+          btnFechar.classList.add('hidden')
+          document.getElementById('modal-senha-desc').innerText =
+            'Este é o seu primeiro acesso. Digite a senha provisória recebida e crie uma nova (mín. 8 caracteres).'
+        } else {
+          btnFechar.classList.remove('hidden')
+          document.getElementById('modal-senha-desc').innerText =
+            'Digite sua senha atual e a nova senha (mín. 8 caracteres).'
+        }
+      }
+
+      function fecharModalSenha() {
+        document.getElementById('modal-senha').classList.add('hidden-view')
+      }
+
+      async function salvarNovaSenha() {
+        const senhaAtual = document.getElementById('senha-atual-input').value
+        const novaSenha = document.getElementById('nova-senha').value
+        const erro = document.getElementById('senha-modal-erro')
+        erro.classList.add('hidden')
+        if (!senhaAtual) {
+          erro.innerText = 'Informe sua senha atual.'
+          erro.classList.remove('hidden')
+          return
+        }
+        const erroPolitica = validarPoliticaSenha(novaSenha)
+        if (erroPolitica) {
+          erro.innerText = erroPolitica
+          erro.classList.remove('hidden')
+          return
+        }
+        try {
+          const res = await fetchMorador(`/api/morador/mudar_senha`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              apartamento: apartamentoLogado,
+              senha_atual: senhaAtual,
+              nova_senha: novaSenha,
+            }),
+          })
+          const data = await res.json()
+          if (res.ok) {
+            primeiroLoginPendente = false
+            fecharModalSenha()
+            toast('Senha atualizada com sucesso.', 'success')
+            document.getElementById('user-name-display').innerText =
+              `Olá, ${localStorage.getItem('docks_name').split(' ')[0]}!`
+            document.getElementById('user-apt-display').innerText = apartamentoLogado
+            showView('area-logada')
+            carregarEncomendas()
+          } else {
+            erro.innerText = data.error || 'Não foi possível salvar a senha.'
+            erro.classList.remove('hidden')
+          }
+        } catch (e) {
+          erro.innerText = 'Erro ao salvar senha.'
+          erro.classList.remove('hidden')
+        }
+      }
+      function abrirModalEsqueci() {
+        document.getElementById('modal-esqueci').classList.remove('hidden-view')
+        document.getElementById('esqueci-passo1').classList.remove('hidden-view')
+        document.getElementById('esqueci-passo2').classList.add('hidden-view')
+        document.getElementById('esqueci-apt').value = ''
+        document.getElementById('esqueci-condominio').value = ''
+        condominioRecuperacao = null
+        document.getElementById('esqueci-codigo').value = ''
+        document.getElementById('esqueci-nova-senha').value = ''
+        document.getElementById('esqueci-erro1').classList.add('hidden')
+        document.getElementById('esqueci-erro2').classList.add('hidden')
+      }
+      function fecharModalEsqueci() {
+        document.getElementById('modal-esqueci').classList.add('hidden-view')
+      }
+
+      function validarPoliticaSenha(senha) {
+        if (!senha || senha.length < 8) return 'A senha deve ter pelo menos 8 caracteres.'
+        if (!/[A-Z]/.test(senha)) return 'Inclua pelo menos uma letra maiúscula.'
+        if (!/[a-z]/.test(senha)) return 'Inclua pelo menos uma letra minúscula.'
+        if (!/\d/.test(senha)) return 'Inclua pelo menos um número.'
+        if (!/[@#!*$%&?+\-/\\=]/.test(senha)) return 'Inclua pelo menos um caractere especial permitido.'
+        return ''
+      }
+
+      async function buscarCondominiosRecuperacao(valor) {
+        condominioRecuperacao = null
+        const box = document.getElementById('esqueci-condominios')
+        if (valor.trim().length < 2) return box.classList.add('hidden')
+        try {
+          const res = await fetch(`${API_URL}/api/condominios/buscar?q=${encodeURIComponent(valor)}`)
+          const itens = await res.json()
+          box.replaceChildren()
+          if (!itens.length) {
+            const vazio = document.createElement('span')
+            vazio.className = 'block p-3 text-sm text-muted'
+            vazio.textContent = 'Nenhum condomínio encontrado.'
+            box.appendChild(vazio)
+          } else {
+            itens.forEach((item) => {
+              const option = document.createElement('button')
+              option.type = 'button'
+              option.className = 'condo-result'
+              option.textContent = item.nome
+              box.appendChild(option)
+            })
+          }
+          box.querySelectorAll('button').forEach(
+            (button, index) =>
+              (button.onclick = () => {
+                condominioRecuperacao = itens[index]
+                document.getElementById('esqueci-condominio').value = itens[index].nome
+                box.classList.add('hidden')
+              }),
+          )
+          box.classList.remove('hidden')
+        } catch (e) {
+          box.classList.add('hidden')
+        }
+      }
+
+      async function enviarCodigoRecuperacao() {
+        const apt = document.getElementById('esqueci-apt').value.trim()
+        const usuario = document.getElementById('esqueci-usuario').value.trim().toLowerCase()
+        const nomeCondominio = document.getElementById('esqueci-condominio').value.trim()
+        const erro = document.getElementById('esqueci-erro1')
+        erro.classList.add('hidden')
+        if (!apt || !usuario || !nomeCondominio) {
+          erro.innerText = 'Informe o condomínio, o usuário e o número do apartamento.'
+          erro.classList.remove('hidden')
+          return
+        }
+        const btn = document.getElementById('btn-enviar-codigo')
+        btn.innerText = 'Enviando…'
+        try {
+          await fetch(`${API_URL}/api/morador/solicitar_codigo`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              condominio_id: condominioRecuperacao?.id,
+              condominio: nomeCondominio,
+              apartamento: apt,
+              usuario,
+            }),
+          })
+          aptRecuperacao = apt
+          usuarioRecuperacao = usuario
+          document.getElementById('esqueci-passo1').classList.add('hidden-view')
+          document.getElementById('esqueci-passo2').classList.remove('hidden-view')
+          toast('Se o apartamento existir, um código foi enviado por WhatsApp.', 'info')
+        } catch (e) {
+          erro.innerText = 'Erro de conexão com o servidor Docks.'
+          erro.classList.remove('hidden')
+        }
+        btn.innerText = 'Enviar código por WhatsApp'
+      }
+
+      async function confirmarRecuperacao() {
+        const codigo = document.getElementById('esqueci-codigo').value.trim()
+        const novaSenha = document.getElementById('esqueci-nova-senha').value
+        const erro = document.getElementById('esqueci-erro2')
+        erro.classList.add('hidden')
+        if (!codigo) {
+          erro.innerText = 'Informe o código recebido no WhatsApp.'
+          erro.classList.remove('hidden')
+          return
+        }
+        const erroPolitica = validarPoliticaSenha(novaSenha)
+        if (erroPolitica) {
+          erro.innerText = erroPolitica
+          erro.classList.remove('hidden')
+          return
+        }
+        try {
+          const res = await fetch(`${API_URL}/api/morador/mudar_senha`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              apartamento: aptRecuperacao,
+              usuario: usuarioRecuperacao,
+              condominio_id: condominioRecuperacao?.id,
+              condominio: document.getElementById('esqueci-condominio').value.trim(),
+              codigo_verificacao: codigo,
+              nova_senha: novaSenha,
+            }),
+          })
+          const data = await res.json()
+          if (res.ok) {
+            fecharModalEsqueci()
+            toast('Senha atualizada! Faça login com a nova senha.', 'success')
+          } else {
+            erro.innerText = data.error || 'Código inválido ou expirado.'
+            erro.classList.remove('hidden')
+          }
+        } catch (e) {
+          erro.innerText = 'Erro de conexão com o servidor Docks.'
+          erro.classList.remove('hidden')
+        }
+      }
+
+      function sizeLabel(t) {
+        const map = {
+          pequeno: ['P', 'bg-teal-light text-teal-dark'],
+          médio: ['M', 'bg-blue-light text-blue-dark'],
+          grande: ['G', 'bg-brick-light text-brick-dark'],
+        }
+        return map[t] || ['?', 'bg-line text-muted']
+      }
+
+      function iniciarAtualizacaoEncomendas() {
+        clearInterval(packagesRefreshInterval)
+        if (!apartamentoLogado || !moradorToken) return
+        packagesRefreshInterval = setInterval(() => {
+          const dashboard = document.getElementById('view-dashboard')
+          if (
+            document.visibilityState === 'visible' &&
+            dashboard &&
+            !dashboard.classList.contains('hidden-view')
+          ) {
+            carregarEncomendas(true)
+          }
+        }, 8000)
+      }
+
+      function pararAtualizacaoEncomendas() {
+        clearInterval(packagesRefreshInterval)
+        packagesRefreshInterval = null
+      }
+
+      async function carregarEncomendas(silencioso = false) {
+        if (!apartamentoLogado || loadingPackages) return
+        loadingPackages = true
+        try {
+          const res = await fetchMorador(`/api/morador/${apartamentoLogado}/encomendas`)
+          if (!res.ok) throw new Error('Falha ao atualizar encomendas.')
+          const data = await res.json()
+          cachedPackages = Array.isArray(data.encomendas) ? data.encomendas : []
+          document.getElementById('qtd-encomendas').innerText = cachedPackages.length
+          const listaContainer = document.getElementById('lista-encomendas')
+          listaContainer.innerHTML = ''
+          if (cachedPackages.length === 0) {
+            listaContainer.innerHTML = `
+                        <div class="text-center py-10 bg-white rounded-2xl border border-dashed border-line">
+                            <p class="text-sm font-semibold text-muted">Nenhuma encomenda por aqui.</p>
+                            <p class="text-xs text-muted/70 mt-1">Assim que chegar algo, você verá aqui.</p>
+                        </div>`
+            document.getElementById('btn-gerar').disabled = true
+          } else {
+            document.getElementById('btn-gerar').disabled = false
+            cachedPackages.forEach((enc) => {
+              const [label, cls] = sizeLabel(enc.tamanho)
+              listaContainer.innerHTML += `
+                            <div class="bg-white p-4 rounded-2xl shadow-sm border border-line flex items-center gap-4">
+                                <span class="size-pill ${cls} flex-shrink-0">${label}</span>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-bold text-ink capitalize truncate">Pacote ${enc.tamanho}</p>
+                                    <p class="text-[11px] font-semibold text-muted uppercase tracking-wide font-mono">Chegou em ${enc.data.split(' ')[0]}</p>
+                                </div>
+                            </div>`
+            })
+          }
+        } catch (err) {
+          if (!silencioso) toast('Não foi possível carregar suas encomendas.', 'error')
+        } finally {
+          loadingPackages = false
+        }
+      }
+
+      async function solicitarQRCode() {
+        const btn = document.getElementById('btn-gerar')
+        const btnText = document.getElementById('btn-gerar-text')
+        btnText.innerText = 'Gerando segurança…'
+        btn.disabled = true
+        try {
+          const res = await fetchMorador(`/api/morador/${apartamentoLogado}/gerar_qr`, { method: 'POST' })
+          const data = await res.json()
+          if (data.success) {
+            currentQrToken = data.token
+            gerarImagemQR(data.token)
+            iniciarTimer(300)
+            iniciarPollingQR()
+            showView('view-qr')
+          } else {
+            toast('Não foi possível gerar o QR Code.', 'error')
+          }
+        } catch (err) {
+          toast('Erro de conexão com o servidor Docks.', 'error')
+        }
+        btnText.innerHTML = 'Abrir sala (gerar <em class="qr-term">QR Code</em>)'
+        btn.disabled = false
+      }
+
+      function gerarImagemQR(token) {
+        document.getElementById('qrcode-canvas').innerHTML = ''
+        new QRCode(document.getElementById('qrcode-canvas'), {
+          text: token,
+          width: 208,
+          height: 208,
+          colorDark: '#10192B',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.H,
+        })
+      }
+
+      function iniciarPollingQR() {
+        clearInterval(pollingInterval)
+        pollingInterval = setInterval(async () => {
+          try {
+            const res = await fetch(`${API_URL}/api/qr_status/${currentQrToken}`)
+            const data = await res.json()
+            if (data.validated) {
+              clearInterval(pollingInterval)
+              clearInterval(timerInterval)
+              exibirRetiradaFinal()
+            }
+          } catch (e) {}
+        }, 1500)
+      }
+
+      function exibirRetiradaFinal() {
+        showView('view-retirada')
+        const container = document.getElementById('retirada-photos-container')
+        container.innerHTML = ''
+        cachedPackages.forEach((enc) => {
+          const imgSrc =
+            enc.foto ||
+            'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PHJlY3Qgd2lkdGg9IjIwIiBoZWlnaHQ9IjIwIiBmaWxsPSIjZTFlOWU2Ii8+PC9zdmc+'
+          container.innerHTML += `
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-line flex gap-4 items-center">
+                        <img src="${imgSrc}" class="w-16 h-16 rounded-xl object-cover border border-line flex-shrink-0">
+                        <div class="flex-1">
+                            <p class="font-bold text-muted uppercase tracking-widest text-[10px] mb-1">Localização</p>
+                            <div class="dock-tag bg-ink text-blue -rotate-1">${enc.prateleira}</div>
+                        </div>
+                    </div>`
+        })
+      }
+
+      function iniciarTimer(segundos) {
+        clearInterval(timerInterval)
+        let timeLeft = segundos
+        timerInterval = setInterval(() => {
+          timeLeft--
+          const m = Math.floor(timeLeft / 60)
+            .toString()
+            .padStart(2, '0')
+          const s = (timeLeft % 60).toString().padStart(2, '0')
+          document.getElementById('timer').innerText = `${m}:${s}`
+          if (timeLeft <= 0) voltarInicio()
+        }, 1000)
+      }
+
+      function abrirConfirmacaoCancelamento() {
+        document.getElementById('modal-cancelar-retirada').classList.remove('hidden-view')
+      }
+
+      function fecharConfirmacaoCancelamento() {
+        document.getElementById('modal-cancelar-retirada').classList.add('hidden-view')
+      }
+
+      async function confirmarCancelamentoRetirada() {
+        clearInterval(timerInterval)
+        clearInterval(pollingInterval)
+        fecharConfirmacaoCancelamento()
+        const tokenCancelado = currentQrToken
+        currentQrToken = ''
+        if (tokenCancelado) {
+          fetchMorador(`/api/morador/${apartamentoLogado}/cancelar_qr`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: tokenCancelado }),
+          }).catch(() => {})
+        }
+        voltarInicio()
+      }
+
+      function voltarInicio() {
+        clearInterval(timerInterval)
+        clearInterval(pollingInterval)
+        carregarEncomendas()
+        showView('view-dashboard')
+      }
+    </script>
+  </body>
+</html>
