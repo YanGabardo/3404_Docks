@@ -20,7 +20,7 @@
 
 O **Docks** automatiza a rotina de recebimento e retirada de encomendas em condomínios. A portaria registra o pacote com uma foto (a etiqueta é lida automaticamente por OCR), o sistema aloca uma prateleira, o morador é avisado por **WhatsApp** e retira a encomenda escaneando um **QR Code** pessoal em um totem, com tudo registrado em um painel administrativo central.
 
-Este repositório guarda **oito versões evolutivas** do projeto (`v1` → `v8`), da primeira maquete estática até a versão atual, com autenticação, hashing de senha, sincronismo de hardware e painel administrativo completo. É, ao mesmo tempo, um produto funcional e um histórico de como ele foi construído e, por isso, a estrutura em pastas por versão foi mantida.
+Este repositório guarda **oito versões evolutivas** do projeto (`v1` → `v8`), da primeira maquete estática até a versão atual, com autenticação, hashing de senha, sincronismo de hardware e painel administrativo completo. Ao mesmo tempo, um produto funcional e um histórico de como ele foi construído e, por isso, a estrutura em pastas por versão foi mantida.
 
 ---
 
