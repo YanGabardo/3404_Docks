@@ -1,0 +1,1080 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="description" content="Docks — gestão inteligente de encomendas para condomínios" />
+    <title>Docks · Segurança</title>
+    <link rel="icon" href="/assets/favicon.png" type="image/png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --navy: #001135;
+        --navy2: #071b41;
+        --navy3: #0a2b64;
+        --blue: #1098ff;
+        --blue2: #2563eb;
+        --cyan: #41c7ff;
+        --ink: #0f1d37;
+        --muted: #5f6b7f;
+        --paper: #f6f8fc;
+        --line: #e3e9f1;
+        --white: #fff;
+        --green: #15966a;
+        --red: #c63d45;
+        --shadow: 0 22px 70px rgba(0, 17, 53, 0.11);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        font-family: Inter, Arial, sans-serif;
+        background: var(--paper);
+        color: var(--ink);
+      }
+      a {
+        text-decoration: none;
+        color: inherit;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      .container {
+        width: min(1180px, calc(100% - 40px));
+        margin: auto;
+      }
+      .display {
+        font-family: 'Space Grotesk', sans-serif;
+      }
+      .mono {
+        font-family: 'IBM Plex Mono', monospace;
+      }
+      .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: rgba(0, 17, 53, 0.97);
+        backdrop-filter: blur(18px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .nav {
+        height: 74px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+      .nav.container {
+        width: min(1120px, calc(100% - 32px));
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        min-width: 165px;
+      }
+      .brand img {
+        width: 165px;
+        display: block;
+      }
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-left: auto;
+      }
+      .nav-links a {
+        color: rgba(255, 255, 255, 0.62);
+        font-size: 13px;
+        font-weight: 750;
+        padding: 10px 9px;
+        border-radius: 10px;
+        transition: 0.2s;
+      }
+      .nav-links a:hover,
+      .nav-links a.active {
+        color: #fff;
+        background: rgba(255, 255, 255, 0.08);
+      }
+      .login-area {
+        position: relative;
+        margin-left: 4px;
+      }
+      .login-btn {
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        padding: 10px 13px;
+        border-radius: 11px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font-weight: 800;
+        font-size: 13px;
+      }
+      .login-btn:hover {
+        border-color: rgba(65, 199, 255, 0.8);
+        background: rgba(16, 152, 255, 0.16);
+      }
+      .login-panel {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 14px);
+        width: 355px;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.28);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-8px);
+        transition: 0.2s;
+        color: var(--ink);
+      }
+      .login-panel.open {
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+      }
+      .login-panel h3 {
+        margin: 0 0 5px;
+        font-size: 18px;
+      }
+      .login-panel .hint {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.5;
+        margin: 0 0 15px;
+      }
+      .access-switch {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        background: #f1f4f8;
+        border-radius: 12px;
+        padding: 4px;
+        margin-bottom: 14px;
+      }
+      .access-switch button {
+        border: 0;
+        background: transparent;
+        padding: 9px 8px;
+        border-radius: 9px;
+        font-size: 12px;
+        font-weight: 800;
+        color: #667085;
+        cursor: pointer;
+      }
+      .access-switch button.active {
+        background: #fff;
+        color: #0b5ecf;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+      }
+      .field {
+        margin: 11px 0;
+      }
+      .field label {
+        display: block;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #7c8798;
+        margin-bottom: 6px;
+      }
+      .field input {
+        width: 100%;
+        border: 1px solid #dce3ed;
+        background: #fbfcfe;
+        border-radius: 11px;
+        padding: 12px 13px;
+        outline: none;
+      }
+      .field input:focus {
+        border-color: var(--blue);
+        box-shadow: 0 0 0 3px rgba(16, 152, 255, 0.12);
+      }
+      .login-submit {
+        width: 100%;
+        border: 0;
+        background: var(--navy);
+        color: #fff;
+        border-radius: 11px;
+        padding: 12px 14px;
+        font-weight: 800;
+        cursor: pointer;
+        margin-top: 7px;
+      }
+      .login-submit:hover {
+        background: #08265c;
+      }
+      .login-error {
+        display: none;
+        margin-top: 10px;
+        background: #fff1f0;
+        color: #b42318;
+        border: 1px solid #ffd8d3;
+        border-radius: 10px;
+        padding: 9px 10px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .hero {
+        background: linear-gradient(135deg, #001135 0%, #031944 52%, #06265d 100%);
+        color: #fff;
+        padding: 58px 0 72px;
+        overflow: hidden;
+        position: relative;
+      }
+      .hero:before {
+        content: '';
+        position: absolute;
+        width: 560px;
+        height: 560px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(16, 152, 255, 0.2), transparent 68%);
+        right: -120px;
+        top: -180px;
+      }
+      .hero-grid {
+        display: grid;
+        grid-template-columns: 1.25fr 0.75fr;
+        gap: 46px;
+        align-items: center;
+        position: relative;
+      }
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        border: 1px solid rgba(65, 199, 255, 0.28);
+        background: rgba(16, 152, 255, 0.1);
+        color: #aee7ff;
+        padding: 8px 12px;
+        border-radius: 999px;
+        font:
+          900 11px Inter,
+          sans-serif;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+      }
+      .pulse {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #41c7ff;
+        box-shadow: 0 0 0 6px rgba(65, 199, 255, 0.1);
+      }
+      .hero h1 {
+        font: 700 clamp(44px, 4.2vw, 52px)/0.98 'Space Grotesk';
+        letter-spacing: -0.045em;
+        margin: 25px 0;
+      }
+      .hero h1 span {
+        color: #42c3ff;
+      }
+      .hero p {
+        font-size: 18px;
+        line-height: 1.7;
+        color: rgba(255, 255, 255, 0.7);
+        max-width: 690px;
+      }
+      .hero-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 30px;
+        flex-wrap: wrap;
+      }
+      .btn-primary,
+      .btn-secondary {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        border-radius: 13px;
+        padding: 14px 18px;
+        font-weight: 800;
+        font-size: 14px;
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, #12a5ff, #2563eb);
+        color: #fff;
+        box-shadow: 0 16px 30px rgba(16, 152, 255, 0.2);
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .qr-term { font-style: italic; }
+      .btn-secondary {
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        color: #fff;
+        background: rgba(255, 255, 255, 0.06);
+      }
+      .proof {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px 18px;
+        margin-top: 27px;
+        color: rgba(255, 255, 255, 0.61);
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .proof span:before {
+        content: '✓';
+        color: #41c7ff;
+        margin-right: 6px;
+      }
+      .product-card {
+        background: linear-gradient(180deg, #081d49, #001135);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 26px;
+        padding: 16px;
+        box-shadow: 0 34px 90px rgba(0, 0, 0, 0.3);
+        transform: rotate(1deg);
+      }
+      .product-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 3px 3px 14px;
+        color: rgba(255, 255, 255, 0.58);
+        font-size: 10px;
+      }
+      .online {
+        color: #59ddb0;
+        background: rgba(24, 166, 106, 0.12);
+        border: 1px solid rgba(89, 221, 176, 0.2);
+        padding: 6px 8px;
+        border-radius: 999px;
+      }
+      .mock {
+        background: #f8fafc;
+        border-radius: 18px;
+        padding: 15px;
+        color: var(--ink);
+      }
+      .mock-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 14px;
+      }
+      .mock-title {
+        font-weight: 800;
+      }
+      .mock-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+      }
+      .mock-metric {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 12px;
+      }
+      .mock-metric small {
+        display: block;
+        color: #637087;
+        font-size: 9px;
+        text-transform: uppercase;
+        font-weight: 800;
+      }
+      .mock-metric strong {
+        display: block;
+        font: 700 25px 'Space Grotesk';
+        margin-top: 5px;
+      }
+      .mock-feed {
+        height: 150px;
+        margin-top: 10px;
+        border-radius: 14px;
+        background: radial-gradient(circle at 50% 35%, #203a69, #071934 70%);
+        position: relative;
+        overflow: hidden;
+      }
+      .mock-feed:after {
+        content: 'CÂMERA AO VIVO  •  SALA MONITORADA';
+        position: absolute;
+        left: 12px;
+        bottom: 11px;
+        color: #d7e5ff;
+        font: 600 9px 'IBM Plex Mono';
+      }
+      .mock-feed:before {
+        content: '';
+        position: absolute;
+        left: 12%;
+        right: 12%;
+        top: 28%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #1f9fff, transparent);
+        box-shadow:
+          0 26px 0 rgba(31, 159, 255, 0.35),
+          0 52px 0 rgba(31, 159, 255, 0.18);
+      }
+      .section {
+        padding: 76px 0;
+      }
+      .section-white {
+        background: #fff;
+      }
+      .section-dark {
+        background: #001135;
+        color: #fff;
+      }
+      .section-head {
+        max-width: 920px;
+        margin-bottom: 34px;
+      }
+      .kicker {
+        font: 800 11px 'IBM Plex Mono';
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #0b83e7;
+      }
+      .section-dark .kicker {
+        color: #54cfff;
+      }
+      .section h2 {
+        font: 700 clamp(34px, 4vw, 52px)/1.05 'Space Grotesk';
+        letter-spacing: -0.035em;
+        margin: 10px 0 14px;
+      }
+      .section-head p {
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.7;
+      }
+      .section-dark .section-head p {
+        color: rgba(255, 255, 255, 0.62);
+      }
+      .cards3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 12px 40px rgba(0, 17, 53, 0.04);
+      }
+      .card .icon {
+        width: 45px;
+        height: 45px;
+        border-radius: 13px;
+        display: grid;
+        place-items: center;
+        background: #eaf6ff;
+        color: #0b7fd7;
+        font-weight: 900;
+        margin-bottom: 18px;
+      }
+      .card h3 {
+        font: 700 20px 'Space Grotesk';
+        margin: 0 0 9px;
+      }
+      .card p {
+        color: var(--muted);
+        line-height: 1.65;
+        font-size: 14px;
+      }
+      .card.dark {
+        background: #071b41;
+        border-color: rgba(255, 255, 255, 0.1);
+        color: #fff;
+      }
+      .card.dark p {
+        color: rgba(255, 255, 255, 0.58);
+      }
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+      }
+      .flow-step {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 20px;
+        min-height: 160px;
+        position: relative;
+      }
+      .flow-step b {
+        display: inline-grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 9px;
+        background: #eaf6ff;
+        color: #0b80d9;
+        font: 800 11px 'IBM Plex Mono';
+      }
+      .flow-step h3 {
+        font: 700 17px 'Space Grotesk';
+        margin: 20px 0 8px;
+      }
+      .flow-step p {
+        font-size: 12px;
+        line-height: 1.55;
+        color: var(--muted);
+      }
+      .section-dark .flow-step {
+        background: #071b41;
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+      .section-dark .flow-step h3 {
+        color: #fff;
+      }
+      .section-dark .flow-step p {
+        color: rgba(255, 255, 255, 0.66);
+      }
+      .split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 28px;
+        align-items: center;
+      }
+      .panel {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        padding: 28px;
+        box-shadow: var(--shadow);
+      }
+      .feature-list {
+        display: grid;
+        gap: 12px;
+      }
+      .feature {
+        display: flex;
+        gap: 13px;
+        align-items: flex-start;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: #fff;
+      }
+      .feature i {
+        width: 30px;
+        height: 30px;
+        display: grid;
+        place-items: center;
+        border-radius: 9px;
+        background: #e9f7ff;
+        color: #067fcf;
+        font-style: normal;
+        font-weight: 900;
+        flex: none;
+      }
+      .feature strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+      .feature p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .stat-strip {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+      }
+      .stat {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 20px;
+      }
+      .stat strong {
+        display: block;
+        font: 700 28px 'Space Grotesk';
+        color: #0b67cf;
+      }
+      .stat span {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+        margin-top: 6px;
+      }
+      .cta {
+        background: linear-gradient(135deg, #08245b, #001135);
+        color: #fff;
+        border-radius: 28px;
+        padding: 42px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 30px;
+        box-shadow: 0 30px 70px rgba(0, 17, 53, 0.2);
+      }
+      .cta h2 {
+        margin: 0 0 8px;
+        font-size: 36px;
+      }
+      .cta p {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.64);
+        max-width: 650px;
+        line-height: 1.6;
+      }
+      .footer {
+        background: #001135;
+        color: rgba(255, 255, 255, 0.5);
+        padding: 18px 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .footer-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        font-size: 12px;
+      }
+      .footer img {
+        width: 135px;
+      }
+      .page-hero {
+        background: linear-gradient(135deg, #001135, #08265d);
+        color: #fff;
+        padding: 52px 0 54px;
+      }
+      .page-hero h1 {
+        font: 700 clamp(40px, 5vw, 64px)/1 'Space Grotesk';
+        margin: 16px 0;
+      }
+      .page-hero p {
+        font-size: 17px;
+        color: rgba(255, 255, 255, 0.68);
+        line-height: 1.7;
+        max-width: 820px;
+      }
+      .page-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 18px;
+      }
+      .big-card {
+        border: 1px solid var(--line);
+        background: #fff;
+        border-radius: 20px;
+        padding: 28px;
+      }
+      .big-card h3 {
+        font: 700 22px 'Space Grotesk';
+        margin: 0 0 10px;
+      }
+      .big-card p,
+      .big-card li {
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.65;
+      }
+      .big-card ul {
+        padding-left: 20px;
+      }
+      .note {
+        border-left: 4px solid var(--blue);
+        padding: 14px 18px;
+        background: #edf7ff;
+        border-radius: 0 12px 12px 0;
+        color: #35516f;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      .price-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+      }
+      .price-card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 22px;
+      }
+      .price-card b {
+        display: inline-grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: #eaf6ff;
+        color: #0b80d9;
+        margin-bottom: 16px;
+      }
+      .price-card h3 {
+        font: 700 18px 'Space Grotesk';
+        margin: 0 0 8px;
+      }
+      .price-card p {
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.55;
+      }
+      html.dark {
+        --ink: #edf3fb;
+        --muted: #a6b1c2;
+        --paper: #0b1425;
+        --line: #2a3850;
+        --white: #15213a;
+      }
+      html.dark body,
+      html.dark .section-white {
+        background: var(--paper);
+      }
+      html.dark .card,
+      html.dark .panel,
+      html.dark .feature,
+      html.dark .stat,
+      html.dark .flow-step,
+      html.dark .big-card,
+      html.dark .price-card,
+      html.dark .login-panel {
+        background: var(--white);
+        color: var(--ink);
+      }
+      html.dark .mock {
+        background: #15213a;
+      }
+      html.dark .mock-metric {
+        background: #0e1a30;
+        border-color: #30415d;
+      }
+      html.dark .mock-metric small,
+      html.dark .mock-head .mono {
+        color: #a9b7ca !important;
+      }
+      html.dark .mock-metric strong[style] {
+        color: #42d49b !important;
+      }
+      html.dark .field input {
+        background: #0d192d;
+        border-color: #31415c;
+        color: var(--ink);
+      }
+      html.dark .login-error {
+        background: rgba(198, 61, 69, 0.16);
+        border-color: rgba(255, 133, 140, 0.28);
+        color: #ffb2b7;
+      }
+      html.dark .card .icon,
+      html.dark .flow-step b,
+      html.dark .price-card b,
+      html.dark .feature i {
+        background: #163152;
+        color: #6ed4ff;
+      }
+      html.dark .stat strong {
+        color: #69cfff;
+      }
+      .theme-switch {
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        border-radius: 11px;
+        width: 39px;
+        height: 39px;
+        padding: 0;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+      }
+      .theme-switch svg {
+        width: 17px;
+        height: 17px;
+      }
+      @media (max-width: 960px) {
+        .nav-links {
+          display: none;
+        }
+        .hero-grid,
+        .split {
+          grid-template-columns: 1fr;
+        }
+        .product-card {
+          max-width: 650px;
+        }
+        .cards3,
+        .page-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .flow {
+          grid-template-columns: 1fr 1fr;
+        }
+        .stat-strip,
+        .price-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .cta {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+      }
+      @media (max-width: 640px) {
+        .container {
+          width: min(100% - 24px, 1180px);
+        }
+        .nav {
+          height: 70px;
+        }
+        .brand img {
+          width: 150px;
+        }
+        .login-panel {
+          position: fixed;
+          left: 12px;
+          right: 12px;
+          top: 78px;
+          width: auto;
+        }
+        .hero {
+          padding: 55px 0;
+        }
+        .hero h1 {
+          font-size: 44px;
+        }
+        .cards3,
+        .page-grid,
+        .flow,
+        .stat-strip,
+        .price-grid {
+          grid-template-columns: 1fr;
+        }
+        .section {
+          padding: 55px 0;
+        }
+        .footer-row {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .cta {
+          padding: 28px;
+        }
+        .cta h2 {
+          font-size: 29px;
+        }
+      }
+    </style>
+    <script src="/assets/validation.js" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container nav">
+        <a class="brand" href="/"><img src="/assets/docks-logo.png" alt="Docks" /></a>
+        <nav class="nav-links">
+          <a href="/">Início</a><a href="/solucao">Solução</a><a href="/funcionamento">Como funciona</a
+          ><a class="active" href="/seguranca">Segurança</a><a href="/comercial">Para condomínios</a
+          ><a href="/contato">Fale conosco</a>
+        </nav>
+        <button class="theme-switch" id="theme-switch" type="button" aria-label="Ativar modo escuro">
+          <svg id="theme-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+            />
+          </svg>
+        </button>
+        <div class="login-area">
+          <button class="login-btn" id="login-toggle" aria-expanded="false">
+            Área do cliente <span>↗</span>
+          </button>
+          <div class="login-panel" id="login-panel">
+            <h3 class="display">Acessar o Docks</h3>
+            <p class="hint" id="access-copy">Use suas credenciais de condomínio ou administração.</p>
+            <form id="login-form">
+              <div class="field">
+              <label>Usuário</label><input id="login-user" data-validate="username" maxlength="64" autocomplete="username" required />
+              </div>
+              <div class="field">
+                <label>Senha</label
+              ><input id="login-password" type="password" maxlength="128" autocomplete="current-password" required />
+              </div>
+              <div id="login-error" class="login-error"></div>
+              <button id="login-submit" class="login-submit" type="submit">Entrar</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </header>
+    <section class="page-hero">
+      <div class="container">
+        <div class="eyebrow"><span class="pulse"></span> Segurança e rastreabilidade</div>
+        <h1>Controle de acesso e registro das operações.</h1>
+        <p>
+          O Docks combina autenticação, <em class="qr-term">QR Code</em>, câmera, gravações e registros do sistema para dar mais
+          visibilidade às retiradas.
+        </p>
+      </div>
+    </section>
+    <section class="section section-white">
+      <div class="container">
+        <div class="page-grid">
+          <div class="big-card">
+            <h3><em class="qr-term">QR Code</em> temporário</h3>
+            <p>
+              O código é gerado para um morador específico, possui prazo de validade e não pode ser
+              reutilizado depois de uma validação bem-sucedida.
+            </p>
+          </div>
+          <div class="big-card">
+            <h3>Confirmação de retirada</h3>
+            <p>
+              A leitura do <em class="qr-term">QR</em> libera o acesso, mas a retirada só é concluída no sistema quando o morador
+              confirma a operação.
+            </p>
+          </div>
+          <div class="big-card">
+            <h3>Câmera e gravação</h3>
+            <p>
+              O painel permite acompanhar a câmera ao vivo. Durante a retirada, a gravação pode ser iniciada
+              automaticamente e permanecer disponível pelo período configurado.
+            </p>
+          </div>
+          <div class="big-card">
+            <h3>Registros de auditoria</h3>
+            <p>
+              Cadastro, validações, ações dos componentes físicos, falhas e retiradas geram registros que
+              podem ser consultados pela administração.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="container">
+        <div class="section-head">
+          <div class="kicker">Privacidade</div>
+          <h2>Dados pessoais tratados com finalidade definida.</h2>
+          <p>
+            O sistema trabalha com dados necessários à gestão das encomendas, como identificação do morador,
+            apartamento, telefone, fotografias e informações de acesso.
+          </p>
+        </div>
+        <div class="cards3">
+          <div class="card">
+            <div class="icon">1</div>
+            <h3>Senhas protegidas</h3>
+            <p>As senhas dos moradores são armazenadas com proteção criptográfica.</p>
+          </div>
+          <div class="card">
+            <div class="icon">2</div>
+            <h3>Termos no primeiro acesso</h3>
+            <p>O morador declara ciência dos Termos de Uso e do Aviso de Privacidade antes de continuar.</p>
+          </div>
+          <div class="card">
+            <div class="icon">3</div>
+            <h3>Retenção limitada</h3>
+            <p>
+              As gravações de segurança possuem prazo de retenção configurável, definido atualmente em sete
+              dias.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <footer class="footer">
+      <div class="container footer-row">
+        <img src="/assets/docks-logo.png" alt="Docks" /><span
+          >Gestão inteligente de encomendas para condomínios</span
+        ><span>Grupo 3404 · ETE FMC · PROJETE 2026</span>
+      </div>
+    </footer>
+    <script>
+      // Reutiliza a sessão e o tema definidos nas outras páginas públicas.
+      const API_URL = window.location.protocol === 'file:' ? 'http://127.0.0.1:5000' : window.location.origin
+      const loginToggle = document.getElementById('login-toggle'),
+        loginPanel = document.getElementById('login-panel'),
+        loginForm = document.getElementById('login-form'),
+        loginError = document.getElementById('login-error'),
+        loginSubmit = document.getElementById('login-submit')
+      let darkMode = localStorage.getItem('docks-theme') === 'dark'
+      document.documentElement.classList.toggle('dark', darkMode)
+      function renderThemeIcon() {
+        // Atualiza sol/lua e o rótulo acessível conforme a preferência compartilhada.
+        const icon = document.getElementById('theme-icon')
+        icon.innerHTML = darkMode
+          ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>'
+          : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>'
+        document
+          .getElementById('theme-switch')
+          .setAttribute('aria-label', darkMode ? 'Ativar modo claro' : 'Ativar modo escuro')
+      }
+      function openLogin() {
+        // Abre o formulário e posiciona o foco para uso imediato pelo teclado.
+        loginPanel.classList.add('open')
+        loginToggle.setAttribute('aria-expanded', 'true')
+        setTimeout(() => document.getElementById('login-user').focus(), 60)
+      }
+      function closeLogin() {
+        loginPanel.classList.remove('open')
+        loginToggle.setAttribute('aria-expanded', 'false')
+      }
+      loginToggle.addEventListener('click', (e) => {
+        e.stopPropagation()
+        loginPanel.classList.contains('open') ? closeLogin() : openLogin()
+      })
+      loginPanel.addEventListener('click', (e) => e.stopPropagation())
+      document.addEventListener('click', closeLogin)
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeLogin()
+      })
+      document.getElementById('theme-switch').addEventListener('click', () => {
+        darkMode = !darkMode
+        document.documentElement.classList.toggle('dark', darkMode)
+        localStorage.setItem('docks-theme', darkMode ? 'dark' : 'light')
+        renderThemeIcon()
+      })
+      renderThemeIcon()
+      loginForm.addEventListener('submit', async (e) => {
+        // O backend decide se o token permite abrir administração ou dashboard.
+        e.preventDefault()
+        loginError.style.display = 'none'
+        loginSubmit.disabled = true
+        const old = loginSubmit.textContent
+        loginSubmit.textContent = 'Validando acesso…'
+        const usuario = document.getElementById('login-user').value.trim(),
+          senha = document.getElementById('login-password').value
+        try {
+          const r = await fetch(`${API_URL}/api/login`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ usuario, senha }),
+            }),
+            d = await r.json()
+          if (!r.ok || !d.success) throw new Error(d.message || 'Usuário ou senha incorretos.')
+          if (d.access_type === 'admin') {
+            sessionStorage.setItem('docks_admin_token', d.token)
+            location.assign(`${API_URL}/admin`)
+          } else {
+            sessionStorage.setItem('docks_dashboard_token', d.token)
+            location.assign(`${API_URL}/dashboard`)
+          }
+        } catch (err) {
+          loginError.textContent = err.message || 'Não foi possível conectar ao Docks.'
+          loginError.style.display = 'block'
+        } finally {
+          loginSubmit.disabled = false
+          loginSubmit.textContent = old
+        }
+      })
+      const params = new URLSearchParams(location.search)
+      if (params.get('login')) openLogin()
+    </script>
+    <script src="/assets/accessibility.js" defer></script>
+  </body>
+</html>

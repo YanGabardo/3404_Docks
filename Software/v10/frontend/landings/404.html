@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Docks · Página não encontrada</title>
+    <link rel="icon" href="/assets/favicon.png" type="image/png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      :root { --navy: #001135; --blue: #1098ff; --ink: #10203b; --muted: #637087; --paper: #f5f8fc; --card: #fff; --line: #e2e9f2; }
+      * { box-sizing: border-box; }
+      html, body { min-height: 100%; margin: 0; }
+      body { background: var(--paper); color: var(--ink); font-family: Inter, 'Segoe UI', Arial, sans-serif; }
+      button, input { font: inherit; }
+      a { color: inherit; text-decoration: none; }
+      .container { width: min(1120px, calc(100% - 32px)); margin: auto; }
+      .site-header { position: sticky; top: 0; z-index: 50; background: var(--navy); border-bottom: 1px solid rgba(255,255,255,.08); color: #fff; }
+      .nav { height: 74px; display: flex; align-items: center; gap: 20px; }
+      .brand { display: flex; align-items: center; min-width: 165px; }
+      .brand img { display: block; width: 165px; }
+      .nav-links { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+      .nav-links a { color: rgba(255,255,255,.65); font-size: 13px; font-weight: 750; padding: 10px 9px; border-radius: 10px; }
+      .nav-links a:hover { color: #fff; background: rgba(255,255,255,.08); }
+      .theme-switch { width: 39px; height: 39px; padding: 0; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.08); color: #fff; border-radius: 11px; cursor: pointer; }
+      .theme-switch svg { width: 17px; height: 17px; }
+      .login-area { position: relative; margin-left: 4px; }
+      .login-btn { border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.08); color: #fff; padding: 10px 13px; border-radius: 11px; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 800; }
+      .login-btn:hover { border-color: rgba(65,199,255,.8); background: rgba(16,152,255,.16); }
+      .login-panel { position: absolute; right: 0; top: calc(100% + 14px); width: 355px; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 20px; box-shadow: 0 30px 80px rgba(0,0,0,.28); opacity: 0; visibility: hidden; transform: translateY(-8px); transition: .2s; color: var(--ink); }
+      .login-panel.open { opacity: 1; visibility: visible; transform: none; }
+      .login-panel h3 { margin: 0 0 5px; font: 700 18px 'Space Grotesk', sans-serif; }
+      .hint { color: var(--muted); font-size: 12px; line-height: 1.5; margin: 0 0 15px; }
+      .field { margin: 11px 0; }
+      .field label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+      .field input { width: 100%; border: 1px solid var(--line); background: var(--paper); color: var(--ink); border-radius: 11px; padding: 12px 13px; outline: none; }
+      .field input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(16,152,255,.12); }
+      .login-submit { width: 100%; border: 0; background: var(--navy); color: #fff; border-radius: 11px; padding: 12px 14px; font-weight: 800; cursor: pointer; margin-top: 7px; }
+      .login-error { display: none; margin-top: 10px; background: #fff1f0; color: #b42318; border: 1px solid #ffd8d3; border-radius: 10px; padding: 9px 10px; font-size: 12px; font-weight: 700; }
+      .not-found { min-height: calc(100vh - 147px); display: grid; place-items: center; padding: 28px 16px; background: radial-gradient(circle at 75% 20%, rgba(16,152,255,.15), transparent 38%), var(--paper); }
+      .not-found-card { width: min(720px, 100%); background: var(--card); border: 1px solid var(--line); border-radius: 28px; padding: clamp(28px, 6vw, 58px); box-shadow: 0 30px 90px rgba(0,17,53,.12); text-align: center; }
+      .code { display: inline-flex; margin: 0 0 10px; padding: 8px 13px; border-radius: 999px; background: rgba(16,152,255,.11); color: #0874c6; font-weight: 900; font-size: 11px; letter-spacing: .09em; }
+      h1 { margin: 8px auto 12px; max-width: 650px; font: 700 clamp(34px,6vw,56px)/1 'Space Grotesk', sans-serif; letter-spacing: -.04em; }
+      .not-found-card p { margin: 0 auto 28px; max-width: 540px; color: var(--muted); line-height: 1.7; }
+      .home-link { display: inline-flex; align-items: center; justify-content: center; background: var(--navy); color: #fff; font-weight: 800; padding: 14px 20px; border-radius: 13px; box-shadow: 0 14px 34px rgba(0,17,53,.18); }
+      .home-link:hover { background: #09255a; }
+      .footer { background: var(--navy); color: rgba(255,255,255,.5); padding: 16px 0; border-top: 1px solid rgba(255,255,255,.08); }
+      .footer-row { display: flex; justify-content: space-between; align-items: center; gap: 20px; font-size: 12px; }
+      .footer img { width: 135px; }
+      html.dark { --ink: #edf3fb; --muted: #a6b1c2; --paper: #0b1425; --card: #15213a; --line: #2a3850; }
+      html.dark .not-found-card { box-shadow: none; }
+      html.dark .code { color: #70d4ff; background: #163152; }
+      html.dark .login-error { background: rgba(198,61,69,.16); border-color: rgba(255,133,140,.28); color: #ffb2b7; }
+      @media (max-width: 960px) { .nav-links { display: none; } }
+      @media (max-width: 640px) { .brand img { width: 150px; } .login-panel { position: fixed; left: 12px; right: 12px; top: 78px; width: auto; } .footer-row { flex-direction: column; align-items: flex-start; } }
+    </style>
+    <script src="/assets/validation.js" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container nav">
+        <a class="brand" href="/"><img src="/assets/docks-logo.png" alt="Docks" /></a>
+        <nav class="nav-links"><a href="/">Início</a><a href="/solucao">Solução</a><a href="/funcionamento">Como funciona</a><a href="/seguranca">Segurança</a><a href="/comercial">Para condomínios</a><a href="/contato">Fale conosco</a></nav>
+        <button class="theme-switch" id="theme-switch" type="button" aria-label="Ativar modo escuro"><svg id="theme-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg></button>
+        <div class="login-area">
+          <button class="login-btn" id="login-toggle" type="button" aria-expanded="false">Área do cliente <span>↗</span></button>
+<div class="login-panel" id="login-panel"><h3>Acessar o Docks</h3><p class="hint">Use suas credenciais de condomínio ou administração.</p><form id="login-form"><div class="field"><label for="login-user">Usuário</label><input id="login-user" data-validate="username" maxlength="64" autocomplete="username" required /></div><div class="field"><label for="login-password">Senha</label><input id="login-password" type="password" maxlength="128" autocomplete="current-password" required /></div><div id="login-error" class="login-error"></div><button id="login-submit" class="login-submit" type="submit">Entrar</button></form></div>
+        </div>
+      </div>
+    </header>
+    <main class="not-found"><section class="not-found-card"><span class="code">ERRO 404</span><h1>Esta rota não atracou por aqui.</h1><p>O endereço informado não existe ou foi alterado. Volte ao início para continuar navegando com segurança.</p><a class="home-link" href="/">Voltar ao início</a></section></main>
+    <footer class="footer"><div class="container footer-row"><img src="/assets/docks-logo.png" alt="Docks" /><span>Gestão inteligente de encomendas para condomínios</span><span>Grupo 3404 · ETE FMC · PROJETE 2026</span></div></footer>
+    <script>
+      // Conserva o tema escolhido e oferece retorno às rotas públicas do Docks.
+      const API_URL = window.location.protocol === 'file:' ? 'http://127.0.0.1:5000' : window.location.origin
+      let darkMode = localStorage.getItem('docks-theme') === 'dark'
+      document.documentElement.classList.toggle('dark', darkMode)
+      function renderThemeIcon() {
+        // Página de erro respeita o mesmo tema usado nas demais landings.
+        document.getElementById('theme-icon').innerHTML = darkMode ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>' : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>'
+        document.getElementById('theme-switch').setAttribute('aria-label', darkMode ? 'Ativar modo claro' : 'Ativar modo escuro')
+      }
+      document.getElementById('theme-switch').addEventListener('click', () => { darkMode = !darkMode; document.documentElement.classList.toggle('dark', darkMode); localStorage.setItem('docks-theme', darkMode ? 'dark' : 'light'); renderThemeIcon() })
+      renderThemeIcon()
+      const loginToggle = document.getElementById('login-toggle'), loginPanel = document.getElementById('login-panel'), loginError = document.getElementById('login-error'), loginSubmit = document.getElementById('login-submit')
+      function closeLogin() { loginPanel.classList.remove('open'); loginToggle.setAttribute('aria-expanded', 'false') }
+      loginToggle.addEventListener('click', (event) => { event.stopPropagation(); const opening = !loginPanel.classList.contains('open'); loginPanel.classList.toggle('open', opening); loginToggle.setAttribute('aria-expanded', String(opening)); if (opening) setTimeout(() => document.getElementById('login-user').focus(), 60) })
+      loginPanel.addEventListener('click', (event) => event.stopPropagation())
+      document.addEventListener('click', closeLogin)
+      document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeLogin() })
+      document.getElementById('login-form').addEventListener('submit', async (event) => {
+        // Mesmo em URL inválida, o login da navegação encaminha ao painel correto.
+        event.preventDefault(); loginError.style.display = 'none'; loginSubmit.disabled = true; loginSubmit.textContent = 'Validando acesso…'
+        try {
+          const response = await fetch(`${API_URL}/api/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ usuario: document.getElementById('login-user').value.trim(), senha: document.getElementById('login-password').value }) })
+          const data = await response.json().catch(() => ({})); if (!response.ok || !data.success) throw new Error(data.message || 'Usuário ou senha incorretos.')
+          if (data.access_type === 'admin') { sessionStorage.setItem('docks_admin_token', data.token); location.assign(`${API_URL}/admin`) } else { sessionStorage.setItem('docks_dashboard_token', data.token); location.assign(`${API_URL}/dashboard`) }
+        } catch (error) { loginError.textContent = error.message || 'Não foi possível conectar ao Docks.'; loginError.style.display = 'block' }
+        finally { loginSubmit.disabled = false; loginSubmit.textContent = 'Entrar' }
+      })
+    </script>
+    <script src="/assets/accessibility.js" defer></script>
+  </body>
+</html>

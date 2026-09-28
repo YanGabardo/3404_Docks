@@ -1,0 +1,763 @@
+<!doctype html>
+<html lang="pt-BR" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Docks · Totem de Validação</title>
+    <link rel="icon" href="/assets/favicon.png" type="image/png" />
+    <link href="/assets/vendor/fonts.css" rel="stylesheet" />
+    <script src="/assets/vendor/tailwindcss.js"></script>
+    <script src="/assets/vendor/html5-qrcode.min.js"></script>
+    <script>
+      // O tablet usa a mesma paleta, mantendo contraste no modo escuro fixo.
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              ink: '#10192B',
+              inkalt: '#182640',
+              paper: '#FAF8F3',
+              blue: { DEFAULT: '#2563EB', dark: '#1D4ED8', light: '#DBEAFE' },
+              teal: { DEFAULT: '#2E9C6C', dark: '#1F7A54', light: '#DDF3E9' },
+              brick: { DEFAULT: '#D14343', dark: '#AC3232', light: '#FBE1E1' },
+              amber: { DEFAULT: '#E9A23B', light: '#FFF2D9' },
+              line: '#28344C',
+            },
+            fontFamily: {
+              display: ['"Space Grotesk"', 'sans-serif'],
+              body: ['Inter', 'sans-serif'],
+              mono: ['"IBM Plex Mono"', 'monospace'],
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      .font-display {
+        font-family: 'Space Grotesk', sans-serif;
+      }
+      .font-mono {
+        font-family: 'IBM Plex Mono', monospace;
+      }
+      #reader video,
+      #reader__scan_region {
+        border-radius: 1.25rem;
+      }
+      #reader__dashboard {
+        display: none !important;
+      }
+      input:focus,
+      button:focus-visible {
+        outline: 2px solid #2563eb;
+        outline-offset: 2px;
+      }
+      .hidden-view {
+        display: none !important;
+      }
+      .qr-term {
+        font-style: italic;
+      }
+      #main-body {
+        background: #001135;
+        color: #ffffff;
+      }
+      html.dark #main-body {
+        background: #07111f;
+      }
+      .totem-flow {
+        position: relative;
+        z-index: 10;
+        display: flex;
+        gap: 0.45rem;
+        padding: 0.4rem;
+        border-radius: 999px;
+        background: rgba(24, 38, 64, 0.86);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(12px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+        margin: 0 auto 12px;
+      }
+      .totem-step {
+        padding: 0.42rem 0.72rem;
+        border-radius: 999px;
+        color: rgba(255, 255, 255, 0.38);
+        font-size: 0.65rem;
+        font-weight: 800;
+        white-space: nowrap;
+        transition: all 0.2s ease;
+      }
+      .totem-step.active {
+        background: #2563eb;
+        color: white;
+      }
+      .totem-step.done {
+        background: rgba(46, 156, 108, 0.18);
+        color: #72d5a3;
+      }
+      .validator-brand {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        max-width: 470px;
+        margin: 0 auto;
+      }
+      .validator-logo {
+        width: 125px;
+        flex: none;
+      }
+      .validator-association {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-width: 0;
+        max-width: 290px;
+        width: 100%;
+        border: 1px solid rgba(255, 255, 255, 0.24);
+        border-radius: 11px;
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+        padding: 9px 11px;
+        font-weight: 700;
+        text-align: center;
+        backdrop-filter: blur(10px);
+      }
+      .validator-association svg {
+        flex: none;
+      }
+      .condo-setup {
+        position: fixed;
+        z-index: 60;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 20px;
+        background: rgba(3, 10, 25, 0.74);
+        backdrop-filter: blur(10px);
+      }
+      .condo-setup-card {
+        width: min(100%, 520px);
+        max-height: min(640px, calc(100dvh - 40px));
+        overflow: auto;
+        border: 1px solid #dce4ef;
+        border-radius: 24px;
+        background: #ffffff;
+        color: #10192b;
+        padding: 24px;
+        box-shadow: 0 28px 80px rgba(0, 0, 0, 0.35);
+      }
+      html.dark .condo-setup-card {
+        border-color: #2d3b54;
+        background: #111c30;
+        color: #f8fafc;
+      }
+      .condo-search-field {
+        width: 100%;
+        margin-top: 18px;
+        border: 1px solid #dce4ef;
+        border-radius: 14px;
+        background: #f7f9fc;
+        color: #10192b;
+        padding: 13px 15px;
+        font-weight: 650;
+      }
+      .condo-search-field::placeholder { color: #728096; }
+      html.dark .condo-search-field {
+        border-color: #31405b;
+        background: #0d192d;
+        color: #f8fafc;
+      }
+      html.dark .condo-search-field::placeholder { color: #9ca8bf; }
+      .condo-list {
+        display: grid;
+        gap: 10px;
+        margin-top: 10px;
+      }
+      .condo-choice {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border: 1px solid #dce4ef;
+        border-radius: 15px;
+        background: #f7f9fc;
+        color: #10192b;
+        padding: 14px 16px;
+        text-align: left;
+        font-weight: 750;
+      }
+      .condo-choice:hover,
+      .condo-choice[aria-current='true'] {
+        border-color: #2563eb;
+        background: #eaf1ff;
+      }
+      html.dark .condo-choice {
+        border-color: #31405b;
+        background: #182640;
+        color: #f8fafc;
+      }
+      html.dark .condo-choice:hover,
+      html.dark .condo-choice[aria-current='true'] {
+        border-color: #60a5fa;
+        background: #20375f;
+      }
+      @media (max-height: 760px) {
+        #reader {
+          min-height: 260px !important;
+        }
+        .text-4xl {
+          font-size: 1.8rem !important;
+        }
+        .mb-7 {
+          margin-bottom: 0.75rem !important;
+        }
+        .totem-step {
+          padding: 0.35rem 0.55rem;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+    <script src="/assets/validation.js" defer></script>
+  </head>
+
+  <body
+    id="main-body"
+    class="bg-paper font-body text-ink h-[100dvh] overflow-hidden flex flex-col items-center justify-center p-4"
+  >
+    <div
+      class="absolute inset-0 opacity-[0.06] pointer-events-none"
+      style="background-image: radial-gradient(#2563eb 1px, transparent 1px); background-size: 28px 28px"
+    ></div>
+
+    <div class="totem-flow" aria-label="Etapas da retirada">
+      <span id="totem-step-scan" class="totem-step active">1 · Validar <em class="qr-term">QR</em></span>
+      <span id="totem-step-retirada" class="totem-step">2 · Retirar</span>
+      <span id="totem-step-final" class="totem-step">3 · Confirmar</span>
+    </div>
+
+    <main id="view-scan" class="z-10 w-full max-w-xl">
+      <div class="text-center mb-7">
+        <div class="validator-brand">
+          <img class="validator-logo" src="/assets/docks-logo.png" alt="Docks" />
+          <button
+            id="validator-condo-button"
+            class="validator-association"
+            type="button"
+            aria-label="Alterar condomínio associado"
+            onclick="openCondoSetup()"
+          >
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M5 21V5l7-3v19m7 0V9l-7-2m-3 3h.01M9 14h.01M9 18h.01M15 13h.01M15 17h.01" />
+            </svg>
+            <span id="validator-condo-name">Associar condomínio</span>
+          </button>
+        </div>
+        <h1 class="text-4xl font-display font-bold tracking-tight mt-3">Sala de Encomendas</h1>
+        <p class="text-white/70 mt-2 font-medium">Apresente o <em class="qr-term">QR Code</em> do Docks para liberar o acesso</p>
+      </div>
+
+      <div
+        id="scanner-box"
+        class="relative bg-inkalt p-3 rounded-[2rem] shadow-[0_0_60px_rgba(0,0,0,0.45)] border border-line"
+      >
+        <div
+          id="reader"
+          class="rounded-[1.5rem] overflow-hidden bg-black"
+          style="width: 100%; min-height: 340px"
+        ></div>
+
+        <div
+          id="camera-fallback"
+          class="hidden-view rounded-[1.5rem] bg-black/40 flex flex-col items-center justify-center text-center p-8"
+          style="min-height: 340px"
+        >
+          <svg class="w-10 h-10 text-white/30 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.5"
+              d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+            />
+          </svg>
+          <p class="text-sm text-white/60 font-medium">
+            Câmera indisponível. Verifique a permissão do navegador e tente novamente.
+          </p>
+        </div>
+
+        <div
+          id="overlay-result"
+          class="absolute inset-0 bg-inkalt/97 rounded-[2rem] flex flex-col items-center justify-center hidden-view backdrop-blur-md"
+        >
+          <div
+            id="overlay-spinner"
+            class="w-14 h-14 border-4 border-white/20 border-t-blue rounded-full animate-spin mb-5"
+          ></div>
+          <div id="icon-error" class="hidden-view text-brick mb-5">
+            <svg class="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+          </div>
+          <h2 id="result-title" class="text-3xl font-display font-bold mb-2 text-center px-6">
+            Autenticando…
+          </h2>
+          <p id="result-msg" class="text-white/60 text-lg text-center px-8 font-medium">
+            Validando o acesso e acionando a fechadura.
+          </p>
+        </div>
+      </div>
+    </main>
+
+    <div id="condo-setup" class="condo-setup hidden-view" role="dialog" aria-modal="true" aria-labelledby="condo-setup-title">
+      <section class="condo-setup-card">
+        <p class="text-xs font-bold uppercase tracking-[0.18em] text-blue">Configuração do dispositivo</p>
+        <h2 id="condo-setup-title" class="font-display text-2xl font-bold mt-2">Associar este validador</h2>
+        <p class="mt-2 text-sm opacity-70">Digite as primeiras letras e selecione o condomínio sugerido. A associação ficará salva neste navegador.</p>
+        <input id="validator-condo-search" class="condo-search-field" type="search" data-validate="place" maxlength="140" autocomplete="off" placeholder="Digite o nome do condomínio…" oninput="buscarCondominiosValidador(this.value)" aria-label="Buscar condomínio" />
+        <div id="validator-condo-list" class="condo-list" aria-live="polite">
+          <p class="text-sm opacity-65">Digite pelo menos duas letras para buscar.</p>
+        </div>
+        <button id="condo-setup-close" type="button" onclick="closeCondoSetup()" class="hidden-view w-full mt-4 border border-slate-300 dark:border-slate-600 font-bold py-3 rounded-xl">
+          Cancelar
+        </button>
+      </section>
+    </div>
+
+    <main id="view-retirada" class="hidden-view z-10 w-full max-w-xl">
+      <div class="bg-inkalt border border-teal/40 rounded-[2rem] shadow-2xl p-7">
+        <div class="text-center">
+          <div
+            class="w-20 h-20 rounded-full bg-teal/15 text-teal flex items-center justify-center mx-auto mb-4 border border-teal/30"
+          >
+            <svg class="w-11 h-11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal mb-2">Acesso autorizado</p>
+          <h1 class="text-3xl font-display font-bold">Retire sua encomenda</h1>
+          <p class="text-white/55 mt-2">
+            A fechadura foi acionada.<br />Ao sair da sala, confirme a retirada neste tablet.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-7">
+          <div class="bg-ink border border-line rounded-2xl p-4">
+            <p class="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Prateleira(s)</p>
+            <p id="retirada-prateleiras" class="font-mono font-bold text-blue text-lg">—</p>
+          </div>
+          <div class="bg-ink border border-line rounded-2xl p-4">
+            <p class="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Fechadura</p>
+            <p class="font-bold text-teal">Liberada</p>
+          </div>
+        </div>
+
+        <div
+          id="gravacao-box"
+          class="mt-3 bg-ink border border-line rounded-2xl p-4 flex items-center justify-between gap-4"
+        >
+          <div>
+            <p class="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">
+              Gravação de segurança
+            </p>
+            <p id="gravacao-status" class="font-bold text-brick">● Em andamento</p>
+          </div>
+          <div class="text-right">
+            <p class="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">
+              Limite automático
+            </p>
+            <p id="gravacao-timer" class="font-mono font-bold text-white">03:00</p>
+          </div>
+        </div>
+
+        <button
+          id="btn-confirmar-retirada"
+          onclick="confirmarRetirada()"
+          class="w-full mt-6 bg-teal hover:bg-teal-dark text-white font-display font-bold text-lg py-4 rounded-2xl shadow-xl transition active:scale-[0.99]"
+        >
+          Confirmar retirada e encerrar gravação
+        </button>
+      </div>
+    </main>
+
+    <main id="view-final" class="hidden-view z-10 w-full max-w-lg text-center">
+      <div class="bg-inkalt border border-line rounded-[2rem] p-8 shadow-2xl">
+        <div
+          class="w-20 h-20 rounded-full bg-teal/15 text-teal flex items-center justify-center mx-auto mb-5"
+        >
+          <svg class="w-11 h-11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h1 class="text-3xl font-display font-bold">Retirada confirmada</h1>
+        <p class="text-white/55 mt-2">A operação foi registrada no histórico do Docks.</p>
+        <p class="text-xs text-white/30 mt-5">O totem voltará ao modo de leitura automaticamente.</p>
+      </div>
+    </main>
+
+    <script>
+      // Reaproveita a origem do servidor, inclusive quando ele é publicado com HTTPS.
+      const API_URL = window.location.protocol === 'file:' ? 'http://127.0.0.1:5000' : window.location.origin
+
+      let html5QrCode
+      let isProcessing = false
+      let retiradaId = null
+      let chaveConfirmacao = ''
+      let gravacaoCountdown = null
+      let statusPolling = null
+      let condominioValidadorId = localStorage.getItem('docks-validador-condominio-id') || ''
+      let condominioValidadorNome = localStorage.getItem('docks-validador-condominio-nome') || ''
+      let validatorSearchTimer
+
+      // Associação persistida e busca de condomínios pelo nome, sem lista fixa na interface.
+      function updateCondoAssociationLabel() {
+        document.getElementById('validator-condo-name').textContent =
+          condominioValidadorNome || 'Associar condomínio'
+      }
+
+      function openCondoSetup() {
+        document.getElementById('condo-setup').classList.remove('hidden-view')
+        document.getElementById('condo-setup-close').classList.toggle('hidden-view', !condominioValidadorId)
+        const input = document.getElementById('validator-condo-search')
+        input.value = ''
+        renderValidatorSearchMessage('Digite pelo menos duas letras para buscar.')
+        setTimeout(() => input.focus(), 0)
+      }
+
+      function closeCondoSetup() {
+        if (!condominioValidadorId) return
+        document.getElementById('condo-setup').classList.add('hidden-view')
+      }
+
+      function associateValidator(item) {
+        condominioValidadorId = String(item.id)
+        condominioValidadorNome = item.nome
+        localStorage.setItem('docks-validador-condominio-id', condominioValidadorId)
+        localStorage.setItem('docks-validador-condominio-nome', condominioValidadorNome)
+        updateCondoAssociationLabel()
+        document.getElementById('condo-setup').classList.add('hidden-view')
+      }
+
+      function renderValidatorSearchMessage(message, isError = false) {
+        const list = document.getElementById('validator-condo-list')
+        list.replaceChildren()
+        const text = document.createElement('p')
+        text.className = isError ? 'text-sm text-brick font-semibold' : 'text-sm opacity-65'
+        text.textContent = message
+        list.appendChild(text)
+      }
+
+      function renderValidatorCondominios(condominios) {
+        const list = document.getElementById('validator-condo-list')
+        list.replaceChildren()
+        if (!condominios.length) return renderValidatorSearchMessage('Nenhum condomínio encontrado.')
+        condominios.forEach((item) => {
+          const choice = document.createElement('button')
+          choice.type = 'button'
+          choice.className = 'condo-choice'
+          choice.setAttribute('aria-current', String(item.id) === condominioValidadorId ? 'true' : 'false')
+          const name = document.createElement('span')
+          name.textContent = item.nome
+          const action = document.createElement('span')
+          action.className = 'text-xs text-blue font-bold'
+          action.textContent = String(item.id) === condominioValidadorId ? 'Associado' : 'Selecionar'
+          choice.append(name, action)
+          choice.addEventListener('click', () => associateValidator(item))
+          list.appendChild(choice)
+        })
+      }
+
+      function buscarCondominiosValidador(valor) {
+        // O atraso evita uma chamada de rede por tecla e descarta buscas antigas.
+        clearTimeout(validatorSearchTimer)
+        const termo = valor.trim()
+        if (termo.length < 2) {
+          renderValidatorSearchMessage('Digite pelo menos duas letras para buscar.')
+          return
+        }
+        renderValidatorSearchMessage('Buscando condomínios…')
+        validatorSearchTimer = setTimeout(async () => {
+          try {
+            const res = await fetch(`${API_URL}/api/condominios/buscar?q=${encodeURIComponent(termo)}`)
+            if (!res.ok) throw new Error()
+            const condominios = await res.json()
+            renderValidatorCondominios(Array.isArray(condominios) ? condominios : [])
+          } catch (e) {
+            renderValidatorSearchMessage(
+              'Não foi possível buscar os condomínios. Verifique a conexão com o servidor.',
+              true,
+            )
+          }
+        }, 280)
+      }
+
+      function showOnly(id) {
+        ;['view-scan', 'view-retirada', 'view-final'].forEach((viewId) => {
+          document.getElementById(viewId).classList.toggle('hidden-view', viewId !== id)
+        })
+
+        const order = ['view-scan', 'view-retirada', 'view-final']
+        const stepIds = ['totem-step-scan', 'totem-step-retirada', 'totem-step-final']
+        const current = order.indexOf(id)
+        stepIds.forEach((stepId, index) => {
+          const el = document.getElementById(stepId)
+          el.classList.remove('active', 'done')
+          if (index === current) el.classList.add('active')
+          else if (index < current) el.classList.add('done')
+        })
+      }
+
+      // Mantém apenas uma câmera ativa e apresenta a alternativa de permissão quando necessário.
+      async function initScanner() {
+        // Só ativa a câmera depois de associar o tablet a um condomínio.
+        if (
+          typeof Html5Qrcode === 'undefined' ||
+          !navigator.mediaDevices ||
+          !navigator.mediaDevices.getUserMedia
+        ) {
+          document.getElementById('reader').classList.add('hidden-view')
+          document.getElementById('camera-fallback').classList.remove('hidden-view')
+          return
+        }
+
+        html5QrCode = new Html5Qrcode('reader')
+        try {
+          await html5QrCode.start(
+            { facingMode: 'environment' },
+            { fps: 15, qrbox: { width: 280, height: 280 } },
+            onScanSuccess,
+            () => {},
+          )
+        } catch (e) {
+          try {
+            await html5QrCode.start(
+              { facingMode: 'user' },
+              { fps: 15, qrbox: { width: 280, height: 280 } },
+              onScanSuccess,
+              () => {},
+            )
+          } catch (e2) {
+            document.getElementById('reader').classList.add('hidden-view')
+            document.getElementById('camera-fallback').classList.remove('hidden-view')
+          }
+        }
+      }
+
+      async function stopScannerSafely() {
+        // Fecha a leitura antes de alternar telas para evitar validações repetidas.
+        try {
+          if (html5QrCode && html5QrCode.isScanning) await html5QrCode.stop()
+        } catch (e) {}
+      }
+
+      function showOverlay(show, title = '', msg = '', isError = false) {
+        const overlay = document.getElementById('overlay-result')
+        overlay.classList.toggle('hidden-view', !show)
+        if (!show) return
+
+        setQrFormattedText(document.getElementById('result-title'), title)
+        setQrFormattedText(document.getElementById('result-msg'), msg)
+        document.getElementById('overlay-spinner').classList.toggle('hidden-view', isError)
+        document.getElementById('icon-error').classList.toggle('hidden-view', !isError)
+        document.getElementById('result-title').className = isError
+          ? 'text-3xl font-display font-bold mb-2 text-center px-6 text-brick'
+          : 'text-3xl font-display font-bold mb-2 text-center px-6 text-white'
+      }
+
+      function setQrFormattedText(element, value) {
+        element.replaceChildren()
+        String(value)
+          .split(/(QR Codes?|QR Code|QR)/gi)
+          .filter(Boolean)
+          .forEach((part) => {
+            if (/^QR(?: Codes?| Code)?$/i.test(part)) {
+              const emphasis = document.createElement('em')
+              emphasis.className = 'qr-term'
+              emphasis.textContent = part
+              element.appendChild(emphasis)
+            } else {
+              element.appendChild(document.createTextNode(part))
+            }
+          })
+      }
+
+      // A trava bloqueia quadros repetidos; a regra de uso único continua no servidor.
+      async function onScanSuccess(decodedText) {
+        // Trava a leitura enquanto o backend verifica QR, condomínio e uso único.
+        if (isProcessing) return
+        if (!condominioValidadorId) {
+          showOverlay(
+            true,
+            'Selecione o condomínio',
+            'Associe este validador ao condomínio antes de ler o QR Code.',
+            true,
+          )
+          setTimeout(() => showOverlay(false), 3500)
+          return
+        }
+        isProcessing = true
+        showOverlay(true, 'Autenticando…', 'Validando o QR Code e acionando a fechadura.', false)
+
+        try {
+          const res = await fetch(`${API_URL}/api/validar_qr`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: decodedText, condominio_id: Number(condominioValidadorId) }),
+          })
+          const data = await res.json()
+
+          if (!res.ok) {
+            showOverlay(true, 'Acesso negado', data.message || 'Não foi possível validar o acesso.', true)
+            setTimeout(() => {
+              showOverlay(false)
+              isProcessing = false
+            }, 4500)
+            return
+          }
+
+          retiradaId = data.retirada_id
+          chaveConfirmacao = data.chave_confirmacao
+          document.getElementById('retirada-prateleiras').innerText =
+            (data.prateleiras || []).join(', ') || '—'
+
+          await stopScannerSafely()
+          showOverlay(false)
+          showOnly('view-retirada')
+          iniciarContagemGravacao(data.gravacao_limite_segundos || 180, data.gravacao_ativa !== false)
+          iniciarPollingRetirada()
+        } catch (err) {
+          showOverlay(true, 'Erro de rede', 'Não foi possível falar com o servidor Docks.', true)
+          setTimeout(() => {
+            showOverlay(false)
+            isProcessing = false
+          }, 4500)
+        }
+      }
+
+      function iniciarContagemGravacao(segundos, ativa) {
+        // Mostra o tempo informado pelo servidor; não determina o fim real da gravação.
+        clearInterval(gravacaoCountdown)
+        const terminaEm = Date.now() + segundos * 1000
+        const status = document.getElementById('gravacao-status')
+        const timer = document.getElementById('gravacao-timer')
+
+        if (!ativa) {
+          status.innerText = 'Falha ao iniciar'
+          status.className = 'font-bold text-amber'
+        }
+
+        function render() {
+          const restante = Math.max(0, Math.ceil((terminaEm - Date.now()) / 1000))
+          const min = Math.floor(Math.max(0, restante) / 60)
+            .toString()
+            .padStart(2, '0')
+          const sec = (Math.max(0, restante) % 60).toString().padStart(2, '0')
+          timer.innerText = `${min}:${sec}`
+        }
+        render()
+
+        gravacaoCountdown = setInterval(() => {
+          render()
+          if (Date.now() >= terminaEm) {
+            clearInterval(gravacaoCountdown)
+            status.innerText = 'Encerrada automaticamente'
+            status.className = 'font-bold text-white/60'
+          }
+        }, 1000)
+      }
+
+      // Consulta o estado real da gravação; a chave não aparece no endereço nem no log de URLs.
+      function iniciarPollingRetirada() {
+        // Consulta a retirada ativa sem repetir a abertura da fechadura.
+        clearInterval(statusPolling)
+        statusPolling = setInterval(async () => {
+          if (!retiradaId || !chaveConfirmacao) return
+          try {
+            const res = await fetch(
+              `${API_URL}/api/retiradas/${retiradaId}/status`,
+              { headers: { 'X-Retirada-Chave': chaveConfirmacao } },
+            )
+            const data = await res.json()
+            if (!res.ok) return
+
+            const status = document.getElementById('gravacao-status')
+            if (data.gravacao_status === 'concluido') {
+              clearInterval(gravacaoCountdown)
+              status.innerText = 'Gravação encerrada'
+              status.className = 'font-bold text-white/60'
+            } else if (data.gravacao_status === 'falha') {
+              clearInterval(gravacaoCountdown)
+              status.innerText = 'Falha na gravação'
+              status.className = 'font-bold text-amber'
+            } else if (['iniciando', 'gravando'].includes(data.gravacao_status)) {
+              status.innerText = '● Em andamento'
+              status.className = 'font-bold text-brick'
+            }
+          } catch (e) {}
+        }, 2000)
+      }
+
+      // Só exibe conclusão depois que o servidor confirma a atualização das encomendas.
+      async function confirmarRetirada() {
+        // O usuário confirma após sair da sala; a leitura do QR não encerra a retirada.
+        const btn = document.getElementById('btn-confirmar-retirada')
+        btn.disabled = true
+        btn.innerText = 'Confirmando…'
+
+        try {
+          const res = await fetch(`${API_URL}/api/retiradas/${retiradaId}/confirmar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chave_confirmacao: chaveConfirmacao }),
+          })
+          const data = await res.json()
+
+          if (!res.ok) {
+            btn.disabled = false
+            btn.innerText = data.message || 'Tentar confirmar novamente'
+            return
+          }
+
+          clearInterval(gravacaoCountdown)
+          clearInterval(statusPolling)
+          showOnly('view-final')
+
+          setTimeout(resetTotem, 5000)
+        } catch (e) {
+          btn.disabled = false
+          btn.innerText = 'Erro de rede — tentar novamente'
+        }
+      }
+
+      async function resetTotem() {
+        // Só retorna ao leitor depois de limpar o estado da operação anterior.
+        retiradaId = null
+        chaveConfirmacao = ''
+        isProcessing = false
+        showOnly('view-scan')
+        document.getElementById('btn-confirmar-retirada').disabled = false
+        document.getElementById('btn-confirmar-retirada').innerText = 'Confirmar retirada e encerrar gravação'
+        await initScanner()
+      }
+
+      updateCondoAssociationLabel()
+      if (!condominioValidadorId || !condominioValidadorNome) openCondoSetup()
+      initScanner()
+    </script>
+  </body>
+</html>

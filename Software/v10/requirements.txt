@@ -1,0 +1,9 @@
+Flask
+Flask-Cors
+Flask-SQLAlchemy
+Werkzeug
+easyocr
+numpy
+opencv-python
+requests
+tinytuya

@@ -1,0 +1,60 @@
+{
+  "expo": {
+    "name": "Docks Validador",
+    "slug": "docks-validador",
+    "version": "1.0.0",
+    "orientation": "default",
+    "userInterfaceStyle": "dark",
+    "platforms": ["android", "ios"],
+    "icon": "./assets/icon.png",
+    "android": {
+      "package": "br.com.grupo3404.docks.validador",
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#07172f"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "br.com.grupo3404.docks.validador",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocalNetworkUsageDescription": "O Docks acessa o servidor do condomínio pela rede local para validar e confirmar retiradas.",
+        "NSAppTransportSecurity": {
+          "NSAllowsLocalNetworking": true,
+          "NSExceptionDomains": {
+            "10.0.0.0/8": { "NSExceptionAllowsInsecureHTTPLoads": true },
+            "172.16.0.0/12": { "NSExceptionAllowsInsecureHTTPLoads": true },
+            "192.168.0.0/16": { "NSExceptionAllowsInsecureHTTPLoads": true }
+          }
+        }
+      }
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Permita que o Docks leia o QR Code da retirada.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": true
+        }
+      ],
+      ["expo-secure-store", { "faceIDPermission": false }],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#07172f",
+          "image": "./assets/icon.png",
+          "imageWidth": 160
+        }
+      ],
+      "expo-font",
+      ["expo-build-properties", { "android": { "usesCleartextTraffic": true } }]
+    ]
+  }
+}

@@ -1,0 +1,1239 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Docks · Portaria</title>
+    <link rel="icon" href="/assets/favicon.png" type="image/png" />
+    <link href="/assets/vendor/fonts.css" rel="stylesheet" />
+    <script src="/assets/vendor/tailwindcss.js"></script>
+    <script>
+      // Mantém a identidade visual do portal nas etapas do cadastro.
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              ink: '#10192B',
+              inkalt: '#182640',
+              paper: '#FAF8F3',
+              blue: { DEFAULT: '#2563EB', dark: '#1D4ED8', light: '#DBEAFE' },
+              teal: { DEFAULT: '#2E9C6C', dark: '#1F7A54', light: '#DDF3E9' },
+              brick: { DEFAULT: '#D14343', dark: '#AC3232', light: '#FBE1E1' },
+              line: '#E6E1D3',
+              muted: '#8C8571',
+            },
+            fontFamily: {
+              display: ['"Space Grotesk"', 'sans-serif'],
+              body: ['Inter', 'sans-serif'],
+              mono: ['"IBM Plex Mono"', 'monospace'],
+            },
+            borderRadius: { '3xl': '1.75rem', '4xl': '2.25rem' },
+          },
+        },
+      }
+    </script>
+    <style>
+      .hidden-view {
+        display: none !important;
+      }
+      .hidden {
+        display: none !important;
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      .font-display {
+        font-family: 'Space Grotesk', sans-serif;
+      }
+      .font-mono {
+        font-family: 'IBM Plex Mono', monospace;
+      }
+
+      .dock-tag {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-family: 'IBM Plex Mono', monospace;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        padding: 0.4rem 0.85rem 0.4rem 1.6rem;
+        border-radius: 0.5rem;
+      }
+      .dock-tag::before {
+        content: '';
+        position: absolute;
+        left: 0.65rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 0.3rem;
+        height: 0.3rem;
+        border-radius: 50%;
+        background: currentColor;
+        opacity: 0.4;
+      }
+
+      #video-container {
+        position: relative;
+        width: 100%;
+        max-width: 420px;
+        margin: 0 auto;
+        border-radius: 1.75rem;
+        overflow: hidden;
+        background: #0a1120;
+        box-shadow: 0 20px 40px -12px rgba(16, 25, 43, 0.35);
+      }
+      #camera-preview {
+        width: 100%;
+        height: auto;
+        display: block;
+        aspect-ratio: 3/4;
+        object-fit: cover;
+      }
+      .guide-ocr {
+        border: 3px dashed rgba(37, 99, 235, 0.9);
+        height: 32%;
+        width: 82%;
+        border-radius: 0.75rem;
+      }
+      .guide-photo {
+        border: 3px solid rgba(37, 99, 235, 0.9);
+        height: 78%;
+        width: 88%;
+        border-radius: 1rem;
+      }
+      #scanner-guide {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 0 9999px rgba(10, 17, 32, 0.55);
+        pointer-events: none;
+      }
+
+      .step-dot {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 4.6rem;
+        padding: 0.38rem 0.65rem;
+        border-radius: 999px;
+        background: #ffffff;
+        border: 1px solid #e6e1d3;
+        color: #8c8571;
+        font-size: 0.64rem;
+        font-weight: 800;
+        letter-spacing: 0.01em;
+        transition: all 0.25s;
+      }
+      .step-dot.active {
+        background: #dbeafe;
+        border-color: rgba(37, 99, 235, 0.35);
+        color: #1d4ed8;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.1);
+      }
+      .step-dot.done {
+        background: #ddf3e9;
+        border-color: rgba(46, 156, 108, 0.28);
+        color: #1f7a54;
+      }
+      html.dark .step-dot {
+        background: #16213a;
+        border-color: #26324a;
+        color: #9ca8bf;
+      }
+      html.dark .step-dot.active {
+        background: rgba(37, 99, 235, 0.18);
+        color: #93b4ff;
+      }
+      html.dark .step-dot.done {
+        background: rgba(46, 156, 108, 0.16);
+        color: #7bd2a8;
+      }
+
+      @keyframes toast-in {
+        from {
+          opacity: 0;
+          transform: translate(-50%, 12px);
+        }
+        to {
+          opacity: 1;
+          transform: translate(-50%, 0);
+        }
+      }
+      .toast {
+        animation: toast-in 0.25s ease-out;
+      }
+
+      input:focus,
+      button:focus-visible {
+        outline: 2px solid #2563eb;
+        outline-offset: 2px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      html.dark body {
+        background-color: #0b1220;
+      }
+      html.dark .bg-paper {
+        background-color: #0b1220 !important;
+      }
+      html.dark .bg-white {
+        background-color: #16213a !important;
+      }
+      html.dark .border-line {
+        border-color: #26324a !important;
+      }
+      html.dark .text-ink {
+        color: #f1ede3 !important;
+      }
+      html.dark .text-muted {
+        color: #9ca8bf !important;
+      }
+      html.dark input,
+      html.dark textarea,
+      html.dark select {
+        background-color: #1c2740 !important;
+        color: #f1ede3 !important;
+      }
+      html.dark .bg-blue-light {
+        background-color: rgba(37, 99, 235, 0.18) !important;
+      }
+      html.dark .text-blue-dark {
+        color: #93c5fd !important;
+      }
+      html.dark .bg-teal-light {
+        background-color: rgba(46, 156, 108, 0.18) !important;
+      }
+      html.dark .text-teal-dark {
+        color: #86efac !important;
+      }
+      html.dark .bg-brick-light {
+        background-color: rgba(209, 67, 67, 0.18) !important;
+      }
+      html.dark .text-brick-dark {
+        color: #fca5a5 !important;
+      }
+      html.dark .step-dot:not(.active):not(.done) {
+        background: #26324a;
+      }
+      html.dark ::-webkit-scrollbar-thumb {
+        background: #26324a;
+      }
+      .brand-logo {
+        width: 92px;
+        height: auto;
+        display: block;
+      }
+      .condo-title {
+        max-width: 190px;
+        line-height: 1.15;
+        white-space: normal;
+        word-break: break-word;
+      }
+      .porteiro-identity {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .porteiro-name {
+        max-width: 190px;
+        overflow: hidden;
+        color: rgba(255, 255, 255, 0.52);
+        font-size: 10px;
+        font-weight: 700;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      #porteiro-login {
+        position: fixed;
+        inset: 0;
+        z-index: 80;
+        background: radial-gradient(circle at 80% 15%, rgba(16,152,255,.2), transparent 34%), #001135;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      .login-card {
+        width: min(420px, 100%);
+        background: #fff;
+        border: 1px solid #e3e9f1;
+        border-radius: 28px;
+        padding: 30px;
+        box-shadow: 0 30px 90px rgba(0, 17, 53, 0.14);
+      }
+      .login-card img {
+        width: 155px;
+        filter: drop-shadow(0 0 1px #001135) drop-shadow(0 1px 1px rgba(0, 17, 53, 0.55));
+      }
+      .login-logo-wrap {
+        display: inline-flex;
+        align-items: center;
+        padding: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+      }
+      .login-theme-button {
+        position: fixed;
+        top: 18px;
+        right: 18px;
+        z-index: 95;
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        border: 1px solid rgba(255,255,255,.22);
+        border-radius: 12px;
+        background: rgba(255,255,255,.1);
+        color: #fff;
+        cursor: pointer;
+      }
+      .login-theme-button svg { width: 17px; height: 17px; }
+      html.dark #porteiro-login {
+        background: radial-gradient(circle at 80% 15%, rgba(16,152,255,.13), transparent 34%), #07111f;
+      }
+      html.dark .login-card {
+        background: #16213a;
+        border-color: #2b3a54;
+      }
+      html.dark .login-card img { filter: none; }
+      html.dark .login-field label { color: #b7c3d5; }
+      html.dark .login-field input,
+      html.dark .login-results,
+      html.dark .login-result {
+        background: #0d192d;
+        border-color: #31415c;
+        color: #f1f5fb;
+      }
+      html.dark .login-result:hover { background: #1c2b47; }
+      .login-password-wrap { position: relative; }
+      .login-password-wrap input { padding-right: 48px; }
+      .login-password-eye {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        color: #10192b;
+        cursor: pointer;
+      }
+      .login-password-eye:hover,
+      .login-password-eye:focus-visible { background: rgba(16,25,43,.08); }
+      .login-password-eye svg { width: 20px; height: 20px; }
+      html.dark .login-password-eye { color: #fff; }
+      html.dark .login-password-eye:hover,
+      html.dark .login-password-eye:focus-visible { background: rgba(255,255,255,.1); }
+      html.dark #view-loading { background: rgba(11, 18, 32, .96) !important; }
+      .login-field {
+        position: relative;
+        margin-top: 14px;
+      }
+      .login-field label {
+        display: block;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #728096;
+        margin-bottom: 6px;
+      }
+      .login-field input {
+        width: 100%;
+        border: 1px solid #dfe6ef;
+        background: #f7f9fc;
+        border-radius: 12px;
+        padding: 13px;
+        outline: none;
+      }
+      .login-field input:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      }
+      .login-results {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 100%;
+        z-index: 90;
+        background: #fff;
+        border: 1px solid #dfe6ef;
+        border-radius: 12px;
+        margin-top: 5px;
+        box-shadow: 0 15px 40px rgba(0, 17, 53, 0.15);
+        max-height: 150px;
+        overflow: auto;
+      }
+      .login-result {
+        display: block;
+        width: 100%;
+        border: 0;
+        border-bottom: 1px solid #edf0f5;
+        background: #fff;
+        text-align: left;
+        padding: 11px 12px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .login-result:hover {
+        background: #f3f8ff;
+      }
+      @media (max-height: 720px) {
+        .step-dot {
+          padding: 0.3rem 0.5rem;
+          min-width: auto;
+        }
+        .login-card {
+          padding: 22px;
+        }
+        #video-container {
+          max-width: 300px;
+        }
+        .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+          margin-top: 1rem;
+        }
+      }
+    </style>
+    <script src="/assets/validation.js" defer></script>
+  </head>
+  <body class="bg-paper font-body text-ink h-[100dvh] overflow-hidden flex flex-col">
+    <div id="porteiro-login">
+      <button
+        type="button"
+        class="login-theme-button"
+        id="btn-login-dark-toggle"
+        onclick="toggleDarkMode()"
+        aria-label="Alternar para modo escuro"
+      >
+        <svg id="icon-dark-login" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+      </button>
+      <form class="login-card" onsubmit="loginPorteiro(event)">
+        <span class="login-logo-wrap"><img src="/assets/docks-logo.png" alt="Docks" /></span>
+        <h1 class="text-2xl font-display font-bold text-ink mt-5">Acesso da portaria</h1>
+        <p class="text-sm text-muted mt-1">
+          Entre com o condomínio e as credenciais cadastradas pelo responsável.
+        </p>
+        <div class="login-field">
+          <label>Condomínio</label
+          ><input
+            id="login-condominio"
+            data-validate="place"
+            maxlength="140"
+            autocomplete="off"
+            oninput="buscarCondominios(this.value)"
+            placeholder="Digite o nome do condomínio"
+            required
+          />
+          <div id="login-condominios" class="login-results hidden"></div>
+        </div>
+        <div class="login-field">
+          <label>Usuário</label><input id="login-usuario" data-validate="username" maxlength="64" autocomplete="username" required />
+        </div>
+        <div class="login-field">
+          <label>Senha</label
+          ><div class="login-password-wrap"><input id="login-senha" type="password" maxlength="128" autocomplete="current-password" required /><button type="button" class="login-password-eye" onclick="togglePorteiroPassword(this)" aria-label="Mostrar senha"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.269 2.943 9.542 7-1.273 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/><circle cx="12" cy="12" r="3" stroke-width="2"/></svg></button></div>
+        </div>
+        <p
+          id="login-erro"
+          class="hidden mt-3 bg-brick-light text-brick-dark text-sm font-semibold p-3 rounded-xl"
+        ></p>
+        <button
+          id="btn-login-porteiro"
+          class="w-full bg-ink text-white font-bold py-3.5 rounded-xl mt-5"
+          type="submit"
+        >
+          Entrar na portaria
+        </button>
+      </form>
+    </div>
+
+    <header
+      class="bg-ink text-white px-5 py-3 flex items-center justify-between sticky top-0 z-30 shadow-lg shadow-ink/10 flex-shrink-0"
+    >
+      <div class="flex items-center gap-2.5">
+        <img src="/assets/docks-logo.png" alt="Docks" class="brand-logo" />
+        <div class="porteiro-identity">
+          <span id="porteiro-condo-name" class="condo-title text-xs font-bold text-white/75">Condomínio</span>
+          <span id="porteiro-name" class="porteiro-name">Porteiro</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button
+          onclick="toggleDarkMode()"
+          id="btn-dark-toggle"
+          aria-label="Alternar modo escuro"
+          class="text-white/70 hover:text-white bg-white/5 border border-white/10 p-2 rounded-full transition-colors"
+        >
+          <svg id="icon-dark" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+            />
+          </svg>
+        </button>
+        <button onclick="logoutPorteiro()" class="text-[10px] font-bold uppercase tracking-[0.1em] text-white/75 bg-white/5 border border-white/10 px-3 py-2 rounded-full">Sair</button>
+      </div>
+    </header>
+
+    <div
+      id="stepper"
+      class="flex items-center justify-center gap-1.5 px-3 py-2.5 flex-shrink-0 overflow-x-auto"
+      aria-label="Etapas do cadastro"
+    >
+      <span class="step-dot" data-step="home">1 · Identificar</span>
+      <span class="step-dot" data-step="form">2 · Confirmar</span>
+      <span class="step-dot" data-step="storage">3 · Armazenar</span>
+      <span class="step-dot" data-step="photo">4 · Fotografar</span>
+      <span class="step-dot" data-step="success">5 · Concluir</span>
+    </div>
+
+    <main class="flex-1 min-h-0 w-full max-w-md mx-auto px-5 pb-3 flex flex-col relative overflow-y-auto">
+
+      <section id="view-home" class="flex flex-col items-center justify-center flex-1 space-y-6 py-2">
+        <div class="text-center space-y-1.5 max-w-xs">
+          <h1 class="text-2xl font-display font-bold text-ink">Nova encomenda</h1>
+          <p class="text-sm text-muted leading-relaxed">
+            Aponte a câmera para a etiqueta. O Docks lê os dados automaticamente.
+          </p>
+        </div>
+
+        <button
+          onclick="openCamera('ocr')"
+          class="relative bg-ink hover:bg-inkalt text-white w-40 h-40 rounded-full flex flex-col items-center justify-center shadow-2xl shadow-ink/20 transition-all active:scale-95 group flex-shrink-0"
+        >
+          <span
+            class="absolute inset-0 rounded-full border-2 border-blue/30 group-hover:border-blue/60 transition-colors"
+          ></span>
+          <svg class="w-11 h-11 mb-1.5 text-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.5"
+              d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+            ></path>
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.5"
+              d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+            ></path>
+          </svg>
+          <span class="font-display font-bold text-base tracking-wide">Escanear</span>
+        </button>
+
+        <button
+          onclick="startManualEntry()"
+          class="text-muted font-semibold hover:text-ink transition-colors text-sm underline decoration-line decoration-2 underline-offset-4"
+        >
+          Ou digite os dados manualmente
+        </button>
+      </section>
+
+      <section id="view-camera" class="hidden-view flex-col items-center flex-1 space-y-5 py-4">
+        <div
+          class="w-full flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-line"
+        >
+          <div>
+            <h2 class="text-sm font-bold text-ink" id="cam-title">Alinhe a etiqueta</h2>
+            <p class="text-xs text-muted mt-0.5" id="cam-subtitle">Mantenha o texto dentro da moldura</p>
+          </div>
+          <button
+            onclick="stopCameraAndGoHome()"
+            class="text-xs font-bold text-brick bg-brick-light px-3 py-2 rounded-lg hover:bg-brick/20 transition-colors"
+          >
+            Cancelar
+          </button>
+        </div>
+        <div id="video-container">
+          <video id="camera-preview" autoplay playsinline muted></video>
+          <div id="scanner-guide" class="guide-ocr"></div>
+        </div>
+        <canvas id="capture-canvas" class="hidden"></canvas>
+        <button
+          onclick="captureImage()"
+          id="btn-capture"
+          class="mt-1 mx-auto flex items-center justify-center gap-3 bg-blue hover:bg-blue-dark text-white font-display font-bold text-lg py-4 px-8 rounded-2xl shadow-lg shadow-blue/30 transition-all w-full max-w-[320px] active:scale-95"
+        >
+          <span class="w-3.5 h-3.5 rounded-full bg-ink"></span>
+          Capturar
+        </button>
+      </section>
+
+      <section
+        id="view-loading"
+        class="hidden-view absolute inset-0 bg-paper/95 backdrop-blur-sm z-20 flex-col items-center justify-center space-y-5"
+      >
+        <div class="relative w-20 h-20">
+          <div class="absolute inset-0 border-4 border-line rounded-full"></div>
+          <div
+            class="absolute inset-0 border-4 border-blue rounded-full border-t-transparent animate-spin"
+          ></div>
+        </div>
+        <p class="text-ink font-display font-semibold tracking-wide" id="loading-text">Lendo etiqueta…</p>
+      </section>
+
+      <section id="view-form" class="hidden-view flex-col flex-1 py-4">
+        <div class="mb-5">
+          <h2 class="text-2xl font-display font-bold text-ink">Confirmar dados</h2>
+          <p class="text-sm text-muted mt-1">Revise as informações antes de continuar.</p>
+        </div>
+
+        <div class="space-y-5 bg-white p-6 rounded-3xl shadow-sm border border-line">
+          <div
+            id="ocr-banner"
+            class="hidden-view bg-teal-light border border-teal/30 text-teal-dark text-xs font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2"
+          >
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <span>Morador identificado automaticamente pela IA</span>
+          </div>
+
+          <div class="relative">
+            <label class="block text-xs font-bold text-muted uppercase tracking-wide mb-2">Morador</label>
+            <input
+              type="text"
+              id="input-nome"
+              data-validate="name"
+              maxlength="120"
+              required
+              oninput="handleAutocomplete(this.value)"
+              autocomplete="off"
+              class="w-full bg-paper border border-line rounded-xl p-4 outline-none focus:border-blue transition-all font-semibold text-ink"
+              placeholder="Digite o nome do morador…"
+            />
+            <div
+              id="autocomplete-box"
+              class="absolute left-0 right-0 bg-white border border-line mt-2 rounded-xl shadow-2xl max-h-48 overflow-y-auto hidden z-20 divide-y divide-line"
+            ></div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-muted uppercase tracking-wide mb-2">Apartamento</label>
+            <input
+              type="text"
+              id="input-apt"
+              data-validate="apartment"
+              maxlength="20"
+              required
+              readonly
+              placeholder="Preenchido pela busca"
+              class="w-full bg-paper border border-line rounded-xl p-4 outline-none font-semibold text-muted cursor-not-allowed font-mono"
+            />
+          </div>
+
+          <div class="pt-1">
+            <label class="block text-xs font-bold text-muted uppercase tracking-wide mb-3"
+              >Tamanho do pacote</label
+            >
+            <div class="grid grid-cols-3 gap-3">
+              <button
+                class="size-btn border-2 border-line rounded-2xl py-4 text-muted font-bold transition hover:border-blue/50"
+                onclick="selectSize(this, 'pequeno')"
+                data-size="P"
+              >
+                <span class="block text-lg font-display">P</span>
+                <span class="block text-[10px] font-semibold mt-0.5 opacity-70">Pequeno</span>
+              </button>
+              <button
+                class="size-btn border-2 border-line rounded-2xl py-4 text-muted font-bold transition hover:border-blue/50"
+                onclick="selectSize(this, 'médio')"
+                data-size="M"
+              >
+                <span class="block text-lg font-display">M</span>
+                <span class="block text-[10px] font-semibold mt-0.5 opacity-70">Médio</span>
+              </button>
+              <button
+                class="size-btn border-2 border-line rounded-2xl py-4 text-muted font-bold transition hover:border-blue/50"
+                onclick="selectSize(this, 'grande')"
+                data-size="G"
+              >
+                <span class="block text-lg font-display">G</span>
+                <span class="block text-[10px] font-semibold mt-0.5 opacity-70">Grande</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6 flex gap-3">
+          <button
+            onclick="resetApp()"
+            class="flex-1 bg-white border border-line hover:bg-paper text-ink font-bold py-4 rounded-2xl transition"
+          >
+            Cancelar
+          </button>
+          <button
+            onclick="goToPhotoStep()"
+            class="flex-[1.4] bg-ink hover:bg-inkalt text-white font-bold py-4 rounded-2xl shadow-lg transition flex items-center justify-center gap-2"
+          >
+            Avançar
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </section>
+
+      <section
+        id="view-storage"
+        class="hidden-view flex-col items-center justify-center flex-1 py-4 text-center"
+      >
+        <p class="text-xs font-bold uppercase tracking-[.18em] text-blue-dark">Posição reservada</p>
+        <h2 class="text-2xl font-display font-bold text-ink mt-2">Armazene a encomenda em</h2>
+        <div id="reserved-shelf" class="dock-tag bg-ink text-blue text-3xl mt-6 shadow-xl">PA—</div>
+        <p class="text-sm text-muted mt-5 max-w-xs">
+          Coloque o pacote fisicamente nesta posição. Em seguida, fotografe-o já armazenado.
+        </p>
+        <div class="w-full max-w-sm flex gap-3 mt-7">
+          <button
+            onclick="showView('view-form')"
+            class="flex-1 bg-white border border-line text-ink font-bold py-4 rounded-2xl"
+          >
+            Voltar</button
+          ><button
+            onclick="openCamera('photo')"
+            class="flex-[1.4] bg-blue text-white font-bold py-4 rounded-2xl shadow-lg"
+          >
+            Já armazenei · Fotografar
+          </button>
+        </div>
+      </section>
+
+      <section id="view-photo-preview" class="hidden-view flex-col flex-1 py-4 items-center">
+        <div class="mb-5 text-center">
+          <h2 class="text-2xl font-display font-bold text-ink">Confira a foto</h2>
+          <p class="text-sm text-muted mt-1">Essa imagem fica registrada no histórico da encomenda.</p>
+        </div>
+        <div
+          class="w-full max-w-[320px] aspect-square rounded-3xl overflow-hidden border border-line shadow-sm bg-white"
+        >
+          <img
+            id="photo-preview-img"
+            class="w-full h-full object-cover"
+            alt="Pré-visualização da encomenda"
+          />
+        </div>
+        <div class="mt-6 flex gap-3 w-full max-w-[320px]">
+          <button
+            onclick="retakePhoto()"
+            class="flex-1 bg-white border border-line hover:bg-paper text-ink font-bold py-4 rounded-2xl transition"
+          >
+            Repetir
+          </button>
+          <button
+            onclick="confirmStorage()"
+            class="flex-[1.4] bg-blue hover:bg-blue-dark text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue/30 transition"
+          >
+            Usar esta foto
+          </button>
+        </div>
+      </section>
+
+      <section
+        id="view-success"
+        class="hidden-view flex-col items-center justify-center flex-1 space-y-6 py-6"
+      >
+        <div class="bg-teal-light p-6 rounded-full border-4 border-white shadow-lg">
+          <svg class="w-14 h-14 text-teal-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+          </svg>
+        </div>
+        <div class="text-center">
+          <h2 class="text-3xl font-display font-bold text-ink">Registrado!</h2>
+          <p class="text-muted font-medium mt-1">O aviso será enviado pelo WhatsApp assim que o serviço estiver disponível.</p>
+        </div>
+        <div class="dock-tag bg-ink text-blue text-base -rotate-1 shadow-md" id="success-shelf-tag">
+          Prateleira —
+        </div>
+        <button
+          onclick="resetApp()"
+          class="w-full max-w-xs bg-ink hover:bg-inkalt text-white font-bold py-4 rounded-2xl shadow-xl transition-all mt-6"
+        >
+          Registrar próxima encomenda
+        </button>
+      </section>
+    </main>
+
+    <div
+      id="toast-root"
+      class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 w-[90%] max-w-sm"
+    ></div>
+
+    <script>
+      // A página web usa as mesmas rotas da portaria que o aplicativo Android.
+      const API_URL =
+        window.location.protocol === 'file:' ? 'http://127.0.0.1:5000' : window.location.origin
+      let porteiroToken = sessionStorage.getItem('docks_porteiro_token') || ''
+      let condominioSelecionado = null
+      let prateleiraReservada = ''
+      let darkModePorteiro = localStorage.getItem('docks-theme') === 'dark'
+
+      // Login associado ao condomínio; o token acompanha as requisições privadas.
+      async function buscarCondominios(valor) {
+        condominioSelecionado = null
+        const box = document.getElementById('login-condominios')
+        if (valor.trim().length < 2) return box.classList.add('hidden')
+        try {
+          const res = await fetch(`${API_URL}/api/condominios/buscar?q=${encodeURIComponent(valor)}`)
+          const itens = await res.json()
+          box.replaceChildren()
+          if (!itens.length) {
+            const vazio = document.createElement('span')
+            vazio.className = 'block p-3 text-sm text-muted'
+            vazio.textContent = 'Nenhum condomínio encontrado.'
+            box.appendChild(vazio)
+          } else {
+            itens.forEach((item) => {
+              const option = document.createElement('button')
+              option.type = 'button'
+              option.className = 'login-result'
+              option.dataset.id = item.id
+              option.textContent = item.nome
+              box.appendChild(option)
+            })
+          }
+          box.querySelectorAll('button').forEach(
+            (button, index) =>
+              (button.onclick = () => {
+                condominioSelecionado = itens[index]
+                document.getElementById('login-condominio').value = itens[index].nome
+                box.classList.add('hidden')
+              }),
+          )
+          box.classList.remove('hidden')
+        } catch (e) {
+          box.classList.add('hidden')
+        }
+      }
+
+      async function loginPorteiro(event) {
+        // Inclui o condomínio selecionado para impedir autenticação em outra unidade.
+        event.preventDefault()
+        const erro = document.getElementById('login-erro')
+        const btn = document.getElementById('btn-login-porteiro')
+        erro.classList.add('hidden')
+        btn.disabled = true
+        btn.innerText = 'Autenticando…'
+        try {
+          const res = await fetch(`${API_URL}/api/porteiro/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              condominio_id: condominioSelecionado?.id,
+              condominio: document.getElementById('login-condominio').value.trim(),
+              usuario: document.getElementById('login-usuario').value.trim(),
+              senha: document.getElementById('login-senha').value,
+            }),
+          })
+          const data = await res.json()
+          if (!res.ok || !data.success || !data.token) throw new Error(data.message || 'Não foi possível entrar.')
+          porteiroToken = data.token
+          sessionStorage.setItem('docks_porteiro_token', porteiroToken)
+          document.getElementById('porteiro-condo-name').innerText = data.condominio.nome
+          document.getElementById('porteiro-name').innerText = data.porteiro.nome
+          document.getElementById('porteiro-login').classList.add('hidden')
+          showView('view-home')
+        } catch (e) {
+          erro.innerText = e.message
+          erro.classList.remove('hidden')
+        } finally {
+          btn.disabled = false
+          btn.innerText = 'Entrar na portaria'
+        }
+      }
+
+      function authHeaders(extra = {}) {
+        // Centraliza o cabeçalho exigido pelas rotas protegidas da portaria.
+        return { ...extra, 'X-Porteiro-Token': porteiroToken }
+      }
+      async function logoutPorteiro() {
+        // Remove o token deste navegador e encerra a sessão também no servidor.
+        const tokenAtual = porteiroToken
+        stopCamera()
+        porteiroToken = ''
+        sessionStorage.removeItem('docks_porteiro_token')
+        if (tokenAtual) {
+          fetch(`${API_URL}/api/porteiro/logout`, {
+            method: 'POST',
+            headers: { 'X-Porteiro-Token': tokenAtual },
+          }).catch(() => {})
+        }
+        resetApp()
+        document.getElementById('login-senha').value = ''
+        document.getElementById('porteiro-login').classList.remove('hidden')
+      }
+      // Tema e controles visuais mantêm as duas aparências no mesmo fluxo.
+      function applyDarkPreference() {
+        const escuro = darkModePorteiro
+        document.documentElement.classList.toggle('dark', escuro)
+        const svgPath = escuro
+            ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>'
+            : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>'
+        ;['icon-dark', 'icon-dark-login'].forEach((id) => {
+          const icon = document.getElementById(id)
+          if (icon) icon.innerHTML = svgPath
+        })
+        ;['btn-dark-toggle', 'btn-login-dark-toggle'].forEach((id) => {
+          document.getElementById(id)?.setAttribute(
+            'aria-label',
+            escuro ? 'Alternar para modo claro' : 'Alternar para modo escuro',
+          )
+        })
+      }
+      function toggleDarkMode() {
+        darkModePorteiro = !darkModePorteiro
+        localStorage.setItem('docks-theme', darkModePorteiro ? 'dark' : 'light')
+        applyDarkPreference()
+      }
+      function togglePorteiroPassword(button) {
+        const input = document.getElementById('login-senha')
+        const show = input.type === 'password'
+        input.type = show ? 'text' : 'password'
+        button.setAttribute('aria-label', show ? 'Ocultar senha' : 'Mostrar senha')
+        button.innerHTML = show
+          ? '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18M10.6 10.7a2 2 0 002.7 2.7M9.9 4.2A10.8 10.8 0 0112 4c5 0 9.3 3.1 10.8 8a11.8 11.8 0 01-2.2 4.1M6.6 6.6A11.8 11.8 0 001.2 12C2.7 16.9 7 20 12 20a10.8 10.8 0 005.4-1.4"/></svg>'
+          : '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.269 2.943 9.542 7-1.273 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/><circle cx="12" cy="12" r="3" stroke-width="2"/></svg>'
+      }
+      applyDarkPreference()
+
+      const video = document.getElementById('camera-preview')
+      const canvas = document.getElementById('capture-canvas')
+      let stream = null
+      let selectedSize = ''
+      let selectedResidentId = null
+      let cameraMode = 'ocr'
+      let photoBase64 = ''
+      function toast(message, type = 'info') {
+        const palette = {
+          info: 'bg-ink text-white',
+          success: 'bg-teal text-white',
+          error: 'bg-brick text-white',
+        }
+        const el = document.createElement('div')
+        el.className = `toast ${palette[type] || palette.info} px-5 py-3 rounded-xl shadow-xl text-sm font-semibold text-center w-full`
+        el.innerText = message
+        document.getElementById('toast-root').appendChild(el)
+        setTimeout(() => {
+          el.style.transition = 'opacity .3s'
+          el.style.opacity = '0'
+          setTimeout(() => el.remove(), 300)
+        }, 3200)
+      }
+      const STEP_MAP = {
+        'view-home': 'home',
+        'view-camera': 'form',
+        'view-form': 'form',
+        'view-storage': 'storage',
+        'view-photo-preview': 'photo',
+        'view-success': 'success',
+      }
+      function showView(viewId) {
+        document.querySelectorAll('main > section').forEach((el) => el.classList.add('hidden-view'))
+        const view = document.getElementById(viewId)
+        view.classList.remove('hidden-view')
+        view.style.display = 'flex'
+        if (viewId !== 'view-loading') {
+          const step =
+            viewId === 'view-camera' && cameraMode === 'photo' ? 'photo' : STEP_MAP[viewId] || 'home'
+          updateStepper(step)
+        }
+      }
+      function updateStepper(current) {
+        const order = ['home', 'form', 'storage', 'photo', 'success']
+        const idx = order.indexOf(current)
+        document.querySelectorAll('.step-dot').forEach((dot) => {
+          const dotIdx = order.indexOf(dot.dataset.step)
+          dot.classList.remove('active', 'done')
+          if (dotIdx === idx) dot.classList.add('active')
+          else if (dotIdx < idx) dot.classList.add('done')
+        })
+      }
+
+      function startManualEntry() {
+        document.getElementById('ocr-banner').classList.add('hidden-view')
+        showView('view-form')
+      }
+      // Câmera compartilhada entre etiqueta e foto final, nunca mantida fora da tela.
+      async function openCamera(mode) {
+        // A mesma câmera atende etiqueta e prova de armazenamento, em momentos diferentes.
+        cameraMode = mode
+        const guide = document.getElementById('scanner-guide')
+        const title = document.getElementById('cam-title')
+        const subtitle = document.getElementById('cam-subtitle')
+        const btnCapture = document.getElementById('btn-capture')
+        if (mode === 'ocr') {
+          guide.className = 'guide-ocr'
+          title.innerText = 'Alinhe a etiqueta'
+          subtitle.innerText = 'Mantenha o texto dentro da moldura'
+          btnCapture.innerHTML = '<span class="w-3.5 h-3.5 rounded-full bg-ink"></span> Capturar etiqueta'
+        } else {
+          guide.className = 'guide-photo'
+          title.innerText = 'Foto da encomenda'
+          subtitle.innerText = 'Mostre o pacote já guardado na prateleira'
+          btnCapture.innerHTML = '<span class="w-3.5 h-3.5 rounded-full bg-ink"></span> Fotografar pacote'
+        }
+        showView('view-camera')
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' } },
+            audio: false,
+          })
+          video.srcObject = stream
+        } catch (err) {
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: { facingMode: 'user' },
+              audio: false,
+            })
+            video.srcObject = stream
+          } catch (e) {
+            toast('Não foi possível acessar a câmera. Use a entrada manual.', 'error')
+            showView('view-home')
+          }
+        }
+      }
+
+      function stopCamera() {
+        // Libera o dispositivo ao sair da etapa para evitar câmera ocupada.
+        if (stream) stream.getTracks().forEach((track) => track.stop())
+        stream = null
+        video.srcObject = null
+      }
+      function stopCameraAndGoHome() {
+        stopCamera()
+        showView(cameraMode === 'photo' ? 'view-form' : 'view-home')
+      }
+
+      async function captureImage() {
+        // Captura o quadro atual antes de encerrar o fluxo da câmera.
+        if (!video.videoWidth || !video.videoHeight) return toast('Aguarde a câmera ficar pronta.', 'info')
+        const limite = cameraMode === 'ocr' ? 1600 : 1280
+        const escala = Math.min(1, limite / Math.max(video.videoWidth, video.videoHeight))
+        canvas.width = Math.max(1, Math.round(video.videoWidth * escala))
+        canvas.height = Math.max(1, Math.round(video.videoHeight * escala))
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height)
+        const imageDataUrl = canvas.toDataURL('image/jpeg', cameraMode === 'ocr' ? 0.78 : 0.7)
+        stopCamera()
+        if (cameraMode === 'ocr') {
+          processOCR(imageDataUrl)
+        } else {
+          photoBase64 = imageDataUrl
+          document.getElementById('photo-preview-img').src = imageDataUrl
+          showView('view-photo-preview')
+        }
+      }
+
+      function retakePhoto() {
+        openCamera('photo')
+      }
+      // OCR apenas sugere; a conferência de nome e Apto continua obrigatória.
+      async function processOCR(imageDataUrl) {
+        // Envia a foto ao backend, onde a leitura pode testar orientações diferentes.
+        showView('view-loading')
+        document.getElementById('loading-text').innerText = 'Lendo etiqueta…'
+        try {
+          const response = await fetch(`${API_URL}/api/ocr`, {
+            method: 'POST',
+            headers: authHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ image: imageDataUrl }),
+          })
+          const result = await response.json()
+          if (!response.ok) throw new Error(result.error || 'Leitura indisponível. Preencha manualmente.')
+          const banner = document.getElementById('ocr-banner')
+          if (result.matched) {
+            selectedResidentId = result.matched.id
+            document.getElementById('input-nome').value = result.matched.nome
+            document.getElementById('input-apt').value = result.matched.apartamento
+            banner.classList.remove('hidden-view')
+          } else {
+            selectedResidentId = null
+            document.getElementById('input-nome').value = ''
+            document.getElementById('input-apt').value = ''
+            banner.classList.add('hidden-view')
+            toast('Não identificamos o morador automaticamente. Busque pelo nome.', 'info')
+          }
+          showView('view-form')
+        } catch (error) {
+          toast(error.message || 'Falha ao processar a etiqueta. Preencha manualmente.', 'error')
+          showView('view-form')
+        }
+      }
+
+      // Reserva o local antes da fotografia da encomenda já guardada.
+      async function goToPhotoStep() {
+        if (window.DocksValidation && !window.DocksValidation.validate(document.getElementById('view-form'))) return
+        const nome = document.getElementById('input-nome').value
+        const apt = document.getElementById('input-apt').value
+        if (!nome || !apt || !selectedSize || !selectedResidentId)
+          return toast('Preencha o morador e o tamanho antes de avançar.', 'error')
+        showView('view-loading')
+        document.getElementById('loading-text').innerText = 'Reservando prateleira…'
+        try {
+          const res = await fetch(`${API_URL}/api/porteiro/reservar-prateleira`, {
+            method: 'POST',
+            headers: authHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ morador_id: selectedResidentId, apartamento: apt, tamanho: selectedSize }),
+          })
+          const data = await res.json()
+          if (!res.ok) throw new Error(data.error || 'Não foi possível reservar a prateleira.')
+          prateleiraReservada = data.prateleira
+          document.getElementById('reserved-shelf').innerText = data.prateleira
+          showView('view-storage')
+        } catch (e) {
+          toast(e.message, 'error')
+          showView('view-form')
+        }
+      }
+      let debounceTimer
+      async function handleAutocomplete(val) {
+        // Consulta moradores do condomínio autenticado em vez de confiar em texto livre.
+        clearTimeout(debounceTimer)
+        selectedResidentId = null
+        document.getElementById('input-apt').value = ''
+        const box = document.getElementById('autocomplete-box')
+        if (val.trim().length < 2) {
+          box.classList.add('hidden')
+          return
+        }
+        debounceTimer = setTimeout(async () => {
+          try {
+            const res = await fetch(`${API_URL}/api/moradores/buscar?q=${encodeURIComponent(val)}`, {
+              headers: authHeaders(),
+            })
+            const data = await res.json()
+            if (document.getElementById('input-nome').value !== val) return
+            if (data.length === 0) {
+              box.innerHTML = '<div class="p-4 text-sm text-muted">Nenhum morador encontrado</div>'
+              box.classList.remove('hidden')
+              return
+            }
+            box.innerHTML = ''
+            data.forEach((item) => {
+              const div = document.createElement('div')
+              div.className =
+                'p-4 hover:bg-paper cursor-pointer text-sm font-bold text-ink transition flex justify-between items-center'
+              const nome = document.createElement('span')
+              nome.textContent = item.nome
+              const apartamento = document.createElement('span')
+              apartamento.className = 'text-xs font-mono bg-paper text-muted px-2 py-1 rounded'
+              apartamento.textContent = `Apto ${item.apartamento}`
+              div.append(nome, apartamento)
+              div.onclick = () => {
+                selectedResidentId = item.id
+                document.getElementById('input-nome').value = item.nome
+                document.getElementById('input-apt').value = item.apartamento
+                box.classList.add('hidden')
+                document.getElementById('ocr-banner').classList.add('hidden-view')
+              }
+              box.appendChild(div)
+            })
+            box.classList.remove('hidden')
+          } catch (e) {}
+        }, 300)
+      }
+      document.addEventListener('click', function (e) {
+        if (!document.getElementById('input-nome').contains(e.target))
+          document.getElementById('autocomplete-box').classList.add('hidden')
+      })
+      function selectSize(btn, size) {
+        selectedSize = size
+        document.querySelectorAll('.size-btn').forEach((b) => {
+          b.className =
+            'size-btn border-2 border-line rounded-2xl py-4 text-muted font-bold transition hover:border-blue/50'
+        })
+        btn.className =
+          'size-btn border-2 border-blue bg-blue-light text-blue-dark rounded-2xl py-4 font-black transition shadow-inner'
+      }
+      // O servidor grava encomenda, log e notificação pendente na mesma transação.
+      async function confirmStorage() {
+        // Reserva o local antes da fotografia final, preservando a ordem operacional.
+        const apt = document.getElementById('input-apt').value
+        showView('view-loading')
+        document.getElementById('loading-text').innerText = 'Salvando encomenda…'
+        try {
+          const response = await fetch(`${API_URL}/api/encomendas`, {
+            method: 'POST',
+            headers: authHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({
+              morador_id: selectedResidentId,
+              apartamento: apt,
+              tamanho: selectedSize,
+              prateleira: prateleiraReservada,
+              foto_pacote: photoBase64,
+            }),
+          })
+          const result = await response.json()
+          if (response.ok) {
+            document.getElementById('success-shelf-tag').innerText = `Prateleira ${result.prateleira || '—'}`
+            showView('view-success')
+          } else {
+            toast(result.error || 'Não foi possível salvar a encomenda.', 'error')
+            showView('view-form')
+          }
+        } catch (err) {
+          toast('Erro de conexão com o servidor Docks.', 'error')
+          showView('view-form')
+        }
+      }
+
+      // Limpa somente o formulário; a sessão autenticada continua disponível.
+      function resetApp() {
+        document.getElementById('input-nome').value = ''
+        document.getElementById('input-apt').value = ''
+        document.getElementById('ocr-banner').classList.add('hidden-view')
+        selectedSize = ''
+        selectedResidentId = null
+        photoBase64 = ''
+        prateleiraReservada = ''
+        document.querySelectorAll('.size-btn').forEach((b) => {
+          b.className =
+            'size-btn border-2 border-line rounded-2xl py-4 text-muted font-bold transition hover:border-blue/50'
+        })
+        showView('view-home')
+      }
+
+      async function iniciarPortaria() {
+        // Revalida a sessão salva antes de mostrar dados privados da portaria.
+        if (!porteiroToken) return
+        try {
+          const res = await fetch(`${API_URL}/api/porteiro/session`, { headers: authHeaders() })
+          const data = await res.json()
+          if (!res.ok) throw new Error()
+          document.getElementById('porteiro-condo-name').innerText = data.condominio_nome
+          document.getElementById('porteiro-name').innerText = data.porteiro_nome
+          document.getElementById('porteiro-login').classList.add('hidden')
+          showView('view-home')
+        } catch (e) {
+          sessionStorage.removeItem('docks_porteiro_token')
+          porteiroToken = ''
+        }
+      }
+      showView('view-home')
+      iniciarPortaria()
+    </script>
+  </body>
+</html>

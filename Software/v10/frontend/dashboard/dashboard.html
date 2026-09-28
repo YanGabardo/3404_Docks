@@ -1,0 +1,2532 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Docks · Painel do Condomínio</title>
+    <link rel="icon" href="/assets/favicon.png" type="image/png" />
+    <link href="/assets/vendor/fonts.css" rel="stylesheet" />
+    <script src="/assets/vendor/tailwindcss.js"></script>
+    <script>
+      // Tokens visuais compartilhados pelos painéis e cartões do condomínio.
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              ink: '#10192B',
+              inkalt: '#182640',
+              paper: '#FAF8F3',
+              blue: { DEFAULT: '#2563EB', dark: '#1D4ED8', light: '#DBEAFE' },
+              teal: { DEFAULT: '#2E9C6C', dark: '#1F7A54', light: '#DDF3E9' },
+              brick: { DEFAULT: '#D14343', dark: '#AC3232', light: '#FBE1E1' },
+              amber: { DEFAULT: '#E9A23B', dark: '#8A5510', light: '#FFF2D9' },
+              line: '#E6E1D3',
+              muted: '#8C8571',
+            },
+            fontFamily: {
+              display: ['"Space Grotesk"', 'sans-serif'],
+              body: ['Inter', 'sans-serif'],
+              mono: ['"IBM Plex Mono"', 'monospace'],
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      .hidden-view {
+        display: none !important;
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      .font-display {
+        font-family: 'Space Grotesk', sans-serif;
+      }
+      .font-mono {
+        font-family: 'IBM Plex Mono', monospace;
+      }
+
+      .dock-tag {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-family: 'IBM Plex Mono', monospace;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        padding: 0.3rem 0.7rem 0.3rem 1.4rem;
+        border-radius: 0.4rem;
+        font-size: 0.72rem;
+      }
+      .dock-tag::before {
+        content: '';
+        position: absolute;
+        left: 0.55rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 0.28rem;
+        height: 0.28rem;
+        border-radius: 50%;
+        background: currentColor;
+        opacity: 0.4;
+      }
+
+      .nav-group-label {
+        padding: 0.8rem 1rem 0.3rem;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.28);
+      }
+      .nav-btn svg {
+        padding: 0.18rem;
+        border-radius: 0.45rem;
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .nav-btn.active svg {
+        background: rgba(255, 255, 255, 0.15);
+      }
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #e6e1d3;
+        border-radius: 999px;
+      }
+      input:focus,
+      button:focus-visible {
+        outline: 2px solid #2563eb;
+        outline-offset: 2px;
+      }
+      @keyframes toast-in {
+        from {
+          opacity: 0;
+          transform: translate(-50%, 12px);
+        }
+        to {
+          opacity: 1;
+          transform: translate(-50%, 0);
+        }
+      }
+      .toast {
+        animation: toast-in 0.25s ease-out;
+      }
+      .skeleton {
+        background: linear-gradient(90deg, #f1ede3 25%, #e6e1d3 37%, #f1ede3 63%);
+        background-size: 400% 100%;
+        animation: sk 1.4s ease infinite;
+      }
+      @keyframes sk {
+        0% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0 50%;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      html.dark body {
+        background-color: #0b1220;
+      }
+      html.dark .bg-paper {
+        background-color: #0b1220 !important;
+      }
+      html.dark .bg-white {
+        background-color: #16213a !important;
+      }
+      html.dark .border-line {
+        border-color: #26324a !important;
+      }
+      html.dark .text-ink {
+        color: #f1ede3 !important;
+      }
+      html.dark .text-muted {
+        color: #9ca8bf !important;
+      }
+      html.dark input,
+      html.dark textarea,
+      html.dark select {
+        background-color: #1c2740 !important;
+        color: #f1ede3 !important;
+      }
+      html.dark .bg-blue-light {
+        background-color: rgba(37, 99, 235, 0.18) !important;
+      }
+      html.dark .text-blue-dark {
+        color: #bfdbfe !important;
+      }
+      html.dark .bg-teal-light {
+        background-color: rgba(46, 156, 108, 0.18) !important;
+      }
+      html.dark .text-teal-dark {
+        color: #a7f3d0 !important;
+      }
+      html.dark .bg-brick-light {
+        background-color: rgba(209, 67, 67, 0.18) !important;
+      }
+      html.dark .text-brick-dark {
+        color: #fecaca !important;
+      }
+      html.dark .hover\:bg-paper:hover {
+        background-color: #1c2740 !important;
+      }
+      html.dark header.bg-white\/80 {
+        background-color: rgba(22, 33, 58, 0.85) !important;
+      }
+      html.dark ::-webkit-scrollbar-thumb {
+        background: #26324a;
+      }
+      #dashboard-condo-name {
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.25;
+        max-width: 100%;
+      }
+      html.dark .bg-amber-100 {
+        background-color: rgba(233, 162, 59, 0.15) !important;
+      }
+      html.dark .text-amber-700 {
+        color: #fcd79b !important;
+      }
+      html.dark .bg-purple-100 {
+        background-color: rgba(168, 85, 247, 0.14) !important;
+      }
+      html.dark .text-purple-700 {
+        color: #e9d5ff !important;
+      }
+      .nav-letter-icon {
+        width: 18px;
+        height: 18px;
+        display: grid;
+        place-items: center;
+        flex: none;
+        padding: 0;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.08);
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 10px;
+        font-weight: 900;
+        line-height: 1;
+        text-align: center;
+      }
+      .nav-letter-icon > span {
+        display: block;
+        transform: translateY(0.5px);
+      }
+      .log-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.42rem;
+        padding: 0.28rem 0.55rem;
+        border-radius: 0.45rem;
+        font-size: 10px;
+        font-weight: 800;
+        line-height: 1.15;
+      }
+      .log-tag::before {
+        content: '';
+        width: 0.38rem;
+        height: 0.38rem;
+        flex: none;
+        border-radius: 999px;
+        background: currentColor;
+      }
+      .log-tag--danger {
+        color: #8f2525;
+        background: #fbe1e1;
+      }
+      .log-tag--success {
+        color: #17633f;
+        background: #ddf3e9;
+      }
+      .log-tag--hardware {
+        color: #854d0e;
+        background: #fef3c7;
+      }
+      .log-tag--camera {
+        color: #6b21a8;
+        background: #f3e8ff;
+      }
+      .log-tag--register {
+        color: #1d4ed8;
+        background: #dbeafe;
+      }
+      .log-tag--neutral {
+        color: #344054;
+        background: #ebe7dc;
+      }
+      html.dark .log-tag--danger {
+        color: #fecaca;
+        background: #4a222c;
+      }
+      html.dark .log-tag--success {
+        color: #a7f3d0;
+        background: #163c35;
+      }
+      html.dark .log-tag--hardware {
+        color: #fde2a7;
+        background: #49391f;
+      }
+      html.dark .log-tag--camera {
+        color: #e9d5ff;
+        background: #3b2b59;
+      }
+      html.dark .log-tag--register {
+        color: #bfdbfe;
+        background: #1d3765;
+      }
+      html.dark .log-tag--neutral {
+        color: #dbe4f0;
+        background: #29364d;
+      }
+      .log-entry-icon {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 0.65rem;
+        display: inline-grid;
+        place-items: center;
+        flex: none;
+        color: #1d4ed8;
+        background: #dbeafe;
+      }
+      .log-entry-icon svg {
+        width: 1rem;
+        height: 1rem;
+      }
+      html.dark .log-entry-icon {
+        color: #bfdbfe;
+        background: #1d3765;
+      }
+      .recording-player {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      .recording-controls {
+        display: grid;
+        grid-template-columns: auto auto 1fr auto auto auto;
+        align-items: center;
+        gap: 0.7rem;
+        padding: 0.85rem 1rem;
+        background: #0b1220;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        color: #fff;
+      }
+      .recording-controls input[type='range'] {
+        width: 100%;
+        accent-color: #3b82f6;
+        cursor: pointer;
+      }
+      .recording-control-button {
+        min-width: 2.35rem;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 0.65rem;
+        background: rgba(255, 255, 255, 0.07);
+        color: #fff;
+        padding: 0.5rem 0.65rem;
+        font-size: 0.75rem;
+        font-weight: 800;
+      }
+      @media (max-width: 640px) {
+        .recording-controls {
+          grid-template-columns: auto 1fr auto;
+        }
+        .recording-speed-label {
+          grid-column: 1 / -1;
+          text-align: center;
+        }
+      }
+      .report-card {
+        display: flex;
+        min-height: 150px;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-end;
+        gap: 0.35rem;
+        padding: 1.4rem;
+        border: 1px solid #e6e1d3;
+        border-radius: 1rem;
+        background: #fff;
+        text-align: left;
+        transition:
+          transform 0.2s,
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+      .report-card:hover {
+        transform: translateY(-2px);
+        border-color: #2563eb;
+        box-shadow: 0 12px 30px rgba(16, 25, 43, 0.08);
+      }
+      .report-card span {
+        color: #10192b;
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 700;
+        font-size: 1.08rem;
+      }
+      .report-card-icon {
+        width: 2.75rem;
+        height: 2.75rem;
+        display: grid;
+        place-items: center;
+        margin-bottom: auto;
+        border-radius: 0.8rem;
+        background: #eaf1ff;
+        color: #2563eb;
+      }
+      .report-card-icon svg {
+        width: 1.35rem;
+        height: 1.35rem;
+      }
+      .report-card small {
+        color: #8c8571;
+        font-weight: 600;
+      }
+      html.dark .report-card {
+        background: #16213a;
+        border-color: #33405b;
+      }
+      html.dark .report-card span {
+        color: #f8fbff;
+      }
+      html.dark .report-card small {
+        color: #b7c1d2;
+      }
+      html.dark .report-card-icon {
+        background: rgba(96, 165, 250, 0.16);
+        color: #93c5fd;
+      }
+      .settings-group {
+        border: 1px solid #e6e1d3;
+        border-radius: 1rem;
+        background: #fff;
+        padding: 1.25rem;
+      }
+      .settings-fields {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+      }
+      .settings-field label {
+        display: block;
+        margin-bottom: 0.45rem;
+        color: #6f6858;
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .settings-field input,
+      .settings-field select,
+      .settings-field textarea {
+        width: 100%;
+        border: 1px solid #e6e1d3;
+        border-radius: 0.75rem;
+        background: #faf8f3;
+        color: #10192b;
+        padding: 0.8rem 0.9rem;
+        outline: none;
+      }
+      .settings-field textarea {
+        min-height: 8.5rem;
+        resize: vertical;
+      }
+      .settings-field--wide {
+        grid-column: 1 / -1;
+      }
+      .setting-secret {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0.5rem;
+      }
+      .setting-secret button {
+        border: 1px solid #e6e1d3;
+        border-radius: 0.75rem;
+        padding: 0 0.9rem;
+        color: #10192b;
+        font-size: 0.75rem;
+        font-weight: 800;
+      }
+      html.dark .settings-group {
+        border-color: #33405b;
+        background: #16213a;
+      }
+      html.dark .settings-field label {
+        color: #b7c1d2;
+      }
+      html.dark .settings-field input,
+      html.dark .settings-field select,
+      html.dark .settings-field textarea {
+        border-color: #33405b;
+        background: #111a2e;
+        color: #f8fbff;
+      }
+      html.dark .setting-secret button {
+        border-color: #46536d;
+        color: #fff;
+      }
+      @media (max-width: 760px) {
+        .settings-fields {
+          grid-template-columns: 1fr;
+        }
+        .settings-field--wide {
+          grid-column: auto;
+        }
+      }
+      .management-list {
+        max-height: calc(100vh - 260px);
+        overflow: auto;
+      }
+      .management-row {
+        display: grid;
+        grid-template-columns: 1.5fr 0.7fr 1fr 0.8fr auto;
+        gap: 12px;
+        align-items: center;
+        padding: 13px 15px;
+        border-bottom: 1px solid #e6e1d3;
+        font-size: 12px;
+      }
+      .management-row:last-child {
+        border-bottom: 0;
+      }
+      .management-actions {
+        display: flex;
+        gap: 6px;
+      }
+      .management-actions button {
+        border: 1px solid #e6e1d3;
+        background: #fff;
+        padding: 7px 9px;
+        border-radius: 8px;
+        font-weight: 800;
+        font-size: 10px;
+      }
+      .modal-input {
+        width: 100%;
+        border: 1px solid #e6e1d3;
+        background: #faf8f3;
+        color: #10192b;
+        border-radius: 10px;
+        padding: 11px;
+        margin-top: 10px;
+        outline: none;
+      }
+      html.dark .management-row {
+        border-color: #26324a;
+      }
+      html.dark .management-actions button {
+        background: #16213a;
+        border-color: #26324a;
+        color: #f1ede3;
+      }
+      html.dark .modal-input {
+        background: #1c2740;
+        border-color: #26324a;
+        color: #f1ede3;
+      }
+      @media (max-width: 900px) {
+        .management-row {
+          grid-template-columns: 1.2fr 0.6fr 0.8fr auto;
+        }
+        .management-row > *:nth-child(4) {
+          display: none;
+        }
+      }
+    </style>
+    <script src="/assets/validation.js" defer></script>
+    <script src="/assets/recording-player.js" defer></script>
+  </head>
+  <body class="bg-paper font-body text-ink flex h-screen overflow-hidden">
+    <div
+      id="view-dashboard-loading"
+      class="w-full h-full flex items-center justify-center text-white"
+      style="background: #001135"
+    >
+      <div class="text-center">
+        <img src="/assets/docks-logo.png" alt="Docks" class="w-52 mx-auto mb-6" />
+        <div class="w-10 h-10 border-4 border-white/15 border-t-blue rounded-full animate-spin mx-auto"></div>
+        <p class="mt-4 text-sm font-semibold text-white/50">Validando acesso ao condomínio…</p>
+      </div>
+    </div>
+
+    <div id="app-shell" class="hidden-view w-full h-full flex">
+      <aside class="w-64 text-white flex flex-col shadow-2xl z-20 flex-shrink-0" style="background: #001135">
+        <div class="p-5 border-b border-white/10">
+          <img src="/assets/docks-logo.png" alt="Docks" class="w-36 h-auto" />
+          <span
+            class="text-[10px] font-mono font-semibold text-white/35 block mt-2 uppercase tracking-[0.14em]"
+            >Controle do Condomínio</span
+          >
+          <span id="dashboard-condo-name" class="text-xs font-semibold text-white/70 block mt-2"
+            >Condomínio</span
+          >
+        </div>
+        <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto">
+          <div class="nav-group-label">Visão geral</div>
+          <button
+            onclick="switchView('view-overview', this)"
+            class="nav-btn active w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition"
+          >
+            <svg
+              class="w-4.5 h-4.5 flex-shrink-0"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+              />
+            </svg>
+            Visão geral
+          </button>
+          <div class="nav-group-label">Gestão</div>
+          <button
+            onclick="switchView('view-moradores', this)"
+            class="nav-btn w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition"
+          >
+            <svg
+              class="w-4.5 h-4.5 flex-shrink-0"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-5.13a4 4 0 11-8 0 4 4 0 018 0zm6 3a4 4 0 10-8 0"
+              />
+            </svg>
+            Moradores
+          </button>
+          <button
+            onclick="
+              switchView('view-porteiros', this)
+              carregarPorteiros()
+            "
+            class="nav-btn w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition"
+          >
+            <span class="nav-letter-icon" aria-hidden="true"><span>P</span></span>
+            Porteiros
+          </button>
+          <button
+            onclick="
+              switchView('view-shelves', this)
+              carregarPrateleiras()
+            "
+            class="nav-btn w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition"
+          >
+            <svg
+              class="w-4.5 h-4.5 flex-shrink-0"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+              />
+            </svg>
+            Prateleiras
+          </button>
+          <div class="nav-group-label">Segurança e auditoria</div>
+          <button
+            onclick="
+              switchView('view-logs', this)
+              carregarLogs()
+            "
+            class="nav-btn w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition"
+          >
+            <svg
+              class="w-4.5 h-4.5 flex-shrink-0"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+            Logs e auditoria
+          </button>
+          <button
+            onclick="switchView('view-relatorios', this)"
+            class="nav-btn w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition"
+          >
+            <svg
+              class="w-4.5 h-4.5 flex-shrink-0"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2zm2 5h6m-6 4h6m-6 4h4"
+              />
+            </svg>
+            Relatórios
+          </button>
+          <button
+            onclick="switchView('view-configuracoes', this)"
+            class="nav-btn w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition"
+          >
+            <svg class="w-4.5 h-4.5 flex-shrink-0" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15.5A3.5 3.5 0 1012 8a3.5 3.5 0 000 7.5zM19.4 15a1.7 1.7 0 00.34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 00-1.88-.34 1.7 1.7 0 00-1.03 1.56V21h-4v-.07A1.7 1.7 0 008.97 19.4a1.7 1.7 0 00-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 004.6 15a1.7 1.7 0 00-1.53-1.03H3v-4h.07A1.7 1.7 0 004.6 8.94a1.7 1.7 0 00-.34-1.88L4.2 7l2.83-2.83.06.06a1.7 1.7 0 001.88.34A1.7 1.7 0 0010 3.07V3h4v.07a1.7 1.7 0 001.03 1.53 1.7 1.7 0 001.88-.34l.06-.06L19.8 7l-.06.06a1.7 1.7 0 00-.34 1.88 1.7 1.7 0 001.53 1.03H21v4h-.07A1.7 1.7 0 0019.4 15z"/>
+            </svg>
+            Configurações
+          </button>
+          <button
+            onclick="switchView('view-camera', this)"
+            class="nav-btn w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition"
+          >
+            <svg
+              class="w-4.5 h-4.5 flex-shrink-0"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+              />
+            </svg>
+            Câmera ao vivo
+          </button>
+          <button
+            onclick="
+              switchView('view-gravacoes', this)
+              carregarGravacoes()
+            "
+            class="nav-btn w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition"
+          >
+            <svg
+              class="w-4.5 h-4.5 flex-shrink-0"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M7 5h6a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2z"
+              />
+            </svg>
+            Gravações de segurança
+          </button>
+        </nav>
+        <div class="p-4 border-t border-white/10 flex items-center justify-between gap-2">
+          <div id="conn-status" class="text-xs font-mono flex items-center gap-2 text-white/40">
+            <span class="w-2 h-2 rounded-full bg-white/20"></span>
+            Verificando servidor…
+          </div>
+          <button
+            onclick="toggleDarkMode()"
+            id="btn-dark-toggle"
+            aria-label="Alternar modo escuro"
+            class="text-white/60 hover:text-white bg-white/5 border border-white/10 p-2 rounded-full transition-colors flex-shrink-0"
+          >
+            <svg id="icon-dark" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+              />
+            </svg>
+          </button>
+        </div>
+      </aside>
+
+      <main class="flex-1 flex flex-col h-full overflow-y-auto relative">
+        <header
+          class="bg-white/80 backdrop-blur p-4 px-6 shadow-sm border-b border-line flex justify-between items-center z-10 sticky top-0"
+        >
+          <h2 id="header-title" class="text-lg font-display font-bold text-ink tracking-tight">
+            Painel Central de Monitoramento
+          </h2>
+          <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 bg-paper px-3 py-1.5 rounded-lg border border-line">
+              <span class="text-[10px] font-bold text-muted uppercase">Trava da Sala:</span>
+              <div id="hw-door-status" class="flex items-center gap-1.5 text-xs font-bold text-brick">
+                <span class="w-1.5 h-1.5 rounded-full bg-brick"></span> BLOQUEADA
+              </div>
+            </div>
+            <span class="text-xs font-mono text-muted" id="clock-display"></span>
+            <button
+              onclick="sairDashboard()"
+              class="text-xs font-bold text-muted hover:text-brick border border-line bg-white px-3 py-2 rounded-lg transition"
+            >
+              Sair
+            </button>
+          </div>
+        </header>
+
+        <div id="view-overview" class="view-section p-6 flex flex-col gap-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 w-full">
+            <div
+              class="bg-white p-6 rounded-2xl shadow-sm border border-line flex items-center justify-between"
+            >
+              <div>
+                <p class="text-xs text-muted font-bold uppercase tracking-wide">Aguardando retirada</p>
+                <p class="text-4xl font-display font-bold text-ink mt-2" id="stat-aguardando">
+                  <span class="skeleton inline-block w-12 h-9 rounded-lg align-middle"></span>
+                </p>
+              </div>
+              <div class="bg-blue-light p-3.5 rounded-2xl text-blue-dark">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div
+              id="stat-atrasadas-card"
+              class="bg-white p-6 rounded-2xl shadow-sm border border-line flex items-center justify-between"
+            >
+              <div>
+                <p class="text-xs text-muted font-bold uppercase tracking-wide">Encomendas atrasadas</p>
+                <p class="text-4xl font-display font-bold text-ink mt-2" id="stat-atrasadas">0</p>
+                <p class="text-[10px] text-muted mt-1" id="stat-atrasadas-prazo"></p>
+              </div>
+              <div class="bg-amber-light p-3.5 rounded-2xl text-amber-dark">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 9v4m0 4h.01M10.3 4.4L2.9 17.2A2 2 0 004.6 20h14.8a2 2 0 001.7-2.8L13.7 4.4a2 2 0 00-3.4 0z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div
+              class="bg-white p-6 rounded-2xl shadow-sm border border-line flex items-center justify-between"
+            >
+              <div>
+                <p class="text-xs text-muted font-bold uppercase tracking-wide">Retiradas hoje</p>
+                <p class="text-4xl font-display font-bold text-ink mt-2" id="stat-retiradas">
+                  <span class="skeleton inline-block w-12 h-9 rounded-lg align-middle"></span>
+                </p>
+              </div>
+              <div class="bg-teal-light p-3.5 rounded-2xl text-teal-dark">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div
+              class="bg-white p-6 rounded-2xl shadow-sm border border-line flex items-center justify-between"
+            >
+              <div class="w-full">
+                <p class="text-xs text-muted font-bold uppercase tracking-wide">Prateleiras livres</p>
+                <p class="text-4xl font-display font-bold text-ink mt-2" id="stat-livres">
+                  <span class="skeleton inline-block w-20 h-9 rounded-lg align-middle"></span>
+                </p>
+                <div class="w-full h-1.5 bg-line rounded-full mt-3 overflow-hidden">
+                  <div
+                    id="stat-livres-bar"
+                    class="h-full bg-blue rounded-full transition-all"
+                    style="width: 0%"
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="bg-white border border-line rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4"
+          >
+            <div>
+              <p class="text-xs text-muted font-bold uppercase tracking-wide">Controle físico</p>
+              <h3 class="font-display font-bold text-ink text-lg mt-1">Fechadura da sala</h3>
+              <p class="text-sm text-muted mt-1">
+                Acionamento manual. Toda utilização fica registrada nos logs.
+              </p>
+            </div>
+            <button
+              id="btn-tuya-manual"
+              onclick="acionarTuyaManual()"
+              class="bg-ink hover:bg-inkalt text-white font-bold px-5 py-3 rounded-xl transition flex-shrink-0"
+            >
+              Acionar fechadura
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 flex-1">
+            <div
+              class="xl:col-span-2 bg-ink rounded-2xl shadow-sm overflow-hidden relative flex flex-col min-h-[320px]"
+            >
+              <div class="absolute top-4 left-4 z-10 flex gap-2">
+                <span
+                  id="badge-rec-home"
+                  class="hidden-view text-xs bg-brick/20 text-brick px-3 py-1 rounded-full font-bold border border-brick/40 animate-pulse"
+                  >● GRAVANDO RETIRADA</span
+                >
+              </div>
+              <div class="flex-1 flex items-center justify-center relative">
+                <img
+                  id="camera-img-home"
+                  src=""
+                  class="w-full h-full object-contain"
+                  alt="Feed da câmera IP Docks"
+                  onload="cameraConnected(this, 'camera-offline-home')"
+                  onerror="scheduleCameraReconnect(this, 'camera-offline-home')"
+                />
+                <div
+                  id="camera-offline-home"
+                  class="hidden-view text-center text-white/40 text-sm font-semibold px-6"
+                >
+                  Sinal da câmera indisponível no momento.
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="xl:col-span-1 bg-white rounded-2xl shadow-sm border border-line flex flex-col min-h-[320px]"
+            >
+              <div class="p-5 border-b border-line flex items-center justify-between">
+                <h3 class="font-display font-bold text-ink">Eventos recentes</h3>
+                <button
+                  onclick="switchViewById('view-logs')"
+                  class="text-xs font-bold text-blue-dark hover:underline"
+                >
+                  Ver tudo
+                </button>
+              </div>
+              <div class="p-0 flex-1 overflow-y-auto">
+                <ul class="divide-y divide-line" id="lista-logs-home">
+                  <li class="p-6"><div class="skeleton h-10 rounded-lg"></div></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="view-moradores" class="view-section hidden-view p-6">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl mx-auto items-stretch">
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-line">
+              <h3 class="font-display font-bold text-ink text-2xl mb-1">Cadastrar novo morador</h3>
+              <p class="text-sm text-muted mb-6">O acesso ao Portal do Morador é gerado automaticamente.</p>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-xs font-bold text-muted uppercase mb-2">Nome completo</label>
+                  <input
+                    type="text"
+                    id="cad-nome"
+                    data-validate="name"
+                    maxlength="120"
+                    required
+                    class="w-full bg-paper border border-line rounded-xl p-4 outline-none focus:border-blue"
+                    placeholder="Ex: Yan Gabardo"
+                  />
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-bold text-muted uppercase mb-2">Apartamento</label>
+                    <input
+                      type="text"
+                      id="cad-apt"
+                      data-validate="apartment"
+                      maxlength="20"
+                      required
+                      class="w-full bg-paper border border-line rounded-xl p-4 outline-none focus:border-blue font-mono"
+                      placeholder="Ex: 567"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-muted uppercase mb-2"
+                      >WhatsApp (DDD + número)</label
+                    >
+                    <input
+                      type="tel"
+                      id="cad-tel"
+                      data-validate="phone"
+                      inputmode="tel"
+                      maxlength="20"
+                      required
+                      class="w-full bg-paper border border-line rounded-xl p-4 outline-none focus:border-blue font-mono"
+                      placeholder="Ex: 35999998888"
+                    />
+                  </div>
+                </div>
+                <button
+                  onclick="salvarMorador()"
+                  id="btn-salvar-morador"
+                  class="w-full bg-ink hover:bg-inkalt text-white font-bold py-4 rounded-xl mt-2 shadow-md transition-all"
+                >
+                  Finalizar cadastro
+                </button>
+              </div>
+            </div>
+
+            <div
+              id="credenciais-box"
+              class="hidden-view bg-white p-8 rounded-2xl shadow-sm border border-teal/30"
+            >
+              <div class="flex items-center gap-3 mb-4">
+                <div class="bg-teal-light text-teal-dark p-2 rounded-xl">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <h4 class="font-display font-bold text-ink">Morador cadastrado com sucesso</h4>
+              </div>
+              <p class="text-sm text-muted mb-4">
+                Repasse estas credenciais provisórias — o morador deverá trocar a senha no primeiro acesso.
+              </p>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="bg-paper border border-line rounded-xl p-4">
+                  <p class="text-[10px] font-bold text-muted uppercase tracking-wide mb-1">Usuário</p>
+                  <p class="font-mono font-bold text-ink" id="cred-usuario">—</p>
+                </div>
+                <div class="bg-paper border border-line rounded-xl p-4">
+                  <p class="text-[10px] font-bold text-muted uppercase tracking-wide mb-1">
+                    Senha provisória
+                  </p>
+                  <p class="font-mono font-bold text-ink" id="cred-senha">—</p>
+                </div>
+              </div>
+              <button
+                onclick="document.getElementById('credenciais-box').classList.add('hidden-view')"
+                class="mt-5 text-sm font-bold text-muted hover:text-ink"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+
+          <div
+            class="bg-white rounded-2xl shadow-sm border border-line max-w-5xl mx-auto mt-6 overflow-hidden"
+          >
+            <div class="p-5 border-b border-line flex items-center justify-between">
+              <div>
+                <h3 class="font-display font-bold text-ink text-lg">Moradores cadastrados</h3>
+                <p class="text-xs text-muted mt-1">
+                  Edite os dados ou controle o acesso sem apagar o histórico.
+                </p>
+              </div>
+              <button onclick="carregarMoradores()" class="text-xs font-bold text-blue-dark">
+                Atualizar
+              </button>
+            </div>
+            <div id="lista-moradores" class="management-list">
+              <div class="p-6 text-sm text-muted text-center">Carregando moradores…</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="view-porteiros" class="view-section hidden-view p-6">
+          <div class="grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-line">
+              <h3 class="font-display font-bold text-ink text-xl">Cadastrar porteiro</h3>
+              <p class="text-sm text-muted mt-1 mb-5">Estas credenciais serão usadas no App da Portaria.</p>
+              <div class="space-y-3">
+                <input
+                  id="port-nome"
+                  data-validate="name"
+                  maxlength="120"
+                  required
+                  class="w-full bg-paper border border-line rounded-xl p-3 outline-none"
+                  placeholder="Nome completo"
+                /><input
+                  id="port-usuario"
+                  data-validate="username"
+                  maxlength="64"
+                  required
+                  class="w-full bg-paper border border-line rounded-xl p-3 outline-none"
+                  placeholder="Usuário"
+                /><input
+                  id="port-senha"
+                  type="password"
+                  data-validate="password"
+                  minlength="8"
+                  maxlength="128"
+                  required
+                  class="w-full bg-paper border border-line rounded-xl p-3 outline-none"
+                  placeholder="Senha forte"
+                />
+                <p class="text-[11px] text-muted">8 caracteres, maiúscula, minúscula, número e especial.</p>
+                <button
+                  id="btn-salvar-porteiro"
+                  onclick="salvarPorteiro()"
+                  class="w-full bg-ink text-white font-bold py-3.5 rounded-xl"
+                >
+                  Cadastrar porteiro
+                </button>
+              </div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-line overflow-hidden">
+              <div class="p-5 border-b border-line">
+                <h3 class="font-display font-bold text-ink text-lg">Equipe da portaria</h3>
+                <p class="text-xs text-muted mt-1">Usuários vinculados exclusivamente a este condomínio.</p>
+              </div>
+              <div id="lista-porteiros" class="management-list">
+                <div class="p-6 text-sm text-muted text-center">Carregando porteiros…</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="view-shelves" class="view-section hidden-view p-6">
+          <div class="space-y-5">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="capacity-cards">
+              <div class="bg-white border border-line rounded-2xl p-5">
+                <p class="text-xs font-bold text-muted">Pequenos</p>
+                <p class="text-2xl font-display font-bold mt-2" id="capacity-pequeno">—</p>
+                <div class="h-2 bg-line rounded-full overflow-hidden mt-3">
+                  <div id="capacity-pequeno-bar" class="h-full bg-teal rounded-full" style="width: 0%"></div>
+                </div>
+              </div>
+              <div class="bg-white border border-line rounded-2xl p-5">
+                <p class="text-xs font-bold text-muted">Médios</p>
+                <p class="text-2xl font-display font-bold mt-2" id="capacity-médio">—</p>
+                <div class="h-2 bg-line rounded-full overflow-hidden mt-3">
+                  <div id="capacity-médio-bar" class="h-full bg-blue rounded-full" style="width: 0%"></div>
+                </div>
+              </div>
+              <div class="bg-white border border-line rounded-2xl p-5">
+                <p class="text-xs font-bold text-muted">Grandes</p>
+                <p class="text-2xl font-display font-bold mt-2" id="capacity-grande">—</p>
+                <div class="h-2 bg-line rounded-full overflow-hidden mt-3">
+                  <div id="capacity-grande-bar" class="h-full bg-brick rounded-full" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-line">
+              <div class="flex justify-between items-center mb-6 flex-wrap gap-3">
+                <h3 class="font-display font-bold text-ink text-lg">Mapeamento físico de prateleiras</h3>
+                <div class="flex items-center gap-4 text-xs font-semibold text-muted">
+                  <span class="flex items-center gap-1.5"
+                    ><span class="w-2.5 h-2.5 rounded-sm bg-blue"></span> Ocupada</span
+                  >
+                  <span class="flex items-center gap-1.5"
+                    ><span class="w-2.5 h-2.5 rounded-sm bg-line"></span> Livre</span
+                  >
+                  <span class="flex items-center gap-1.5"
+                    ><span class="w-2.5 h-2.5 rounded-sm bg-amber"></span> Atrasada</span
+                  >
+                </div>
+              </div>
+              <div class="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-10 gap-3" id="grid-prateleiras"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="view-logs" class="view-section hidden-view p-6">
+          <div class="bg-white rounded-2xl shadow-sm border border-line overflow-hidden">
+            <div class="p-5 border-b border-line flex justify-between items-center flex-wrap gap-3">
+              <h3 class="font-display font-bold text-ink text-lg">Histórico de auditoria</h3>
+              <input
+                id="log-filter"
+                oninput="filtrarLogs()"
+                type="text"
+                placeholder="Filtrar por tipo ou descrição…"
+                class="border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-blue w-64 max-w-full"
+              />
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-paper text-muted text-xs uppercase tracking-wider border-b border-line">
+                    <th class="p-4 font-bold">Data/Hora</th>
+                    <th class="p-4 font-bold">Evento</th>
+                    <th class="p-4 font-bold">Descrição detalhada</th>
+                  </tr>
+                </thead>
+                <tbody class="text-sm divide-y divide-line" id="tabela-logs-full"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="view-relatorios" class="view-section hidden-view p-6">
+          <div class="max-w-5xl mx-auto">
+            <div class="mb-6">
+              <h3 class="font-display font-bold text-ink text-2xl">Exportação de relatórios</h3>
+              <p class="text-sm text-muted mt-1">
+                Gere documentos em PDF com os dados atuais deste condomínio.
+              </p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              <button onclick="baixarRelatorio('logs')" class="report-card">
+                <div class="report-card-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M7 3h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg></div><span>Logs e auditoria</span><small>Histórico completo de eventos</small>
+              </button>
+              <button onclick="baixarRelatorio('encomendas')" class="report-card">
+                <div class="report-card-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg></div><span>Encomendas</span><small>Recebidas, pendentes e retiradas</small>
+              </button>
+              <button onclick="baixarRelatorio('moradores')" class="report-card">
+                <div class="report-card-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m7-10a4 4 0 100-8 4 4 0 000 8zm13 10v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div><span>Moradores</span><small>Cadastros ativos e inativos</small>
+              </button>
+              <button onclick="baixarRelatorio('retiradas')" class="report-card">
+                <div class="report-card-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><span>Retiradas</span><small>Sessões e confirmações</small>
+              </button>
+              <button onclick="baixarRelatorio('ocorrencias')" class="report-card">
+                <div class="report-card-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 4h.01M10.3 3.7L2.4 17.4A2 2 0 004.1 20h15.8a2 2 0 001.7-2.6L13.7 3.7a2 2 0 00-3.4 0z"/></svg></div><span>Ocorrências e falhas</span><small>Registros preservados e falhas técnicas</small>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="view-configuracoes" class="view-section hidden-view p-6">
+          <div class="max-w-6xl mx-auto">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+              <div>
+                <h3 class="font-display font-bold text-ink text-2xl">Configurações operacionais</h3>
+                <p class="text-sm text-muted mt-1">Controle os parâmetros do condomínio sem editar o código.</p>
+              </div>
+              <button id="btn-salvar-configuracoes" onclick="salvarConfiguracoes()" class="bg-blue hover:bg-blue-dark text-white font-bold px-5 py-3 rounded-xl">Salvar configurações</button>
+            </div>
+            <div id="configuracoes-status" class="text-sm text-muted mb-4">Carregando valores atuais…</div>
+            <form id="configuracoes-form" class="space-y-5" onsubmit="event.preventDefault(); salvarConfiguracoes()"></form>
+          </div>
+        </div>
+
+        <div id="view-camera" class="view-section hidden-view p-6 flex-1 flex flex-col">
+          <div
+            class="bg-ink rounded-2xl shadow-2xl overflow-hidden flex-1 flex flex-col relative min-h-[420px]"
+          >
+            <div
+              class="p-4 border-b border-white/10 flex justify-between items-center bg-ink/50 backdrop-blur z-10 absolute top-0 left-0 right-0"
+            >
+              <h3 class="font-display font-bold text-white text-lg">Monitoramento Ao Vivo</h3>
+              <span
+                class="text-xs bg-brick/20 text-brick px-3 py-1 rounded-full font-bold border border-brick/40 flex items-center gap-2"
+              >
+                <span class="w-2 h-2 rounded-full bg-brick animate-pulse"></span> LIVE
+              </span>
+            </div>
+            <div class="flex-1 flex items-center justify-center relative">
+              <div
+                class="border border-white/10 w-3/4 max-w-4xl aspect-video rounded-xl flex items-center justify-center bg-black shadow-2xl overflow-hidden z-10 mt-10"
+              >
+                <img
+                  id="camera-img"
+                  src=""
+                  class="w-full h-full object-contain"
+                  alt="Feed da câmera IP Docks"
+                  onload="cameraConnected(this, 'camera-offline')"
+                  onerror="scheduleCameraReconnect(this, 'camera-offline')"
+                />
+                <div
+                  id="camera-offline"
+                  class="hidden-view text-center text-white/40 text-sm font-semibold px-6"
+                >
+                  Sinal da câmera indisponível no momento.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="view-gravacoes" class="view-section hidden-view p-6">
+          <div class="bg-white rounded-2xl shadow-sm border border-line overflow-hidden">
+            <div class="p-5 border-b border-line flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 class="font-display font-bold text-ink text-lg">Gravações de segurança</h3>
+                <p id="recording-retention-policy" class="text-sm text-muted mt-1">
+                  Registros vinculados às retiradas. Retenção automática configurada.
+                </p>
+              </div>
+              <button onclick="carregarGravacoes()" class="text-sm font-bold text-blue-dark hover:underline">
+                Atualizar
+              </button>
+            </div>
+            <div id="lista-gravacoes" class="divide-y divide-line">
+              <div class="p-6"><div class="skeleton h-16 rounded-lg"></div></div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <div
+      id="modal-primeiro-login"
+      class="hidden-view fixed inset-0 bg-ink/90 backdrop-blur-sm z-[90] p-4 flex items-center justify-center"
+    >
+      <div class="bg-white border border-line rounded-3xl p-7 w-full max-w-md shadow-2xl">
+        <p class="text-xs font-bold text-blue uppercase tracking-[0.16em]">Primeiro acesso</p>
+        <h3 class="text-2xl font-display font-bold text-ink mt-2">Crie uma nova senha</h3>
+        <p class="text-sm text-muted mt-2">
+          Antes de usar o painel, substitua a senha inicial do condomínio.
+        </p>
+        <div class="space-y-3 mt-6">
+          <input
+            id="dashboard-senha-atual"
+            type="password"
+            required
+            autocomplete="current-password"
+            class="w-full bg-paper border border-line rounded-xl p-3.5 outline-none focus:border-blue"
+            placeholder="Senha atual"
+          />
+          <input
+            id="dashboard-nova-senha"
+            type="password"
+            data-validate="password"
+            minlength="8"
+            maxlength="128"
+            required
+            autocomplete="new-password"
+            class="w-full bg-paper border border-line rounded-xl p-3.5 outline-none focus:border-blue"
+            placeholder="Nova senha forte"
+          />
+          <input
+            id="dashboard-confirmar-senha"
+            type="password"
+            data-validate="password"
+            minlength="8"
+            maxlength="128"
+            required
+            autocomplete="new-password"
+            class="w-full bg-paper border border-line rounded-xl p-3.5 outline-none focus:border-blue"
+            placeholder="Confirmar nova senha"
+          />
+          <p class="text-xs text-muted">
+            Use 8 caracteres ou mais, com maiúscula, minúscula, número e caractere especial.
+          </p>
+          <p
+            id="dashboard-senha-erro"
+            class="hidden text-xs font-semibold text-brick bg-brick-light p-3 rounded-xl"
+          ></p>
+          <button
+            id="dashboard-senha-btn"
+            onclick="alterarSenhaInicialDashboard()"
+            class="w-full bg-blue hover:bg-blue-dark text-white font-bold py-3.5 rounded-xl"
+          >
+            Salvar nova senha
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="modal-prateleira"
+      class="hidden-view fixed inset-0 bg-ink/80 backdrop-blur-sm z-[75] p-4 flex items-center justify-center"
+    >
+      <div class="bg-white border border-line rounded-2xl p-6 w-full max-w-lg shadow-2xl">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <p class="text-xs font-bold text-blue uppercase tracking-wide">Compartimento</p>
+            <h3 id="shelf-modal-title" class="text-2xl font-display font-bold text-ink mt-1">—</h3>
+          </div>
+          <button onclick="fecharDetalhesPrateleira()" class="text-muted font-bold px-2 py-1">Fechar</button>
+        </div>
+        <div id="shelf-modal-content" class="mt-5 space-y-3"></div>
+      </div>
+    </div>
+
+    <div
+      id="modal-video"
+      class="hidden-view fixed inset-0 bg-ink/90 backdrop-blur-sm z-50 p-4 flex items-center justify-center"
+    >
+      <div class="w-full max-w-4xl bg-inkalt border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+        <div class="p-4 flex justify-between items-center border-b border-white/10">
+          <div>
+            <h3 class="text-white font-display font-bold">Gravação de retirada</h3>
+            <p id="modal-video-meta" class="text-white/50 text-xs mt-1"></p>
+          </div>
+          <div class="flex items-center gap-2">
+            <a
+              id="video-download"
+              href="#"
+              download
+              class="text-blue font-bold text-xs px-3 py-2 hover:text-white"
+              >Baixar arquivo</a
+            >
+            <button onclick="fecharGravacao()" class="text-white/60 hover:text-white font-bold px-3 py-2">
+              Fechar
+            </button>
+          </div>
+        </div>
+        <div class="bg-black aspect-video flex items-center justify-center relative">
+          <p id="video-loading" class="absolute z-20 text-white/65 text-sm font-semibold pointer-events-none">
+            Carregando gravação…
+          </p>
+          <img
+            id="video-gravacao"
+            class="recording-player relative z-10 hidden-view"
+            alt="Reprodução da gravação de retirada"
+          />
+        </div>
+        <div id="video-controls" class="recording-controls hidden-view">
+          <button id="video-pause" type="button" class="recording-control-button" onclick="pausarGravacao()">Pausar</button>
+          <span id="video-current-time" class="font-mono text-xs">00:00</span>
+          <input id="video-timeline" type="range" min="0" max="0" step="1" value="0" aria-label="Posição da gravação" />
+          <span id="video-total-time" class="font-mono text-xs text-white/60">00:00</span>
+          <button type="button" class="recording-control-button" onclick="alterarVelocidadeGravacao(-0.5)" aria-label="Diminuir velocidade">−</button>
+          <div class="recording-speed-label flex items-center gap-2">
+            <span id="video-speed" class="font-mono text-xs min-w-[34px] text-center">1x</span>
+            <button type="button" class="recording-control-button" onclick="alterarVelocidadeGravacao(0.5)" aria-label="Aumentar velocidade">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="toast-root"
+      class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 w-[90%] max-w-sm"
+    ></div>
+
+    <div
+      id="modal-acao"
+      class="hidden-view fixed inset-0 bg-ink/80 backdrop-blur-sm z-[70] p-4 flex items-center justify-center"
+    >
+      <div class="bg-white border border-line rounded-2xl p-6 w-full max-w-md shadow-2xl">
+        <h3 id="modal-acao-titulo" class="text-xl font-display font-bold text-ink">Confirmar ação</h3>
+        <p id="modal-acao-texto" class="text-sm text-muted mt-2"></p>
+        <div id="modal-acao-campos" class="mt-3"></div>
+        <div class="flex justify-end gap-2 mt-6">
+          <button
+            onclick="fecharModalAcao()"
+            class="border border-line bg-white text-ink font-bold px-4 py-2.5 rounded-xl"
+          >
+            Cancelar</button
+          ><button id="modal-acao-confirmar" class="bg-brick text-white font-bold px-4 py-2.5 rounded-xl">
+            Confirmar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // O painel usa a origem atual para câmera, relatórios e dados do condomínio.
+      const API_URL = window.location.protocol === 'file:' ? 'http://127.0.0.1:5000' : window.location.origin
+      let allLogs = []
+      let allShelves = []
+      let serverOk = null
+      let dashboardToken = sessionStorage.getItem('docks_dashboard_token') || ''
+      let modalAction = null
+      let activeRecording = null
+      let configurationSchema = []
+      let darkModeDashboard = localStorage.getItem('docks-theme') === 'dark'
+      function applyDarkPreference() {
+        const escuro = darkModeDashboard
+        document.documentElement.classList.toggle('dark', escuro)
+        const icon = document.getElementById('icon-dark')
+        if (icon) {
+          icon.innerHTML = escuro
+            ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>'
+            : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>'
+        }
+        document
+          .getElementById('btn-dark-toggle')
+          ?.setAttribute('aria-label', escuro ? 'Alternar para modo claro' : 'Alternar para modo escuro')
+      }
+      function toggleDarkMode() {
+        darkModeDashboard = !darkModeDashboard
+        localStorage.setItem('docks-theme', darkModeDashboard ? 'dark' : 'light')
+        applyDarkPreference()
+      }
+      applyDarkPreference()
+      function sairDashboard() {
+        // Encerra a sessão local imediatamente; a chamada remota é melhor esforço.
+        const tokenAtual = dashboardToken
+        sessionStorage.removeItem('docks_dashboard_token')
+        dashboardToken = ''
+        if (tokenAtual) {
+          fetch(`${API_URL}/api/dashboard/logout`, {
+            method: 'POST',
+            headers: { 'X-Dashboard-Token': tokenAtual },
+          }).catch(() => {})
+        }
+        window.location.replace(`${API_URL}/?login=condominio`)
+      }
+
+      async function validarSessaoDashboard() {
+        // Bloqueia a abertura do painel até obter o condomínio e o primeiro-login.
+        if (!dashboardToken) {
+          window.location.replace(`${API_URL}/?login=condominio`)
+          return
+        }
+
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 8000)
+
+        try {
+          const res = await fetch(`${API_URL}/api/dashboard/session`, {
+            headers: { 'X-Dashboard-Token': dashboardToken },
+            signal: controller.signal,
+          })
+          const data = await res.json().catch(() => ({}))
+          if (!res.ok || !data.success) throw new Error('Sessão inválida')
+
+          const condoName = document.getElementById('dashboard-condo-name')
+          if (condoName && data.condominio?.nome) condoName.innerText = data.condominio.nome
+
+          document.getElementById('view-dashboard-loading').classList.add('hidden-view')
+          document.getElementById('app-shell').classList.remove('hidden-view')
+          if (data.primeiro_login)
+            document.getElementById('modal-primeiro-login').classList.remove('hidden-view')
+          else iniciarPainel()
+        } catch (e) {
+          sessionStorage.removeItem('docks_dashboard_token')
+          window.location.replace(`${API_URL}/?login=condominio`)
+        } finally {
+          clearTimeout(timeout)
+        }
+      }
+      async function fetchDashboard(path, options = {}) {
+        // Todas as chamadas internas recebem o token do condomínio autenticado.
+        options.headers = { ...(options.headers || {}), 'X-Dashboard-Token': dashboardToken }
+        const response = await fetch(`${API_URL}${path}`, options)
+        if (response.status === 401) {
+          sessionStorage.removeItem('docks_dashboard_token')
+          dashboardToken = ''
+          window.location.replace(`${API_URL}/`)
+          throw new Error()
+        }
+        return response
+      }
+
+      function settingInput(field, value) {
+        const id = `config-${field.chave}`
+        const safeValue = htmlSeguro(value)
+        if (field.tipo === 'bool') {
+          return `<select id="${id}" required><option value="true" ${value === true ? 'selected' : ''}>Ativado</option><option value="false" ${value === false ? 'selected' : ''}>Desativado</option></select>`
+        }
+        if (field.tipo === 'textarea')
+          return `<textarea id="${id}" data-config-type="textarea" data-validate="text" maxlength="${Number(field.max || 2000)}" required>${safeValue}</textarea>`
+        const numeric = field.tipo === 'int' || field.tipo === 'float'
+        const type = field.secreto ? 'password' : numeric ? 'number' : 'text'
+        const min = numeric && field.min != null ? ` min="${Number(field.min)}"` : ''
+        const max = numeric && field.max != null ? ` max="${Number(field.max)}"` : ''
+        const step = field.tipo === 'int' ? ' step="1"' : field.tipo === 'float' ? ' step="any"' : ''
+        const maxLength = !numeric && field.max ? ` maxlength="${Number(field.max)}"` : ''
+        const validation = field.tipo === 'rtsp' || field.tipo === 'http' ? ' data-validate="url"' : ''
+        const input = `<input id="${id}" type="${type}" data-config-type="${field.tipo}" value="${safeValue}"${min}${max}${step}${maxLength}${validation} required>`
+        if (!field.secreto) return input
+        return `<div class="setting-secret">${input}<button type="button" onclick="toggleSettingSecret('${id}', this)">Ver</button></div>`
+      }
+
+      function renderConfiguracoes(values) {
+        // Preenche campos com valores efetivos do backend, sem opções em branco.
+        const groups = new Map()
+        configurationSchema.forEach((field) => {
+          if (!groups.has(field.grupo)) groups.set(field.grupo, [])
+          groups.get(field.grupo).push(field)
+        })
+        document.getElementById('configuracoes-form').innerHTML = [...groups.entries()]
+          .map(
+            ([group, fields]) => `<section class="settings-group"><h4 class="font-display font-bold text-ink text-lg mb-4">${htmlSeguro(group)}</h4><div class="settings-fields">${fields
+              .map(
+                (field) => `<div class="settings-field ${field.tipo === 'textarea' ? 'settings-field--wide' : ''}"><label for="config-${field.chave}">${htmlSeguro(field.rotulo)}</label>${settingInput(field, values[field.chave])}</div>`,
+              )
+              .join('')}</div></section>`,
+          )
+          .join('')
+      }
+
+      async function carregarConfiguracoes() {
+        const status = document.getElementById('configuracoes-status')
+        status.textContent = 'Carregando valores atuais…'
+        try {
+          const response = await fetchDashboard('/api/dashboard/configuracoes')
+          const data = await response.json()
+          if (!response.ok || !data.success) throw new Error(data.error || 'Não foi possível carregar.')
+          configurationSchema = data.campos
+          renderConfiguracoes(data.valores)
+          status.textContent = 'Todos os campos possuem valores iniciais e são aplicados somente a este condomínio.'
+        } catch (error) {
+          status.textContent = error.message || 'Não foi possível carregar as configurações.'
+          toast(status.textContent, 'error')
+        }
+      }
+
+      function toggleSettingSecret(id, button) {
+        const field = document.getElementById(id)
+        const showing = field.type === 'text'
+        field.type = showing ? 'password' : 'text'
+        button.textContent = showing ? 'Ver' : 'Ocultar'
+      }
+
+      async function salvarConfiguracoes() {
+        // Envia o conjunto de alterações; o backend valida tipos e aplica aos serviços.
+        const form = document.getElementById('configuracoes-form')
+        if (!configurationSchema.length || (window.DocksValidation && !window.DocksValidation.validate(form))) return
+        const values = {}
+        configurationSchema.forEach((field) => {
+          const input = document.getElementById(`config-${field.chave}`)
+          if (field.tipo === 'bool') values[field.chave] = input.value === 'true'
+          else if (field.tipo === 'int') values[field.chave] = Number(input.value)
+          else if (field.tipo === 'float') values[field.chave] = Number.parseFloat(input.value)
+          else values[field.chave] = input.value.trim()
+        })
+        const button = document.getElementById('btn-salvar-configuracoes')
+        button.disabled = true
+        button.textContent = 'Salvando…'
+        try {
+          const response = await fetchDashboard('/api/dashboard/configuracoes', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ valores: values }),
+          })
+          const data = await response.json()
+          if (!response.ok || !data.success) throw new Error(data.error || 'Não foi possível salvar.')
+          renderConfiguracoes(data.valores)
+          document.getElementById('configuracoes-status').textContent = 'Últimas alterações salvas e aplicadas.'
+          toast('Configurações salvas com sucesso.', 'success')
+          atualizarStatus()
+          carregarPrateleiras()
+        } catch (error) {
+          toast(error.message || 'Não foi possível salvar as configurações.', 'error')
+        } finally {
+          button.disabled = false
+          button.textContent = 'Salvar configurações'
+        }
+      }
+
+      async function alterarSenhaInicialDashboard() {
+        // A troca obrigatória protege as credenciais iniciais antes do uso do painel.
+        if (window.DocksValidation && !window.DocksValidation.validate(document.getElementById('modal-primeiro-login'))) return
+        const erro = document.getElementById('dashboard-senha-erro')
+        const btn = document.getElementById('dashboard-senha-btn')
+        erro.classList.add('hidden')
+        btn.disabled = true
+        btn.innerText = 'Salvando…'
+        try {
+          const res = await fetchDashboard('/api/dashboard/mudar_senha', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              senha_atual: document.getElementById('dashboard-senha-atual').value,
+              nova_senha: document.getElementById('dashboard-nova-senha').value,
+              confirmacao: document.getElementById('dashboard-confirmar-senha').value,
+            }),
+          })
+          const data = await res.json()
+          if (!res.ok) throw new Error(data.message || data.error || 'Não foi possível alterar a senha.')
+          document.getElementById('modal-primeiro-login').classList.add('hidden-view')
+          toast('Senha inicial substituída com sucesso.', 'success')
+          iniciarPainel()
+        } catch (e) {
+          erro.innerText = e.message
+          erro.classList.remove('hidden')
+        } finally {
+          btn.disabled = false
+          btn.innerText = 'Salvar nova senha'
+        }
+      }
+
+      function toast(message, type = 'info') {
+        const palette = {
+          info: 'bg-ink text-white',
+          success: 'bg-teal text-white',
+          error: 'bg-brick text-white',
+        }
+        const el = document.createElement('div')
+        el.className = `toast ${palette[type] || palette.info} px-5 py-3 rounded-xl shadow-xl text-sm font-semibold text-center w-full`
+        el.innerText = message
+        document.getElementById('toast-root').appendChild(el)
+        setTimeout(() => {
+          el.style.transition = 'opacity .3s'
+          el.style.opacity = '0'
+          setTimeout(() => el.remove(), 300)
+        }, 3200)
+      }
+
+      function switchView(viewId, btnElement) {
+        // Troca o conteúdo visível sem recarregar câmera, sessão e dados comuns.
+        document.querySelectorAll('.view-section').forEach((el) => el.classList.add('hidden-view'))
+        document.getElementById(viewId).classList.remove('hidden-view')
+        document.querySelectorAll('.nav-btn').forEach((btn) => btn.classList.remove('active'))
+        btnElement.classList.add('active')
+        const camHome = document.getElementById('camera-img-home')
+        const camFull = document.getElementById('camera-img')
+        const offlineHome = document.getElementById('camera-offline-home')
+        const offlineFull = document.getElementById('camera-offline')
+
+        if (viewId === 'view-camera') {
+          camHome.removeAttribute('src')
+          camFull.classList.remove('hidden-view')
+          offlineFull.classList.add('hidden-view')
+
+          camFull.src = `${API_URL}/api/camera_stream?token=${dashboardToken}&t=${Date.now()}`
+        } else if (viewId === 'view-overview') {
+          camFull.removeAttribute('src')
+          camHome.classList.remove('hidden-view')
+          offlineHome.classList.add('hidden-view')
+
+          camHome.src = `${API_URL}/api/camera_stream?token=${dashboardToken}&t=${Date.now()}`
+        } else {
+          camHome.removeAttribute('src')
+          camFull.removeAttribute('src')
+        }
+
+        const titles = {
+          'view-overview': 'Painel Central de Monitoramento',
+          'view-moradores': 'Gestão de Moradores',
+          'view-porteiros': 'Gestão de Porteiros',
+          'view-shelves': 'Mapeamento Físico de Prateleiras',
+          'view-logs': 'Auditoria de Sistema',
+          'view-relatorios': 'Relatórios em PDF',
+          'view-configuracoes': 'Configurações Operacionais',
+          'view-camera': 'Monitoramento Ao Vivo',
+          'view-gravacoes': 'Gravações de Segurança',
+        }
+        document.getElementById('header-title').innerText = titles[viewId] || ''
+        if (viewId === 'view-moradores') carregarMoradores()
+        if (viewId === 'view-porteiros') carregarPorteiros()
+        if (viewId === 'view-configuracoes') carregarConfiguracoes()
+      }
+      function switchViewById(viewId) {
+        const map = {
+          'view-overview': 0,
+          'view-moradores': 1,
+          'view-porteiros': 2,
+          'view-shelves': 3,
+          'view-logs': 4,
+          'view-relatorios': 5,
+          'view-configuracoes': 6,
+          'view-camera': 7,
+          'view-gravacoes': 8,
+        }
+        const btn = document.querySelectorAll('.nav-btn')[map[viewId]]
+        switchView(viewId, btn)
+        if (viewId === 'view-logs') carregarLogs()
+        if (viewId === 'view-shelves') carregarPrateleiras()
+        if (viewId === 'view-gravacoes') carregarGravacoes()
+      }
+
+      function setConnStatus(ok) {
+        if (serverOk === ok) return
+        serverOk = ok
+        const box = document.getElementById('conn-status')
+        box.innerHTML = ok
+          ? '<span class="w-2 h-2 rounded-full bg-teal animate-pulse"></span> Servidor conectado'
+          : '<span class="w-2 h-2 rounded-full bg-brick animate-pulse"></span> Servidor offline'
+        box.className = `text-xs font-mono flex items-center gap-2 ${ok ? 'text-teal' : 'text-brick'}`
+      }
+
+      function cameraConnected(image, offlineId) {
+        clearTimeout(image._reconnectTimer)
+        image._reconnectAttempt = 0
+        image.classList.remove('hidden-view')
+        document.getElementById(offlineId)?.classList.add('hidden-view')
+      }
+
+      function scheduleCameraReconnect(image, offlineId) {
+        // Retenta o stream quando a imagem cai, sem travar os demais controles.
+        image.classList.add('hidden-view')
+        document.getElementById(offlineId)?.classList.remove('hidden-view')
+        clearTimeout(image._reconnectTimer)
+        image._reconnectAttempt = (image._reconnectAttempt || 0) + 1
+        const delay = Math.min(8000, 500 * 2 ** Math.min(image._reconnectAttempt, 4))
+        image._reconnectTimer = setTimeout(() => {
+          const expectedView = image.id === 'camera-img-home' ? 'view-overview' : 'view-camera'
+          if (document.getElementById(expectedView)?.classList.contains('hidden-view')) return
+          image.src = `${API_URL}/api/camera_stream?token=${dashboardToken}&t=${Date.now()}`
+        }, delay)
+      }
+
+      async function atualizarStatus() {
+        // Reúne indicadores locais de câmera, fechadura e capacidade no painel.
+        try {
+          const res = await fetchDashboard('/api/dashboard/status')
+          const data = await res.json()
+          document.getElementById('stat-aguardando').innerText = data.aguardando
+          document.getElementById('stat-atrasadas').innerText = data.atrasadas || 0
+          document.getElementById('stat-atrasadas-prazo').innerText =
+            `Prazo visual: ${data.prazo_alerta_dias} dias`
+          document
+            .getElementById('stat-atrasadas-card')
+            .classList.toggle('border-amber', Number(data.atrasadas) > 0)
+          document.getElementById('stat-retiradas').innerText = data.retiradas_hoje
+          document.getElementById('stat-livres').innerText = data.livres
+          const livresNum = parseInt(String(data.livres).split('/')[0].trim())
+          const pct = isNaN(livresNum) ? 0 : Math.max(0, Math.min(100, (livresNum / 50) * 100))
+          document.getElementById('stat-livres-bar').style.width = `${pct}%`
+          atualizarCapacidade(data.capacidade || {})
+          const retention = document.getElementById('recording-retention-policy')
+          if (retention)
+            retention.innerText = `Registros vinculados às retiradas. Exclusão automática após ${data.retencao_dias} dias, exceto gravações preservadas.`
+          setConnStatus(true)
+        } catch (e) {
+          setConnStatus(false)
+        }
+      }
+
+      function atualizarCapacidade(capacidade) {
+        ;[['Pequeno', 'pequeno'], ['Médio', 'médio'], ['Grande', 'grande']].forEach(([tamanho, id]) => {
+          const item = capacidade[tamanho] || capacidade[id]
+          if (!item) return
+          const texto = document.getElementById(`capacity-${id}`)
+          const barra = document.getElementById(`capacity-${id}-bar`)
+          if (texto) {
+            texto.innerText = `${item.ocupadas} / ${item.total}`
+            texto.classList.toggle('text-brick', Boolean(item.alerta))
+          }
+          if (barra) {
+            barra.style.width = `${Math.min(100, item.percentual)}%`
+            barra.classList.toggle('bg-brick', Boolean(item.alerta))
+          }
+        })
+      }
+
+      async function carregarPrateleiras() {
+        // Alimenta o mapa visual com ocupação retornada pelo servidor.
+        try {
+          const res = await fetchDashboard('/api/dashboard/prateleiras')
+          const data = await res.json()
+          allShelves = Array.isArray(data) ? data : []
+          const container = document.getElementById('grid-prateleiras')
+          container.innerHTML = ''
+          allShelves.forEach((p) => {
+            const isOcupada = p.status === 'ocupada'
+            let border = p.atrasada
+              ? 'border-amber bg-amber-light'
+              : isOcupada
+                ? 'border-blue bg-blue-light'
+                : 'border-line bg-paper'
+            let text = p.atrasada ? 'text-amber-dark' : isOcupada ? 'text-blue-dark' : 'text-muted/50'
+            const sub = isOcupada ? `Apto ${htmlSeguro(p.apt)}` : 'Livre'
+            container.innerHTML += `<button type="button" onclick="abrirDetalhesPrateleira('${htmlSeguro(p.id)}')" class="border-2 ${border} rounded-xl p-3 text-center transition-all hover:-translate-y-0.5 hover:shadow-md"><p class="font-mono font-bold ${text} text-sm">${htmlSeguro(p.id)}</p><p class="text-[10px] mt-1 ${text} font-bold">${sub}</p></button>`
+          })
+          setConnStatus(true)
+        } catch (e) {
+          setConnStatus(false)
+        }
+      }
+
+      function abrirDetalhesPrateleira(id) {
+        const prateleira = allShelves.find((item) => item.id === id)
+        if (!prateleira) return
+        document.getElementById('shelf-modal-title').innerText = `${prateleira.id} · ${prateleira.setor}`
+        const content = document.getElementById('shelf-modal-content')
+        if (!prateleira.encomendas?.length) {
+          content.innerHTML =
+            '<div class="bg-paper border border-line rounded-xl p-5 text-sm text-muted text-center">Compartimento livre.</div>'
+        } else {
+          content.innerHTML = prateleira.encomendas
+            .map(
+              (item) => `
+            <div class="border ${item.atrasada ? 'border-amber bg-amber-light' : 'border-line bg-paper'} rounded-xl p-4">
+              <div class="flex items-start justify-between gap-3"><div><p class="font-bold text-ink">${htmlSeguro(item.morador)}</p><p class="text-xs text-muted mt-1">Apartamento ${htmlSeguro(item.apartamento)} · Encomenda #${htmlSeguro(item.id)}</p></div><span class="text-[10px] font-bold ${item.atrasada ? 'text-amber-dark' : 'text-blue-dark'}">${item.atrasada ? 'Atrasada' : htmlSeguro(rotuloStatusEncomenda(item.status))}</span></div>
+              <p class="text-xs text-muted mt-3">Chegada: ${htmlSeguro(item.data_chegada)} · ${htmlSeguro(item.dias_armazenada)} dia(s) armazenada</p>
+            </div>`,
+            )
+            .join('')
+        }
+        document.getElementById('modal-prateleira').classList.remove('hidden-view')
+      }
+
+      function fecharDetalhesPrateleira() {
+        document.getElementById('modal-prateleira').classList.add('hidden-view')
+      }
+
+      function rotuloStatusEncomenda(status) {
+        const rotulos = { aguardando: 'Aguardando', em_retirada: 'Em retirada', retirada: 'Retirada' }
+        return rotulos[status] || String(status || 'Não informado').replaceAll('_', ' ').replace(/^./, (letra) => letra.toUpperCase())
+      }
+
+      function baixarRelatorio(tipo) {
+        // O PDF é gerado no backend para refletir dados filtrados do condomínio.
+        const link = document.createElement('a')
+        link.href = `${API_URL}/api/dashboard/relatorios/${tipo}.pdf?token=${encodeURIComponent(dashboardToken)}`
+        link.download = ''
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+      }
+      async function syncHardware() {
+        try {
+          const res = await fetch(`${API_URL}/api/hardware/sync`)
+          const state = await res.json()
+
+          const doorUI = document.getElementById('hw-door-status')
+          if (state.porta_destravada) {
+            doorUI.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-teal animate-pulse"></span> ACIONADA`
+            doorUI.className = 'flex items-center gap-1.5 text-xs font-bold text-teal-dark'
+          } else {
+            doorUI.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-brick"></span> BLOQUEADA'
+            doorUI.className = 'flex items-center gap-1.5 text-xs font-bold text-brick'
+          }
+
+          const badgeHome = document.getElementById('badge-rec-home')
+          if (badgeHome) {
+            if (state.gravacao_ativa) {
+              badgeHome.classList.remove('hidden-view')
+            } else {
+              badgeHome.classList.add('hidden-view')
+            }
+          }
+        } catch (e) {}
+      }
+
+      async function acionarTuyaManual() {
+        abrirModalAcao('Acionar fechadura', 'A porta será liberada e a ação ficará registrada.', async () => {
+          fecharModalAcao()
+          await executarTuyaManual()
+        })
+      }
+
+      async function executarTuyaManual() {
+        // Comando manual é separado da validação normal por QR e exige confirmação.
+        const btn = document.getElementById('btn-tuya-manual')
+        btn.disabled = true
+        btn.innerText = 'Acionando…'
+
+        try {
+          const res = await fetchDashboard('/api/dashboard/hardware/tuya/acionar', { method: 'POST' })
+          const data = await res.json()
+          if (res.ok && data.success) {
+            toast('Fechadura acionada manualmente.', 'success')
+            carregarLogs()
+          } else {
+            toast(data.error || 'Não foi possível acionar a fechadura.', 'error')
+          }
+        } catch (e) {
+          toast('Falha de comunicação com o hardware.', 'error')
+        }
+
+        btn.disabled = false
+        btn.innerText = 'Acionar fechadura'
+      }
+
+      function abrirModalAcao(titulo, texto, callback, campos = '') {
+        document.getElementById('modal-acao-titulo').innerText = titulo
+        document.getElementById('modal-acao-texto').innerText = texto
+        document.getElementById('modal-acao-campos').innerHTML = campos
+        modalAction = callback
+        document.getElementById('modal-acao-confirmar').onclick = () => {
+          if (window.DocksValidation && !window.DocksValidation.validate(document.getElementById('modal-acao-campos'))) return
+          if (modalAction) modalAction()
+        }
+        document.getElementById('modal-acao').classList.remove('hidden-view')
+      }
+
+      function fecharModalAcao() {
+        document.getElementById('modal-acao').classList.add('hidden-view')
+        document.getElementById('modal-acao-campos').innerHTML = ''
+        modalAction = null
+      }
+
+      function logTagClass(tipo) {
+        // Classes por categoria mantêm as tags legíveis nos dois temas.
+        if (tipo.includes('FALHA') || tipo.includes('SEGURANÇA') || tipo.includes('ALERTA'))
+          return 'log-tag log-tag--danger'
+        if (tipo.includes('RETIRADA')) return 'log-tag log-tag--success'
+        if (tipo.includes('HARDWARE')) return 'log-tag log-tag--hardware'
+        if (tipo.includes('CÂMERA')) return 'log-tag log-tag--camera'
+        if (tipo.includes('CADASTRO')) return 'log-tag log-tag--register'
+        return 'log-tag log-tag--neutral'
+      }
+
+      function logIcon(tipo) {
+        const base = 'fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"'
+        if (tipo.includes('FALHA') || tipo.includes('ALERTA') || tipo.includes('SEGURANÇA'))
+          return `<svg ${base}><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 4h.01M10.3 3.7L2.4 17.4A2 2 0 004.1 20h15.8a2 2 0 001.7-2.6L13.7 3.7a2 2 0 00-3.4 0z"/></svg>`
+        if (tipo.includes('RETIRADA'))
+          return `<svg ${base}><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`
+        if (tipo.includes('HARDWARE'))
+          return `<svg ${base}><rect x="5" y="10" width="14" height="10" rx="2" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M8 10V7a4 4 0 118 0v3"/></svg>`
+        if (tipo.includes('CÂMERA'))
+          return `<svg ${base}><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.5-2.5v9L15 14M4 6h9a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2z"/></svg>`
+        if (tipo.includes('CADASTRO') || tipo.includes('GESTÃO'))
+          return `<svg ${base}><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>`
+        return `<svg ${base}><circle cx="12" cy="12" r="9" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 11v5m0-8h.01"/></svg>`
+      }
+
+      async function carregarLogs() {
+        try {
+          const res = await fetchDashboard('/api/dashboard/logs')
+          allLogs = await res.json()
+          renderLogs(allLogs)
+          setConnStatus(true)
+        } catch (e) {
+          setConnStatus(false)
+        }
+      }
+
+      function renderLogs(logs) {
+        // Formata mensagens e categorias sem mostrar respostas técnicas brutas.
+        const listaHome = document.getElementById('lista-logs-home')
+        const tabFull = document.getElementById('tabela-logs-full')
+        listaHome.innerHTML = ''
+        tabFull.innerHTML = ''
+        if (logs.length === 0) {
+          listaHome.innerHTML =
+            '<p class="p-6 text-sm text-muted text-center">Nenhum evento registrado ainda.</p>'
+          tabFull.innerHTML =
+            '<tr><td colspan="3" class="p-6 text-sm text-muted text-center">Nenhum evento encontrado.</td></tr>'
+          return
+        }
+        logs.forEach((log, index) => {
+          const tagClass = logTagClass(log.tipo)
+          const icon = logIcon(log.tipo)
+          if (index < 5) {
+            listaHome.innerHTML += `<li class="p-5 hover:bg-paper transition"><div class="flex justify-between items-start gap-3"><div class="flex gap-3 min-w-0"><span class="log-entry-icon">${icon}</span><div class="min-w-0"><span class="${tagClass} mb-1">${htmlSeguro(log.tipo)}</span><p class="text-sm font-medium text-ink mt-1 truncate">${htmlSeguro(log.descricao)}</p></div></div><span class="text-xs text-muted font-mono flex-shrink-0">${htmlSeguro((log.horario || '').split(' ')[1] || '')}</span></div></li>`
+          }
+          tabFull.innerHTML += `<tr class="hover:bg-paper transition"><td class="p-4 text-muted font-mono whitespace-nowrap">${htmlSeguro(log.horario)}</td><td class="p-4"><div class="flex items-center gap-2"><span class="log-entry-icon">${icon}</span><span class="${tagClass}">${htmlSeguro(log.tipo)}</span></div></td><td class="p-4 text-ink font-medium">${htmlSeguro(log.descricao)}</td></tr>`
+        })
+      }
+
+      function filtrarLogs() {
+        const q = document.getElementById('log-filter').value.trim().toLowerCase()
+        if (!q) return renderLogs(allLogs)
+        renderLogs(
+          allLogs.filter((l) => l.tipo.toLowerCase().includes(q) || l.descricao.toLowerCase().includes(q)),
+        )
+      }
+
+      async function salvarMorador() {
+        // Cadastra/edita morador e mostra as credenciais no painel lateral.
+        if (window.DocksValidation && !window.DocksValidation.validate(document.getElementById('cad-nome').closest('.space-y-4'))) return
+        const nome = document.getElementById('cad-nome').value.trim()
+        const apt = document.getElementById('cad-apt').value.trim()
+        const tel = document.getElementById('cad-tel').value.trim()
+        if (!nome || !apt || !tel) return toast('Preencha todos os campos obrigatórios.', 'error')
+
+        const btn = document.getElementById('btn-salvar-morador')
+        btn.disabled = true
+        btn.innerText = 'Salvando…'
+        try {
+          const res = await fetchDashboard('/api/dashboard/moradores', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome, apartamento: apt, telefone: tel }),
+          })
+          const data = await res.json()
+          if (data.success) {
+            toast('Morador cadastrado com sucesso.', 'success')
+            document.getElementById('cred-usuario').innerText = data.usuario
+            document.getElementById('cred-senha').innerText = data.senha
+            document.getElementById('credenciais-box').classList.remove('hidden-view')
+            document.getElementById('cad-nome').value = ''
+            document.getElementById('cad-apt').value = ''
+            document.getElementById('cad-tel').value = ''
+            carregarLogs()
+            carregarMoradores()
+          } else {
+            toast(data.error || 'Não foi possível cadastrar o morador.', 'error')
+          }
+        } catch (e) {
+          toast('Erro ao conectar com o servidor Docks.', 'error')
+        }
+        btn.disabled = false
+        btn.innerText = 'Finalizar cadastro'
+      }
+
+      const htmlSeguro = (valor) =>
+        // Dados digitados por pessoas nunca entram diretamente no HTML dos cartões.
+        String(valor ?? '').replace(
+          /[&<>"']/g,
+          (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[c],
+        )
+
+      async function carregarMoradores() {
+        const lista = document.getElementById('lista-moradores')
+        if (!lista) return
+        try {
+          const res = await fetchDashboard('/api/dashboard/moradores')
+          const moradores = await res.json()
+          lista.innerHTML = moradores.length
+            ? moradores
+                .map(
+                  (m) =>
+                    `<div class="management-row"><span><strong class="text-ink">${htmlSeguro(m.nome)}</strong><small class="block text-muted mt-1">${htmlSeguro(m.usuario)}</small></span><span class="font-mono">Apto ${htmlSeguro(m.apartamento)}</span><span>${htmlSeguro(m.telefone)}</span><span class="font-bold ${m.ativo ? 'text-teal-dark' : 'text-muted'}">${m.ativo ? 'Ativo' : 'Inativo'}</span><span class="management-actions"><button onclick="editarMorador(JSON.parse(decodeURIComponent('${encodeURIComponent(JSON.stringify(m))}')))">Editar</button><button onclick="confirmarStatusMorador(${m.id},${!m.ativo},decodeURIComponent('${encodeURIComponent(m.nome)}'))">${m.ativo ? 'Desativar' : 'Ativar'}</button></span></div>`,
+                )
+                .join('')
+            : '<div class="p-6 text-sm text-muted text-center">Nenhum morador cadastrado.</div>'
+        } catch (e) {
+          lista.innerHTML =
+            '<div class="p-6 text-sm text-brick text-center">Não foi possível carregar os moradores.</div>'
+        }
+      }
+
+      function editarMorador(m) {
+        const campos = `<input id="edit-morador-nome" data-validate="name" maxlength="120" required class="modal-input" value="${htmlSeguro(m.nome)}" placeholder="Nome"><input id="edit-morador-apt" data-validate="apartment" maxlength="20" required class="modal-input" value="${htmlSeguro(m.apartamento)}" placeholder="Apartamento"><input id="edit-morador-tel" data-validate="phone" maxlength="20" required class="modal-input" value="${htmlSeguro(m.telefone)}" placeholder="Telefone"><input id="edit-morador-usuario" data-validate="username" maxlength="64" required class="modal-input" value="${htmlSeguro(m.usuario)}" placeholder="Usuário">`
+        abrirModalAcao(
+          'Editar morador',
+          'Revise as informações deste cadastro.',
+          async () => {
+            const body = {
+              nome: document.getElementById('edit-morador-nome').value.trim(),
+              apartamento: document.getElementById('edit-morador-apt').value.trim(),
+              telefone: document.getElementById('edit-morador-tel').value.trim(),
+              usuario: document.getElementById('edit-morador-usuario').value.trim(),
+            }
+            const res = await fetchDashboard(`/api/dashboard/moradores/${m.id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+            })
+            const data = await res.json()
+            if (!res.ok) return toast(data.error || 'Não foi possível editar.', 'error')
+            fecharModalAcao()
+            toast('Morador atualizado.', 'success')
+            carregarMoradores()
+          },
+          campos,
+        )
+      }
+
+      function confirmarStatusMorador(id, ativo, nome) {
+        abrirModalAcao(
+          ativo ? 'Reativar morador' : 'Desativar morador',
+          ativo
+            ? `${nome} voltará a acessar o portal.`
+            : `${nome} perderá o acesso, mas permanecerá no histórico.`,
+          async () => {
+            const res = await fetchDashboard(`/api/dashboard/moradores/${id}/status`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ativo }),
+            })
+            const data = await res.json()
+            if (!res.ok) return toast(data.error || 'Não foi possível alterar o acesso.', 'error')
+            fecharModalAcao()
+            carregarMoradores()
+            toast('Acesso atualizado.', 'success')
+          },
+        )
+      }
+
+      async function salvarPorteiro() {
+        // Essas credenciais serão usadas pelo aplicativo da portaria deste condomínio.
+        if (window.DocksValidation && !window.DocksValidation.validate(document.getElementById('port-nome').closest('.space-y-3'))) return
+        const body = {
+          nome: document.getElementById('port-nome').value.trim(),
+          usuario: document.getElementById('port-usuario').value.trim(),
+          senha: document.getElementById('port-senha').value,
+        }
+        if (!body.nome || !body.usuario || !body.senha)
+          return toast('Preencha nome, usuário e senha.', 'error')
+        const btn = document.getElementById('btn-salvar-porteiro')
+        btn.disabled = true
+        btn.innerText = 'Salvando…'
+        try {
+          const res = await fetchDashboard('/api/dashboard/porteiros', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+            }),
+            data = await res.json().catch(() => ({
+              error: 'O servidor não conseguiu concluir o cadastro. Verifique o terminal.',
+            }))
+          if (!res.ok || data.error) throw new Error(data.error || 'Não foi possível cadastrar.')
+          ;['port-nome', 'port-usuario', 'port-senha'].forEach(
+            (id) => (document.getElementById(id).value = ''),
+          )
+          toast('Porteiro cadastrado.', 'success')
+          carregarPorteiros()
+        } catch (e) {
+          toast(e.message, 'error')
+        } finally {
+          btn.disabled = false
+          btn.innerText = 'Cadastrar porteiro'
+        }
+      }
+
+      async function carregarPorteiros() {
+        const lista = document.getElementById('lista-porteiros')
+        if (!lista) return
+        try {
+          const res = await fetchDashboard('/api/dashboard/porteiros'),
+            porteiros = await res.json()
+          lista.innerHTML = porteiros.length
+            ? porteiros
+                .map(
+                  (p) =>
+                    `<div class="management-row"><span><strong class="text-ink">${htmlSeguro(p.nome)}</strong><small class="block text-muted mt-1">Criado em ${htmlSeguro(p.criado_em)}</small></span><span class="font-mono">${htmlSeguro(p.usuario)}</span><span>Portaria</span><span class="font-bold ${p.ativo ? 'text-teal-dark' : 'text-muted'}">${p.ativo ? 'Ativo' : 'Inativo'}</span><span class="management-actions"><button onclick="editarPorteiro(JSON.parse(decodeURIComponent('${encodeURIComponent(JSON.stringify(p))}')))">Editar</button><button onclick="confirmarStatusPorteiro(${p.id},${!p.ativo},decodeURIComponent('${encodeURIComponent(p.nome)}'))">${p.ativo ? 'Desativar' : 'Ativar'}</button></span></div>`,
+                )
+                .join('')
+            : '<div class="p-6 text-sm text-muted text-center">Nenhum porteiro cadastrado.</div>'
+        } catch (e) {
+          lista.innerHTML =
+            '<div class="p-6 text-sm text-brick text-center">Não foi possível carregar os porteiros.</div>'
+        }
+      }
+
+      function editarPorteiro(p) {
+        const campos = `<input id="edit-port-nome" data-validate="name" maxlength="120" required class="modal-input" value="${htmlSeguro(p.nome)}" placeholder="Nome"><input id="edit-port-usuario" data-validate="username" maxlength="64" required class="modal-input" value="${htmlSeguro(p.usuario)}" placeholder="Usuário"><input id="edit-port-senha" type="password" data-validate="password" minlength="8" maxlength="128" class="modal-input" placeholder="Nova senha (deixe vazio para manter)">`
+        abrirModalAcao(
+          'Editar porteiro',
+          'Altere os dados necessários.',
+          async () => {
+            const body = {
+              nome: document.getElementById('edit-port-nome').value.trim(),
+              usuario: document.getElementById('edit-port-usuario').value.trim(),
+              senha: document.getElementById('edit-port-senha').value,
+            }
+            const res = await fetchDashboard(`/api/dashboard/porteiros/${p.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+              }),
+              data = await res.json()
+            if (!res.ok) return toast(data.error || 'Não foi possível editar.', 'error')
+            fecharModalAcao()
+            toast('Porteiro atualizado.', 'success')
+            carregarPorteiros()
+          },
+          campos,
+        )
+      }
+
+      function confirmarStatusPorteiro(id, ativo, nome) {
+        abrirModalAcao(
+          ativo ? 'Reativar porteiro' : 'Desativar porteiro',
+          ativo ? `${nome} voltará a acessar a portaria.` : `${nome} perderá o acesso ao App da Portaria.`,
+          async () => {
+            const res = await fetchDashboard(`/api/dashboard/porteiros/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ativo }),
+              }),
+              data = await res.json()
+            if (!res.ok) return toast(data.error || 'Não foi possível alterar o acesso.', 'error')
+            fecharModalAcao()
+            carregarPorteiros()
+            toast('Acesso atualizado.', 'success')
+          },
+        )
+      }
+
+      async function carregarGravacoes() {
+        // Metadados, ocorrência e URL de reprodução são obtidos para cada retirada.
+        const container = document.getElementById('lista-gravacoes')
+        if (!container) return
+        container.innerHTML = '<div class="p-6"><div class="skeleton h-16 rounded-lg"></div></div>'
+
+        try {
+          const res = await fetchDashboard('/api/dashboard/gravacoes')
+          const gravacoes = await res.json()
+          container.innerHTML = ''
+
+          if (!Array.isArray(gravacoes) || gravacoes.length === 0) {
+            container.innerHTML =
+              '<div class="p-8 text-center text-sm text-muted">Nenhuma gravação registrada.</div>'
+            return
+          }
+
+          gravacoes.forEach((g) => {
+            const statusMap = {
+              gravando: ['Gravando', 'text-brick-dark bg-brick-light'],
+              iniciando: ['Iniciando', 'text-blue-dark bg-blue-light'],
+              concluido: ['Concluída', 'text-teal-dark bg-teal-light'],
+              interrompido: ['Interrompida', 'text-amber-dark bg-amber-light'],
+              falha: ['Falha', 'text-brick-dark bg-brick-light'],
+            }
+            const [statusText, statusCls] = statusMap[g.status] || [
+              String(g.status || 'Não informado').replaceAll('_', ' ').replace(/^./, (letra) => letra.toUpperCase()),
+              'text-ink bg-line',
+            ]
+            const duracao =
+              g.duracao_segundos == null
+                ? '—'
+                : `${Math.floor(g.duracao_segundos / 60)}m ${g.duracao_segundos % 60}s`
+            const aptSeguro = encodeURIComponent(String(g.apartamento)).replace(/'/g, '%27')
+            const inicioSeguro = encodeURIComponent(String(g.inicio || '')).replace(/'/g, '%27')
+            const assistir = g.disponivel
+              ? `<button onclick="abrirGravacao(${Number(g.id)}, decodeURIComponent('${aptSeguro}'), decodeURIComponent('${inicioSeguro}'), ${Number(g.duracao_segundos || 0)})" class="bg-ink hover:bg-inkalt text-white text-xs font-bold px-4 py-2 rounded-lg">Assistir</button>`
+              : '<span class="text-xs text-muted">Arquivo indisponível</span>'
+            const ocorrencia = g.preservada
+              ? g.ocorrencia_status === 'resolvida'
+                ? `<span class="text-xs font-bold text-teal-dark bg-teal-light px-3 py-2 rounded-lg">Ocorrência #${htmlSeguro(g.ocorrencia_id)} resolvida</span>`
+                : `<button onclick="resolverOcorrencia(${Number(g.ocorrencia_id)})" class="border border-teal/40 text-teal-dark bg-teal-light text-xs font-bold px-4 py-2 rounded-lg">Marcar ocorrência como resolvida</button>`
+              : `<button onclick="abrirOcorrencia(${Number(g.id)})" class="border border-brick/30 text-brick text-xs font-bold px-4 py-2 rounded-lg">Registrar ocorrência</button>`
+
+            container.innerHTML += `
+              <div class="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-paper transition">
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="px-2 py-1 rounded-md text-[10px] font-bold ${statusCls}">${htmlSeguro(statusText)}</span>
+                    <span class="font-mono text-xs text-muted">Retirada #${htmlSeguro(g.retirada_id)}</span>
+                  </div>
+                  <p class="font-bold text-ink mt-2">Apto ${htmlSeguro(g.apartamento)} · ${htmlSeguro(g.morador)}</p>
+                  <p class="text-xs text-muted mt-1">Início: ${htmlSeguro(g.inicio || '—')} · Duração: ${htmlSeguro(duracao)}</p>
+                  <p class="text-[11px] ${g.preservada ? 'text-brick font-bold' : 'text-muted'} mt-1">${g.preservada ? 'Preservação permanente por ocorrência' : `Exclusão automática em ${htmlSeguro(g.expira_em || '—')}`}</p>
+                </div>
+                <div class="flex-shrink-0 flex flex-wrap items-center justify-end gap-2">${assistir}${ocorrencia}</div>
+              </div>`
+          })
+        } catch (e) {
+          container.innerHTML =
+            '<div class="p-8 text-center text-sm text-brick">Não foi possível carregar as gravações.</div>'
+        }
+      }
+
+      function abrirOcorrencia(gravacaoId) {
+        // Relaciona a ocorrência à gravação para preservá-la da retenção automática.
+        abrirModalAcao(
+          'Registrar ocorrência',
+          'Descreva a ocorrência. A gravação será preservada e não será removida pela retenção automática.',
+          async () => {
+            const descricao = document.getElementById('ocorrencia-descricao').value.trim()
+            if (!descricao) return toast('Descreva a ocorrência antes de continuar.', 'error')
+            const res = await fetchDashboard('/api/dashboard/ocorrencias', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ gravacao_id: gravacaoId, descricao }),
+            })
+            const data = await res.json()
+            if (!res.ok)
+              return toast(data.message || data.error || 'Não foi possível registrar a ocorrência.', 'error')
+            fecharModalAcao()
+            carregarGravacoes()
+            carregarLogs()
+            toast('Ocorrência registrada e gravação preservada.', 'success')
+          },
+          '<textarea id="ocorrencia-descricao" rows="4" minlength="10" maxlength="1000" data-validate="text" required class="modal-input resize-none" placeholder="Descreva o que aconteceu…"></textarea>',
+        )
+      }
+
+      function resolverOcorrencia(ocorrenciaId) {
+        // Concluir uma ocorrência registra a solução sem apagar seu histórico.
+        abrirModalAcao(
+          'Resolver ocorrência',
+          'A ocorrência será marcada como resolvida. A gravação continuará preservada para auditoria.',
+          async () => {
+            const res = await fetchDashboard(`/api/dashboard/ocorrencias/${ocorrenciaId}/status`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: 'resolvida' }),
+            })
+            const data = await res.json()
+            if (!res.ok) return toast(data.message || 'Não foi possível resolver a ocorrência.', 'error')
+            fecharModalAcao()
+            carregarGravacoes()
+            carregarLogs()
+            toast('Ocorrência marcada como resolvida.', 'success')
+          },
+        )
+      }
+
+      function formatarTempoGravacao(segundos) {
+        const valor = Math.max(0, Math.floor(Number(segundos) || 0))
+        return `${String(Math.floor(valor / 60)).padStart(2, '0')}:${String(valor % 60).padStart(2, '0')}`
+      }
+
+      function posicaoAtualGravacao() {
+        return activeRecording?.position || 0
+      }
+
+      function atualizarLinhaTempoGravacao() {
+        if (!activeRecording) return
+        const atual = posicaoAtualGravacao()
+        const timeline = document.getElementById('video-timeline')
+        timeline.value = String(Math.floor(atual))
+        document.getElementById('video-current-time').innerText = formatarTempoGravacao(atual)
+      }
+
+      async function reiniciarFluxoGravacao() {
+        if (!activeRecording) return
+        activeRecording.controller?.abort()
+        const recording = activeRecording
+        const controller = new AbortController()
+        recording.controller = controller
+        recording.paused = false
+        document.getElementById('video-pause').innerText = 'Pausar'
+        const player = document.getElementById('video-gravacao')
+        const loading = document.getElementById('video-loading')
+        loading.innerText = 'Carregando gravação…'
+        loading.classList.remove('text-brick', 'hidden-view')
+        player.classList.remove('hidden-view')
+        try {
+          const response = await fetch(`${API_URL}/api/dashboard/gravacoes/${recording.id}/stream?inicio=${recording.position.toFixed(4)}&velocidade=${recording.speed}`, {
+            headers: { 'X-Dashboard-Token': dashboardToken }, signal: controller.signal,
+          })
+          if (!response.ok || !response.body) throw new Error('Gravação indisponível.')
+          let received = false
+          for await (const frame of recordingFrames(response.body.getReader())) {
+            if (controller.signal.aborted || activeRecording !== recording) break
+            const url = URL.createObjectURL(new Blob([frame.jpeg], { type: 'image/jpeg' }))
+            try {
+              player.src = url
+              await player.decode()
+              if (controller.signal.aborted || activeRecording !== recording) break
+              received = true
+              recording.position = Number.isFinite(frame.position) ? frame.position : recording.position
+              if (Number.isFinite(frame.duration) && frame.duration > 0) {
+                recording.duration = frame.duration
+                document.getElementById('video-timeline').max = String(frame.duration)
+                document.getElementById('video-timeline').disabled = false
+                document.getElementById('video-total-time').innerText = formatarTempoGravacao(frame.duration)
+              }
+              gravacaoCarregada()
+              atualizarLinhaTempoGravacao()
+            } finally { URL.revokeObjectURL(url) }
+          }
+          if (!controller.signal.aborted && activeRecording === recording) {
+            if (!received) throw new Error('Nenhum quadro disponível.')
+            recording.paused = true
+            document.getElementById('video-pause').innerText = 'Rever'
+            loading.innerText = 'Fim da gravação disponível'
+            loading.classList.remove('hidden-view')
+          }
+        } catch (error) {
+          if (!controller.signal.aborted && activeRecording === recording) gravacaoFalhou()
+        }
+      }
+
+      function pausarGravacao() {
+        if (!activeRecording) return
+        if (activeRecording.paused) {
+          if (activeRecording.position >= activeRecording.duration - 0.1) activeRecording.position = 0
+          reiniciarFluxoGravacao()
+        } else {
+          activeRecording.controller?.abort()
+          activeRecording.paused = true
+          document.getElementById('video-pause').innerText = 'Continuar'
+        }
+      }
+
+      function alterarVelocidadeGravacao(delta) {
+        if (!activeRecording) return
+        activeRecording.position = posicaoAtualGravacao()
+        activeRecording.speed = Math.min(2, Math.max(0.5, activeRecording.speed + delta))
+        document.getElementById('video-speed').innerText = `${activeRecording.speed.toFixed(1).replace('.0', '')}x`
+        reiniciarFluxoGravacao()
+      }
+
+      function abrirGravacao(id, apartamento, inicio, duracao) {
+        activeRecording?.controller?.abort()
+        const modal = document.getElementById('modal-video')
+        const token = encodeURIComponent(dashboardToken)
+        document.getElementById('modal-video-meta').innerText = `Apartamento ${apartamento} · ${inicio}`
+        document.getElementById('video-download').href =
+          `${API_URL}/api/dashboard/gravacoes/${id}/video?token=${token}`
+        const timeline = document.getElementById('video-timeline')
+        timeline.max = String(Math.max(0, Math.floor(duracao)))
+        timeline.value = '0'
+        timeline.disabled = !duracao
+        document.getElementById('video-current-time').innerText = '00:00'
+        document.getElementById('video-total-time').innerText = formatarTempoGravacao(duracao)
+        document.getElementById('video-speed').innerText = '1x'
+        document.getElementById('video-controls').classList.remove('hidden-view')
+        activeRecording = { id, duration: Math.max(0, Number(duracao) || 0), position: 0, speed: 1, paused: false, controller: null }
+        modal.classList.remove('hidden-view')
+        reiniciarFluxoGravacao()
+      }
+
+      function gravacaoCarregada() {
+        document.getElementById('video-loading').classList.add('hidden-view')
+        document.getElementById('video-gravacao').classList.remove('hidden-view')
+      }
+
+      function gravacaoFalhou() {
+        if (activeRecording) activeRecording.paused = true
+        document.getElementById('video-pause').innerText = 'Tentar novamente'
+        const loading = document.getElementById('video-loading')
+        document.getElementById('video-gravacao').classList.add('hidden-view')
+        loading.innerText =
+          'Não foi possível reproduzir esta gravação. Use “Baixar arquivo” para abri-la no PC.'
+        loading.classList.add('text-brick')
+        loading.classList.remove('hidden-view')
+      }
+
+      function fecharGravacao() {
+        const modal = document.getElementById('modal-video')
+        const player = document.getElementById('video-gravacao')
+        activeRecording?.controller?.abort()
+        activeRecording = null
+        player.removeAttribute('src')
+        player.classList.add('hidden-view')
+        document.getElementById('video-loading').classList.remove('hidden-view')
+        document.getElementById('video-controls').classList.add('hidden-view')
+        modal.classList.add('hidden-view')
+      }
+
+      document.getElementById('video-timeline').addEventListener('input', (event) => {
+        document.getElementById('video-current-time').innerText = formatarTempoGravacao(event.target.value)
+      })
+      document.getElementById('video-timeline').addEventListener('change', (event) => {
+        if (!activeRecording) return
+        activeRecording.position = Number(event.target.value) || 0
+        reiniciarFluxoGravacao()
+      })
+
+      function tickClock() {
+        const now = new Date()
+        document.getElementById('clock-display').innerText = now.toLocaleString('pt-BR', {
+          dateStyle: 'short',
+          timeStyle: 'medium',
+        })
+      }
+
+      function iniciarPainel() {
+        atualizarStatus()
+        carregarLogs()
+        carregarPrateleiras()
+        tickClock()
+
+        document.getElementById('camera-img-home').src =
+          `${API_URL}/api/camera_stream?token=${dashboardToken}&t=${Date.now()}`
+
+        setInterval(atualizarStatus, 10000)
+        setInterval(carregarLogs, 15000)
+        setInterval(carregarPrateleiras, 15000)
+        setInterval(tickClock, 1000)
+        setInterval(syncHardware, 2000)
+      }
+
+      document.addEventListener('DOMContentLoaded', validarSessaoDashboard)
+    </script>
+    <style>
+      .nav-btn {
+        color: rgba(255, 255, 255, 0.6);
+      }
+      .nav-btn:hover {
+        background: rgba(255, 255, 255, 0.06);
+        color: white;
+      }
+      .nav-btn.active {
+        background: #2563eb;
+        color: #ffffff;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </body>
+</html>

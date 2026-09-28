@@ -1,0 +1,12 @@
+*
+!App.tsx
+!index.ts
+!app.json
+!eas.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!src/
+!src/**
+!assets/
+!assets/**
