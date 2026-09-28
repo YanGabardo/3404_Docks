@@ -32,7 +32,7 @@ Este repositório guarda **oito versões evolutivas** do projeto (`v1` → `v8`)
 
 ### 🛎️ Portaria
 
-- Leitura automática da etiqueta por OCR (EasyOCR)
+- Leitura automática da etiqueta por OCR
 - Reconhecimento do morador com autocompletar
 - Alocação de prateleira por tamanho, reaproveitando uma prateleira já em uso pelo mesmo morador quando possível
 - Foto do pacote anexada ao registro
