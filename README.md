@@ -1,172 +1,136 @@
-<div align="center">
+# Docks
 
-# 📦 Docks
+Sistema de gestão e rastreabilidade de encomendas para condomínios, desenvolvido pelo Grupo 3404 para o PROJETE 2026. A versão em desenvolvimento ativo é a **v10**. Ela reúne um servidor local, painel web, páginas de apresentação, integração com WhatsApp e aplicativos React Native + Expo.
 
-### Sistema de gerenciamento de encomendas para condomínios
+## Dois planos, uma plataforma
 
-![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat&logo=python&logoColor=white)
-![Flask](https://img.shields.io/badge/Flask-black?style=flat&logo=flask&logoColor=white)
-![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat&logo=node.js&logoColor=white)
-![SQLite](https://img.shields.io/badge/SQLite-07405E?style=flat&logo=sqlite&logoColor=white)
-![WhatsApp](https://img.shields.io/badge/WhatsApp-25D366?style=flat&logo=whatsapp&logoColor=white)
-![Status](https://img.shields.io/badge/status-em%20evolução-blue)
-![Licença](https://img.shields.io/badge/licença-a%20definir-lightgrey)
+|                | Essential                                                                               | Smart                                                                                                       |
+| -------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Recebimento    | Porteiro identifica o morador e fotografa a encomenda                                   | Porteiro identifica o morador, define o tamanho, recebe indicação de armazenamento e fotografa a encomenda  |
+| Aviso          | WhatsApp, com código de quatro dígitos opcional                                         | WhatsApp e acompanhamento no app do morador                                                                 |
+| Retirada       | Porteiro entrega ao morador ou terceiro, identifica quem recebeu e registra comprovante | Morador gera QR Code de uso único; validador confere o condomínio, aciona a fechadura e registra a retirada |
+| Infraestrutura | Sem sala, validador, câmera de retirada ou fechadura                                    | Compartimentos, validador, câmera IP, gravação e fechadura Tuya                                             |
+| Gestão         | Mesmo dashboard, adaptado ao plano                                                      | Mesmo dashboard, com recursos da sala e das gravações                                                       |
 
-</div>
+O plano é escolhido no painel Admin ao criar o condomínio; não há cobrança integrada. O cadastro de moradores é manual nos dois planos. No Essential, o código, quando ativado, é gerado na chegada e enviado na mensagem ao morador. Há cinco tentativas de conferência; uma exceção precisa ser autorizada no dashboard com justificativa. Não se pede o tamanho da encomenda nesse plano.
 
----
+## Recursos da v10
 
-## 💡 Sobre o projeto
+- **Portaria:** login vinculado ao condomínio, busca de moradores, leitura de etiqueta por OCR com conferência manual, foto da encomenda e recibo de cadastro que evita duplicação após falha de rede.
+- **Moradores e gestão:** cadastro manual, edição e ativação de moradores e porteiros; mudança de senha no primeiro acesso do condomínio; recuperação de senha por código no WhatsApp.
+- **Plano Smart:** QR Code vinculado ao condomínio e de uso único, orientação de armazenamento, mapa e capacidade dos compartimentos, validação por câmera, acionamento da fechadura, monitoramento ao vivo e gravação da retirada.
+- **Plano Essential:** recebimento sem tamanho ou prateleira, entrega presencial ao morador ou a terceiros, código opcional de quatro dígitos com tentativas limitadas, exceção justificada e comprovante da entrega.
+- **Dashboard:** logs e auditoria, relatórios em PDF, ocorrências, preservação e prazo de retenção de gravações, reprodução de vídeos e configurações operacionais de cada condomínio, de acordo com o plano.
+- **Painel Admin e landings:** criação e ativação de condomínios, seleção do plano, pesquisa, acompanhamento das mensagens de “Fale conosco” e aviso por WhatsApp ao novo responsável.
+- **Resiliência:** operação pela rede local, fila persistente de notificações externas e tentativas progressivas de reconexão. O modo sem internet depende de o servidor e os dispositivos locais continuarem acessíveis.
 
-O **Docks** automatiza a rotina de recebimento e retirada de encomendas em condomínios. A portaria registra o pacote com uma foto (a etiqueta é lida automaticamente por OCR), o sistema aloca uma prateleira, o morador é avisado por **WhatsApp** e retira a encomenda escaneando um **QR Code** pessoal em um totem, com tudo registrado em um painel administrativo central.
+## Organização
 
-Este repositório guarda **oito versões evolutivas** do projeto (`v1` → `v8`), da primeira maquete estática até a versão atual, com autenticação, hashing de senha, sincronismo de hardware e painel administrativo completo. Ao mesmo tempo, um produto funcional e um histórico de como ele foi construído e, por isso, a estrutura em pastas por versão foi mantida.
+| Caminho                               | Finalidade                                                             |
+| ------------------------------------- | ---------------------------------------------------------------------- |
+| `Software/v10/app-v10.py`             | Entrada do servidor atual.                                             |
+| `Software/v10/backend/`               | API, regras de negócio, banco, integração de câmera e fila de tarefas. |
+| `Software/v10/frontend/`              | Landings, painel Admin, dashboard e versões web dos três aplicativos.  |
+| `Software/v10/mobile/apps/`           | Aplicativos Expo `morador`, `porteiro` e `validador`.                  |
+| `Software/v10/integrations/whatsapp/` | Ponte local com WhatsApp Web.                                          |
+| `Software/v10/docs/`                  | Contratos das APIs móveis e notas técnicas.                            |
+| `Software/v10/tests/`                 | Testes automatizados do servidor e do vídeo.                           |
+| `Software/v9/`                        | Versão web anterior, preservada para consulta.                         |
+| `Software/v1/` a `Software/v8/`       | Histórico de desenvolvimento.                                          |
+| `Software/Testes Isolados/`           | Experimentos independentes de integrações.                             |
+| `Documentos/`                         | Materiais de apoio do projeto.                                         |
 
----
+O servidor usa SQLite local. Fotos, gravações, banco, sessões e caches são dados de execução e não devem entrar no repositório.
 
-## ✨ Funcionalidades
+## Preparação
 
-<table>
-<tr>
-<td width="33%" valign="top">
+É necessário ter Python com as dependências de `Software/v10/requirements.txt`, Node.js/npm e aparelhos na mesma rede local do computador. Para testar o fluxo Smart completo, prepare também câmera IP, fechadura Tuya e validador. O servidor Flask incluído é para desenvolvimento e demonstração em rede controlada, não para publicação direta na internet.
 
-### 🛎️ Portaria
+No PowerShell, partindo da raiz do repositório, abra um terminal para o servidor:
 
-- Leitura automática da etiqueta por OCR
-- Reconhecimento do morador com autocompletar
-- Alocação de prateleira por tamanho, reaproveitando uma prateleira já em uso pelo mesmo morador quando possível
-- Foto do pacote anexada ao registro
-
-</td>
-<td width="33%" valign="top">
-
-### 🏠 Morador
-
-- Login pessoal com senha
-- Lista de encomendas pendentes
-- Geração de QR Code de retirada (expira em 5 minutos)
-- Notificação automática por WhatsApp
-- Recuperação de senha por código enviado no WhatsApp
-
-</td>
-<td width="33%" valign="top">
-
-### 🖥️ Síndico / Portaria
-
-- Dados em tempo real (aguardando, retiradas, prateleiras livres)
-- Mapeamento físico das prateleiras
-- Auditoria de eventos (logs)
-- Câmera IP ao vivo
-- Cadastro de moradores
-
-</td>
-</tr>
-</table>
-
-## 🔄 Como funciona
-
-```
-  📷 Portaria escaneia        📲 Morador recebe          🚪 Totem libera
-    a etiqueta (OCR)      →    aviso no WhatsApp    →    a sala via QR Code
-            │                          │                         │
-            ▼                          ▼                         ▼
-   Prateleira alocada         Gera QR Code (5 min)        Porta destrava e
-    automaticamente           no Portal do Morador        câmera registra
+```powershell
+cd "Software/v10"
+python -m pip install -r requirements.txt
+python .\app-v10.py
 ```
 
-Todo o fluxo fica visível em tempo real no **Painel Administrativo**, incluindo o histórico de auditoria de cada retirada.
+No computador, abra `http://127.0.0.1:5000/`. As interfaces estão em `/admin`, `/dashboard`, `/porteiro`, `/morador` e `/validador`. A rota `/api/health` serve para verificar se o servidor responde. Para acessar pelos celulares, descubra o IPv4 do computador com `ipconfig`, confirme que os aparelhos estão na mesma rede e use `http://IP_DO_PC:5000`. Se não houver resposta, confira o firewall e a porta 5000.
 
-## 🛠️ Stack tecnológica
+### WhatsApp
 
-| Camada                  | Tecnologias                                                                             |
-| ----------------------- | --------------------------------------------------------------------------------------- |
-| **Backend**             | Python · Flask · Flask-SQLAlchemy · SQLite                                              |
-| **Visão computacional** | EasyOCR · OpenCV                                                                        |
-| **Frontend**            | HTML · Tailwind CSS · JavaScript                                                        |
-| **Notificações**        | Node.js · [whatsapp-web.js](https://github.com/pedroslopez/whatsapp-web.js) · Puppeteer |
-| **QR Code**             | qrcodejs (geração) · html5-qrcode (leitura)                                             |
-| **Autenticação**        | Werkzeug (hash de senha) · tokens de sessão em memória                                  |
+Em outro terminal, ainda a partir da raiz:
 
-## 🕓 Linha do tempo das versões
-
-| Versão | O que mudou                                                                                              |
-| ------ | -------------------------------------------------------------------------------------------------------- |
-| **v1** | Maquete estática das três telas, sem backend                                                             |
-| **v2** | Primeiro backend em Flask, com registro de encomendas e inclusão no banco de dados                       |
-| **v3** | Registro de encomendas com OCR e cadastro de moradores                                                   |
-| **v4** | Login do morador, geração e validação de _QR Codes_ (totem) e autocompletar                              |
-| **v5** | Notificação por e-mail _(nunca usada)_, reaproveitamento de prateleira, sincronismo de Hardware          |
-| **v6** | Reescrita de banco, login no dashboard e alteração da senha do morador                                   |
-| **v7** | Migração para Flask-SQLAlchemy, hash de senha, token de sessão do morador e senha atual exigida na troca |
-| **v8** | Notificação por WhatsApp, câmera IP, painel com login, recuperação de senha por código, modo escuro      |
-
-## 🚀 Como rodar localmente
-
-### Pré-requisitos
-
-- Python 3.10+
-- Node.js 18+
-
-### 1. Backend (exemplo com a v8 — versão atual)
-
-```bash
-cd v8
-pip install flask flask-cors flask-sqlalchemy easyocr opencv-python numpy requests
-python app-v8.py
+```powershell
+cd "Software/v10/integrations/whatsapp"
+npm ci
+npm start
 ```
 
-O servidor sobe em `http://localhost:5000` e cria o banco `docks.db` automaticamente, já populado com moradores de exemplo.
+A ponte tenta localizar Chrome, Edge ou Chromium instalado; quando necessário, mostra um QR para vincular a conta de WhatsApp. Ela atende localmente na porta 3000. Inicie-a também para testar os avisos de encomenda, recuperação de senha, contato comercial e mensagem de criação de condomínio. Se estiver temporariamente indisponível, as notificações enfileiradas aguardam nova tentativa; um teste automatizado da fila não comprova a entrega real no WhatsApp. A sessão local de autenticação nunca deve ser publicada.
 
-### 2. Ponte de WhatsApp
+Ao criar um condomínio, o sistema coloca na fila uma mensagem ao responsável com o usuário e a senha inicial. Essa senha deve ser trocada no primeiro acesso. O endereço do painel é informado pela equipe Docks, não presumido pela mensagem.
 
-```bash
-cd v8
-npm install whatsapp-web.js puppeteer express
-node server.js
+### Três aplicativos Expo ao mesmo tempo
+
+Instale as dependências com `npm ci` **dentro de cada pasta** em `Software/v10/mobile/apps/`. Abra três terminais, um por aplicativo, e use portas diferentes:
+
+```powershell
+cd "Software/v10/mobile/apps/morador"
+npx expo start --lan --port 8081
 ```
 
-Escaneie o QR Code exibido no terminal com o WhatsApp que vai enviar as notificações. A sessão fica salva em `.wwebjs_auth/` (ignorada pelo Git).
+```powershell
+cd "Software/v10/mobile/apps/porteiro"
+npx expo start --lan --port 8082
+```
 
-### 3. Telas
+```powershell
+cd "Software/v10/mobile/apps/validador"
+npx expo start --lan --port 8083
+```
 
-Abra os arquivos `.html` da versão desejada diretamente no navegador (ex.: `v8/dashboard-v8.html`, `v8/porteiro-v8.html`, `v8/morador-v8.html`, `v8/validador-v8.html`). Cada tela se conecta sozinha ao backend em `localhost:5000`.
+Escaneie o QR de cada terminal com o Expo Go compatível com o SDK indicado no respectivo `package.json`. Morador e porteiro são destinados ao Android; o validador foi preparado para Android e iOS, inclusive iPad. No primeiro uso, configure em **cada aplicativo** o endereço `http://IP_DO_PC:5000`. Não use `localhost` no aparelho: ele apontaria para o próprio celular ou tablet. Conceda as permissões de câmera necessárias. O teste no Expo Go não exige assinatura de distribuição; builds independentes seguem os scripts e perfis de cada aplicativo.
 
-> Versões mais antigas (`v2` a `v7`) seguem o mesmo padrão — troque apenas o número da versão nos comandos acima. A v1 é só HTML estático, sem passos de backend.
+## Operação e comportamento offline
 
-## 🔑 Variáveis de ambiente
+O servidor, os aparelhos e os equipamentos devem permanecer comunicáveis pela **rede local**, mesmo quando essa rede perder acesso à internet. Cadastro, leitura e retirada continuam sujeitos à disponibilidade do servidor e dos dispositivos locais. Mensagens externas falhas são mantidas em fila e reenviadas quando o WhatsApp e a internet voltarem. O modo offline não substitui o servidor por um banco no celular.
 
-Disponíveis a partir da v6 (painel) e v8 (WhatsApp), todas opcionais. O projeto roda com valores padrão adequados para desenvolvimento local:
+No dashboard, cada condomínio vê somente seus próprios dados e as funções do seu plano. O painel reúne moradores, porteiros, encomendas, logs, relatórios PDF, ocorrências e configurações. O Smart também usa mapa/capacidade dos compartimentos, vídeo de retirada, retenção e integração de hardware. O Essential apresenta a entrega presencial e seus comprovantes. O painel Admin gerencia condomínios, planos e contatos recebidos pelo “Fale conosco”.
 
-| Variável                | Versões | Padrão      | Descrição                                                                    |
-| ----------------------- | ------- | ----------- | ---------------------------------------------------------------------------- |
-| `DASHBOARD_USUARIO`     | v6 – v8 | `sindico`   | Usuário de acesso ao painel administrativo                                   |
-| `DASHBOARD_SENHA`       | v6 – v8 | `docks2026` | Senha de acesso ao painel administrativo                                     |
-| `FLASK_DEBUG`           | v6 – v8 | desligado   | Defina como `1` para ativar o modo debug **apenas em desenvolvimento local** |
-| `WHATSAPP_BROWSER_PATH` | v8      | _(auto)_    | Caminho de um navegador específico para o Puppeteer, se necessário           |
+## Verificação antes de demonstrar
 
-## 🔒 Segurança
+Depois de instalar as dependências Python, no diretório `Software/v10`:
 
-Este é um projeto em evolução e, por isso, propositalmente, **nem todas as versões têm o mesmo nível de segurança**. Antes de usar em produção com moradores reais:
+```powershell
+python -m unittest discover -s tests -p "test_*.py"
+node --test tests/recording-player.test.cjs
+```
 
-- ⚠️ Troque `DASHBOARD_USUARIO` / `DASHBOARD_SENHA` do valor padrão.
-- ⚠️ A v6 mantém, de propósito, senha de morador em texto puro e troca de senha sem confirmação da senha atual — não é a versão recomendada para uso real.
-- ⚠️ As credenciais da câmera IP (v8) ainda estão escritas diretamente no código-fonte (`app-v8.py`) — mova para variável de ambiente antes de expor o servidor fora da rede local.
-- ⚠️ Sessões (painel e morador) ficam em memória do processo Flask e são perdidas ao reiniciar o servidor; não há expiração automática por tempo.
+Em **cada** pasta de `Software/v10/mobile/apps/`:
 
-## 🗺️ Roadmap
+```powershell
+npm run check
+npm test
+```
 
-- [ ] Unificar o formato de erro das rotas (`{"error"}` vs. `{"success": false, "message"}`)
-- [ ] Migrar sessões em memória para um armazenamento persistente (Redis) ou JWT com expiração
-- [ ] Mover as credenciais da câmera IP para variável de ambiente
-- [ ] Adicionar testes automatizados de contrato de API
-- [ ] Unificar as versões em um único backend versionado, em vez de pastas paralelas
+Na pasta `Software/v10/integrations/whatsapp`:
 
-## 📜 Licença
+```powershell
+npm test
+```
 
-Licença a definir pela equipe.
+Os testes cobrem regras e contratos, mas a demonstração final ainda deve validar presencialmente: login de cada perfil, câmera do porteiro, OCR, WhatsApp pronto, rede local, câmera IP, fechadura, QR de uso único e reprodução integral das gravações. Confira especialmente o plano selecionado e as configurações de cada condomínio antes de testar hardware real.
 
----
+## API e documentação
 
-<div align="center">
-<sub>Feito com 📦 para simplificar a vida de portarias e moradores.</sub>
-</div>
+As rotas móveis versionadas usam `/api/v1/`; as rotas `/api/...` permanecem disponíveis para os clientes web existentes. Os contratos estão em [API do Morador](Software/v10/docs/API-MORADOR.md), [API do Porteiro](Software/v10/docs/API-PORTEIRO.md) e [API do Validador](Software/v10/docs/API-VALIDADOR.md). A [revisão visual e de vídeo](Software/v10/docs/REVISAO-VISUAL-E-VIDEO.md) registra detalhes dessas áreas.
+
+## Segurança antes de publicar
+
+**O `.gitignore` não esconde segredos escritos no código.** Revise credenciais de conta, URL RTSP com usuário/senha e chaves Tuya nos arquivos da v10 antes do commit. Também confira valores sensíveis que já estejam gravados no banco local e rotacione credenciais reais se tiverem sido expostas. Não publique banco, fotos, gravações, logs, sessões do WhatsApp, arquivos `.env`, caches ou `node_modules`. Bibliotecas e recursos de terceiros em `frontend/vendor/` mantêm suas próprias licenças.
+
+## Equipe e licença
+
+Caio Augusto Faria Machado · Iury Gonçalves de Souza · Tuany Silva Pereira · Yan Gabardo Souza.
+
+Copyright © 2026 Equipe Docks. Todos os direitos reservados. Este projeto utiliza [licença proprietária](LICENSE); componentes de terceiros mantêm suas respectivas licenças.
