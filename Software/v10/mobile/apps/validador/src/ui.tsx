@@ -2,6 +2,7 @@
 import React, { PropsWithChildren } from "react";
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -79,14 +80,29 @@ export function Steps({ current }: { current: number }) {
   );
 }
 /** Mantém o conteúdo utilizável no tablet com teclado aberto ou fonte ampliada. */
-export function Page({ children }: PropsWithChildren) {
+export function Page({ children, identity }: PropsWithChildren<{ identity: string }>) {
   return (
-    <ScrollView
-      contentContainerStyle={styles.page}
-      keyboardShouldPersistTaps="handled"
-    >
-      <View style={styles.content}>{children}</View>
-    </ScrollView>
+    <View style={{ flex: 1, backgroundColor: "#001135" }}>
+      <View style={styles.frameHeader}>
+        <Image
+          source={require("../assets/docks-brand.png")}
+          accessibilityLabel="Logo completa Docks"
+          style={{ width: 154, height: 48 }}
+          resizeMode="contain"
+        />
+        <View style={{ flex: 1, minWidth: 180 }}>
+          <NativeText style={styles.frameTitle}>{identity}</NativeText>
+          <NativeText style={styles.frameSubtitle}>Retirada de encomendas</NativeText>
+        </View>
+      </View>
+      <ScrollView
+        style={styles.frameBody}
+        contentContainerStyle={styles.page}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.content}>{children}</View>
+      </ScrollView>
+    </View>
   );
 }
 /** Anuncia erros e avisos aos leitores de tela quando o texto muda. */
@@ -196,6 +212,28 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: "center",
     justifyContent: "center",
+  },
+  frameHeader: {
+    width: "100%",
+    maxWidth: 600,
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 16,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 6,
+  },
+  frameTitle: { color: "#fff", fontFamily: "InterSemi", fontSize: 16 },
+  frameSubtitle: { color: "#b8cbe2", fontFamily: "Inter", fontSize: 13 },
+  frameBody: {
+    flex: 1,
+    marginHorizontal: 8,
+    marginBottom: 8,
+    borderRadius: 22,
+    overflow: "hidden",
+    backgroundColor: colors.background,
   },
   content: { width: "100%", maxWidth: 600, gap: 20 },
   notice: {

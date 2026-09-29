@@ -257,24 +257,18 @@ export default function App() {
       />
     );
 
-  const loginScreen = Boolean(server) && !session && screen === "home";
   return (
     <SafeAreaProvider>
       <Theme.Provider value={dark}>
         <SafeAreaView
           style={{
             flex: 1,
-            backgroundColor: loginScreen
-              ? "#001135"
-              : dark
-                ? "#0b1220"
-                : "#faf8f3",
+            backgroundColor: "#001135",
           }}
         >
-          <StatusBar style={dark || loginScreen ? "light" : "dark"} />
+          <StatusBar style="light" />
           <Page
             dark={dark}
-            login={loginScreen}
             toggleTheme={() =>
               void save({ ...preferences, dark: !dark }).catch((error) =>
                 Alert.alert("Preferência não salva", error.message),

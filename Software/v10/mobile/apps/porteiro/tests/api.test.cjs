@@ -79,6 +79,19 @@ test("cadastro incompleto não pode ser enviado", () => {
   assert.throws(() => submission({ ...draft, photo: "" }));
   assert.throws(() => submission({ ...draft, size: "inválido" }));
 });
+test("plano Essential envia foto sem tamanho ou prateleira", async () => {
+  const { submission, api } = client(async (url, options) => {
+    assert.equal(url, "http://host:5000/api/v1/porteiro/essencial/encomendas");
+    assert.equal(options.headers["X-Porteiro-Token"], "porteiro");
+    assert.equal(JSON.parse(options.body).prateleira, "");
+    assert.equal("tamanho" in JSON.parse(options.body), false);
+    return { ok: true, json: async () => ({ success: true, data: { encomenda_id: 8 } }) };
+  });
+  const draft = { resident: { id: 3, nome: "Maria", apartamento: "101" }, size: "", shelf: "", photo: "foto", requestId: "id" };
+  assert.throws(() => submission(draft));
+  const resposta = await api("http://host:5000", "/porteiro/essencial/encomendas", { token: "porteiro" }, submission(draft, true));
+  assert.equal(resposta.encomenda_id, 8);
+});
 test("falha de rede não repete um POST automaticamente", async () => {
   let calls = 0;
   const { api } = client(async () => {

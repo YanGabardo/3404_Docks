@@ -100,6 +100,9 @@ class FilaTarefas:
                     raise RuntimeError("O serviço externo permanece indisponível.")
                 tarefa.status = self.status_concluido
                 tarefa.ultimo_erro = ""
+                if tarefa.tipo == "notificacao_whatsapp":
+                    # A mensagem pode conter um código de retirada; não guardamos o texto após o envio.
+                    tarefa.payload = "{}"
                 concluidas += 1
             except Exception as exc:
                 # Uma falha externa não apaga a tarefa; agenda retry progressivo.

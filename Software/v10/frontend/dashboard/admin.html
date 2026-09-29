@@ -38,7 +38,8 @@
         overflow: hidden;
       }
       button,
-      input {
+      input,
+      select {
         font: inherit;
       }
       .hidden {
@@ -285,7 +286,7 @@
         color: var(--muted);
         margin-bottom: 5px;
       }
-      .field input {
+      .field input, .field select {
         width: 100%;
         border: 1px solid var(--line);
         background: var(--paper);
@@ -294,7 +295,7 @@
         padding: 10px 11px;
         outline: none;
       }
-      .field input:focus {
+      .field input:focus, .field select:focus {
         border-color: var(--blue);
         box-shadow: 0 0 0 3px rgba(16, 152, 255, 0.11);
       }
@@ -349,6 +350,24 @@
       .table-wrap {
         height: calc(100% - 65px);
         overflow: auto;
+      }
+      .condo-search {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 11px 17px;
+        border-bottom: 1px solid var(--line);
+        color: var(--muted);
+      }
+      .condo-search input {
+        flex: 1;
+        min-width: 0;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: var(--ink);
+        font: inherit;
+        font-size: 12px;
       }
       .condo-row {
         display: grid;
@@ -811,6 +830,10 @@
                   />
                 </div>
                 <div class="field">
+                  <label for="condo-plano">Plano Docks</label>
+                  <select id="condo-plano" required><option value="completo">Smart · sala e retirada por QR Code</option><option value="essencial">Essential · controle pela portaria</option></select>
+                </div>
+                <div class="field">
                   <label>Senha inicial</label>
                   <div class="password-wrap">
                     <input
@@ -844,6 +867,10 @@
                 <p>Contas autorizadas a utilizar a plataforma.</p>
               </div>
               <div class="table-wrap">
+                <label class="condo-search" for="busca-condominios">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+                  <input id="busca-condominios" type="search" placeholder="Pesquisar condomínio pelo nome" oninput="renderCondominios()" autocomplete="off" />
+                </label>
                 <div class="condo-row header">
                   <span>Condomínio</span><span>Usuário</span><span>Responsável</span><span>Status</span
                   ><span>Ação</span>
@@ -903,6 +930,7 @@
           (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char],
         )
       const headers = (extra = {}) => ({ ...extra, 'X-Admin-Token': adminToken })
+      const planoNome = (plano) => plano === 'essencial' ? 'Essential' : plano === 'completo' ? 'Smart' : 'Não informado'
       function applyAdminTheme() {
         document.documentElement.classList.toggle('dark', dark)
         const icon = document.getElementById('admin-theme-icon')
@@ -964,15 +992,21 @@
         document.getElementById('stat-total').textContent = data.length
         document.getElementById('stat-ativos').textContent = data.filter((item) => item.ativo).length
         document.getElementById('stat-novos').textContent = novos
+        renderCondominios()
+      }
+      function renderCondominios() {
+        // A busca usa a lista já carregada e não dispara uma requisição por tecla.
+        const termo = document.getElementById('busca-condominios').value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+        const visiveis = condominios.filter((item) => item.nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(termo))
         const list = document.getElementById('condo-list')
-        list.innerHTML = data.length
-          ? data
+        list.innerHTML = visiveis.length
+          ? visiveis
               .map(
                 (item) =>
-                  `<div class="condo-row"><span><span class="name">${esc(item.nome)}</span><span class="sub">${esc(item.telefone || 'WhatsApp não informado')}</span></span><span class="mono">${esc(item.usuario)}</span><span>${esc(item.responsavel || '—')}</span><span><span class="status ${item.ativo ? 'on' : 'off'}">● ${item.ativo ? 'Ativo' : 'Inativo'}</span></span><span><button class="action" onclick="editContact(${item.id})">Contato</button>${item.usuario === 'sindico' ? '' : `<button class="action" onclick="askStatus(${item.id},${!item.ativo})">${item.ativo ? 'Desativar' : 'Ativar'}</button>`}</span></div>`,
+                  `<div class="condo-row"><span><span class="name">${esc(item.nome)}</span><span class="sub">${esc(item.telefone || 'WhatsApp não informado')} · ${planoNome(item.plano)}</span></span><span class="mono">${esc(item.usuario)}</span><span>${esc(item.responsavel || '—')}</span><span><span class="status ${item.ativo ? 'on' : 'off'}">● ${item.ativo ? 'Ativo' : 'Inativo'}</span></span><span><button class="action" onclick="editContact(${item.id})">Contato</button><button class="action" onclick="askPlan(${item.id})">Plano</button>${item.usuario === 'sindico' ? '' : `<button class="action" onclick="askStatus(${item.id},${!item.ativo})">${item.ativo ? 'Desativar' : 'Ativar'}</button>`}</span></div>`,
               )
               .join('')
-          : '<div class="empty">Nenhum condomínio cadastrado.</div>'
+          : `<div class="empty">${termo ? 'Nenhum condomínio encontrado.' : 'Nenhum condomínio cadastrado.'}</div>`
       }
       function askStatus(id, active) {
         // Desativação é uma ação sensível e exige confirmação visual.
@@ -989,6 +1023,27 @@
           : `${name} e seus usuários perderão o acesso até a reativação.`
         confirmCallback = () => alterarStatus(id, active)
         document.getElementById('confirm-fields').innerHTML = ''
+        document.getElementById('confirm-modal').classList.remove('hidden')
+      }
+      function askPlan(id) {
+        // O modal confirma uma mudança que altera os painéis de todo o condomínio.
+        const item = condominios.find((condominio) => condominio.id === id)
+        if (!item) return
+        document.getElementById('confirm-title').textContent = 'Alterar plano'
+        document.getElementById('confirm-text').textContent = `Escolha o plano de ${item.nome}. O histórico será preservado.`
+        document.getElementById('confirm-fields').innerHTML = `<div class="field"><label for="edit-plano">Plano</label><select id="edit-plano"><option value="completo" ${item.plano !== 'essencial' ? 'selected' : ''}>Smart</option><option value="essencial" ${item.plano === 'essencial' ? 'selected' : ''}>Essential</option></select></div>`
+        const button = document.getElementById('confirm-action')
+        button.className = 'primary'
+        button.textContent = 'Salvar plano'
+        confirmCallback = async () => {
+          const plano = document.getElementById('edit-plano').value
+          const response = await fetch(`${API_URL}/api/admin/condominios/${id}/plano`, { method: 'PATCH', headers: headers({ 'Content-Type': 'application/json' }), body: JSON.stringify({ plano }) })
+          const data = await response.json()
+          if (!response.ok) return toast(data.error || 'Não foi possível alterar o plano.')
+          closeConfirm()
+          toast('Plano atualizado.')
+          carregarCondominios()
+        }
         document.getElementById('confirm-modal').classList.remove('hidden')
       }
       function editContact(id) {
@@ -1062,6 +1117,7 @@
           email: document.getElementById('condo-email').value.trim(),
           telefone: document.getElementById('condo-telefone').value.trim(),
           usuario: document.getElementById('condo-usuario').value.trim(),
+          plano: document.getElementById('condo-plano').value,
         }
         try {
           const response = await fetch(`${API_URL}/api/admin/condominios`, {
@@ -1111,7 +1167,7 @@
           ? visible
               .map(
                 (item) =>
-                  `<button class="conversation ${item.status === 'novo' ? 'unread' : ''} ${selectedContact === item.id ? 'active' : ''}" onclick="openContact(${item.id})"><span class="contact-status ${esc(item.status)}">${item.status === 'novo' ? 'Novo' : item.status === 'em_atendimento' ? 'Em atendimento' : 'Concluído'}</span><strong>${esc(item.nome)}</strong><span class="sub">${esc(item.condominio)} · ${esc(item.criado_em)}</span><p>${esc(item.mensagem)}</p></button>`,
+                  `<button class="conversation ${item.status === 'novo' ? 'unread' : ''} ${selectedContact === item.id ? 'active' : ''}" onclick="openContact(${item.id})"><span class="contact-status ${esc(item.status)}">${item.status === 'novo' ? 'Novo' : item.status === 'em_atendimento' ? 'Em atendimento' : 'Concluído'}</span><strong>${esc(item.nome)}</strong><span class="sub">${esc(item.condominio)} · ${planoNome(item.plano_interesse)} · ${esc(item.criado_em)}</span><p>${esc(item.mensagem)}</p></button>`,
               )
               .join('')
           : '<div class="empty">Nenhuma mensagem neste filtro.</div>'
@@ -1132,7 +1188,7 @@
         if (!item) return
         renderContacts()
         document.getElementById('contact-detail').innerHTML =
-          `<span class="status ${item.status === 'concluido' ? 'on' : 'off'}">${esc(item.status === 'novo' ? 'Novo' : item.status === 'em_atendimento' ? 'Em atendimento' : 'Concluído')}</span><h2>${esc(item.nome)}</h2><p class="sub">${esc(item.condominio)} · ${esc(item.cidade || 'Cidade não informada')}</p><div class="lead-meta"><span>${esc(item.telefone)}</span><span>${esc(item.email)}</span><span>${esc(item.criado_em)}</span></div><div class="bubble">${esc(item.mensagem)}</div><div class="inbox-actions"><button class="primary" onclick="importContact(${item.id})">Usar dados no cadastro</button><button onclick="setContactStatus(${item.id},'em_atendimento')">Em atendimento</button><button onclick="setContactStatus(${item.id},'concluido')">Concluir</button></div>`
+          `<span class="status ${item.status === 'concluido' ? 'on' : 'off'}">${esc(item.status === 'novo' ? 'Novo' : item.status === 'em_atendimento' ? 'Em atendimento' : 'Concluído')}</span><h2>${esc(item.nome)}</h2><p class="sub">${esc(item.condominio)} · ${esc(item.cidade || 'Cidade não informada')} · Docks ${planoNome(item.plano_interesse)}</p><div class="lead-meta"><span>${esc(item.telefone)}</span><span>${esc(item.email)}</span><span>${esc(item.criado_em)}</span></div><div class="bubble">${esc(item.mensagem)}</div><div class="inbox-actions"><button class="primary" onclick="importContact(${item.id})">Usar dados no cadastro</button><button onclick="setContactStatus(${item.id},'em_atendimento')">Em atendimento</button><button onclick="setContactStatus(${item.id},'concluido')">Concluir</button></div>`
       }
       function importContact(id) {
         // Prefill da solicitação comercial reduz redigitação no cadastro do condomínio.
@@ -1146,6 +1202,7 @@
         document.getElementById('condo-email').value = email
         document.getElementById('condo-telefone').value = item.telefone || ''
         document.getElementById('condo-usuario').value = email.includes('@') ? email.split('@')[0] : ''
+        if (['essencial', 'completo'].includes(item.plano_interesse)) document.getElementById('condo-plano').value = item.plano_interesse
         showView('condos')
         const form = document.getElementById('condo-form')
         window.DocksValidation?.validate(form, false)

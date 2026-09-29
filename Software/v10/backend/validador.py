@@ -197,6 +197,8 @@ def registrar_rotas_validador(
                 ),
                 400,
             )
+        if condominio.plano != "completo":
+            return jsonify({"error": "O plano Essential não utiliza validador."}), 403
         qr = QrCode.query.filter_by(codigo=token).first()
         chave = body.get("request_id")
         registro = None

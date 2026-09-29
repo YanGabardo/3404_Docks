@@ -44,7 +44,8 @@
       }
       button,
       input,
-      textarea {
+      textarea,
+      select {
         font: inherit;
       }
       a {
@@ -284,7 +285,8 @@
         margin: 0 0 6px;
       }
       .field input,
-      .field textarea {
+      .field textarea,
+      .field select {
         width: 100%;
         border: 1px solid var(--line);
         background: var(--paper);
@@ -298,7 +300,8 @@
         resize: none;
       }
       .field input:focus,
-      .field textarea:focus {
+      .field textarea:focus,
+      .field select:focus {
         border-color: var(--blue);
         box-shadow: 0 0 0 3px rgba(16, 152, 255, 0.12);
       }
@@ -405,7 +408,7 @@
         <a href="/"><img class="logo" src="/assets/docks-logo.png" alt="Docks" /></a>
         <nav class="links">
           <a href="/">Início</a><a href="/solucao">Solução</a><a href="/funcionamento">Como funciona</a
-          ><a href="/seguranca">Segurança</a><a href="/comercial">Para condomínios</a
+          ><a href="/seguranca">Segurança</a><a href="/comercial#planos">Planos</a
           ><a class="active" href="/contato">Fale conosco</a>
         </nav>
         <button class="theme" id="theme" type="button" aria-label="Ativar modo escuro">
@@ -428,11 +431,23 @@
             <form id="login-form">
               <div class="field">
                 <label for="login-user">Usuário</label
-                ><input id="login-user" data-validate="username" maxlength="64" autocomplete="username" required />
+                ><input
+                  id="login-user"
+                  data-validate="username"
+                  maxlength="64"
+                  autocomplete="username"
+                  required
+                />
               </div>
               <div class="field">
                 <label for="login-password">Senha</label
-                ><input id="login-password" type="password" maxlength="128" autocomplete="current-password" required />
+                ><input
+                  id="login-password"
+                  type="password"
+                  maxlength="128"
+                  autocomplete="current-password"
+                  required
+                />
               </div>
               <div id="login-error" class="login-error"></div>
               <button id="login-submit" class="login-submit" type="submit">Entrar</button>
@@ -451,6 +466,10 @@
               Conte um pouco sobre o seu condomínio. A equipe Docks poderá entender a rotina da portaria e
               apresentar a implantação adequada.
             </p>
+            <p>
+              Temos os planos <a href="/comercial#planos">Essential e Smart</a>. Conte-nos qual combina com a
+              sua operação.
+            </p>
           </div>
           <div class="points">
             <span>✓ Atendimento direto e organizado</span
@@ -463,19 +482,38 @@
           <form id="contact-form">
             <div class="fields">
               <div class="field">
-                <label for="nome">Seu nome *</label><input id="nome" data-validate="name" maxlength="120" required autocomplete="name" />
+                <label for="nome">Seu nome *</label
+                ><input id="nome" data-validate="name" maxlength="120" required autocomplete="name" />
               </div>
               <div class="field">
-                <label for="condominio">Condomínio *</label><input id="condominio" data-validate="place" maxlength="140" required />
+                <label for="condominio">Condomínio *</label
+                ><input id="condominio" data-validate="place" maxlength="140" required />
               </div>
-              <div class="field"><label for="cidade">Cidade</label><input id="cidade" data-validate="place" maxlength="140" /></div>
+              <div class="field">
+                <label for="cidade">Cidade</label><input id="cidade" data-validate="place" maxlength="140" />
+              </div>
               <div class="field">
                 <label for="telefone">Telefone/WhatsApp *</label
-                ><input id="telefone" type="tel" data-validate="phone" maxlength="20" required inputmode="tel" />
+                ><input
+                  id="telefone"
+                  type="tel"
+                  data-validate="phone"
+                  maxlength="20"
+                  required
+                  inputmode="tel"
+                />
               </div>
               <div class="field full">
                 <label for="email">E-mail *</label
                 ><input id="email" type="email" maxlength="254" required autocomplete="email" />
+              </div>
+              <div class="field full">
+                <label for="plano-interesse">Qual opção Docks você deseja? *</label>
+                <select id="plano-interesse" data-validate="generic" required>
+                  <option value="">Selecione um plano</option>
+                  <option value="essencial">Docks Essential</option>
+                  <option value="completo">Docks Smart</option>
+                </select>
               </div>
               <div class="field full">
                 <label for="mensagem">Como podemos ajudar? *</label
@@ -489,6 +527,7 @@
                 ></textarea>
               </div>
             </div>
+            <p>Enviaremos uma confirmação ao seu WhatsApp.</p>
             <button class="submit" id="submit">Enviar para a equipe Docks</button>
             <div class="message" id="form-message" role="status"></div>
           </form>
@@ -589,6 +628,7 @@
           cidade: document.getElementById('cidade').value.trim(),
           telefone: document.getElementById('telefone').value.trim(),
           email: document.getElementById('email').value.trim(),
+          plano_interesse: document.getElementById('plano-interesse').value,
           mensagem: document.getElementById('mensagem').value.trim(),
         }
         try {

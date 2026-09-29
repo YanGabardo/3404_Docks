@@ -546,6 +546,7 @@
         >
           Ou digite os dados manualmente
         </button>
+        <button id="btn-entregas-essencial" onclick="abrirEntregasEssenciais()" class="hidden-view w-full max-w-xs bg-blue text-white font-bold py-4 rounded-2xl">Entregar encomenda</button>
       </section>
 
       <section id="view-camera" class="hidden-view flex-col items-center flex-1 space-y-5 py-4">
@@ -646,7 +647,7 @@
             />
           </div>
 
-          <div class="pt-1">
+          <div id="porteiro-size-selection" class="pt-1">
             <label class="block text-xs font-bold text-muted uppercase tracking-wide mb-3"
               >Tamanho do pacote</label
             >
@@ -776,6 +777,33 @@
           Registrar próxima encomenda
         </button>
       </section>
+      <section id="view-essencial-list" class="hidden-view flex-col flex-1 py-4">
+        <h2 class="text-2xl font-display font-bold text-ink">Aguardando entrega</h2>
+        <p class="text-sm text-muted mt-1 mb-4">Selecione a encomenda quando o recebedor chegar à portaria.</p>
+        <input id="busca-entregas-porteiro" oninput="renderEntregasEssenciais()" class="w-full bg-white border border-line rounded-xl p-4 text-ink mb-4" placeholder="Buscar pelo nome do morador" aria-label="Buscar pelo nome do morador" />
+        <div id="lista-entregas-porteiro" class="grid gap-3 overflow-y-auto"></div>
+        <button onclick="showView('view-home')" class="mt-4 bg-white border border-line text-ink font-bold py-3 rounded-xl">Voltar</button>
+      </section>
+      <section id="view-essencial-entrega" class="hidden-view flex-col flex-1 py-4">
+        <h2 class="text-2xl font-display font-bold text-ink">Confirmar entrega</h2>
+        <p id="essencial-entrega-pacote" class="text-sm text-muted my-3"></p>
+        <label class="text-xs font-bold text-muted uppercase mb-2">Nome de quem recebe</label>
+        <input id="essencial-recebedor" data-validate="name" maxlength="120" class="w-full bg-white border border-line rounded-xl p-4 text-ink mb-3" />
+        <label class="text-xs font-bold text-muted uppercase mb-2">Vínculo com o morador</label>
+        <select id="essencial-vinculo" class="w-full bg-white border border-line rounded-xl p-4 text-ink mb-3">
+          <option value="Próprio morador">Próprio morador</option>
+          <option value="Familiar">Familiar</option>
+          <option value="Terceiro autorizado">Terceiro autorizado</option>
+        </select>
+        <div id="essencial-codigo-box">
+          <label class="text-xs font-bold text-muted uppercase mb-2">Código recebido pelo morador</label>
+          <input id="essencial-codigo" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" class="w-full bg-white border border-line rounded-xl p-4 text-ink mb-3" placeholder="4 dígitos" />
+          <p id="essencial-tentativas" class="text-sm text-muted mb-3"></p>
+        </div>
+        <p id="essencial-excecao" class="text-sm text-amber-dark hidden-view mb-3">Exceção autorizada pelo síndico. Registre o recebedor normalmente.</p>
+        <button onclick="confirmarEntregaEssencial()" class="bg-blue text-white font-bold py-4 rounded-xl">Confirmar entrega</button>
+        <button onclick="abrirEntregasEssenciais()" class="bg-white border border-line text-ink font-bold py-3 rounded-xl mt-3">Voltar à lista</button>
+      </section>
     </main>
 
     <div
@@ -791,6 +819,20 @@
       let condominioSelecionado = null
       let prateleiraReservada = ''
       let darkModePorteiro = localStorage.getItem('docks-theme') === 'dark'
+      let entregasEssenciais = []
+      let planoPorteiro = 'completo'
+      let encomendaEmEntrega = null
+      let essencialRequestId = ''
+
+      function aplicarPlanoPorteiro(plano) {
+        // O fluxo é escolhido pelo plano retornado pelo servidor, nunca por preferência local.
+        planoPorteiro = plano === 'essencial' ? 'essencial' : 'completo'
+        document.getElementById('btn-entregas-essencial').classList.toggle('hidden-view', planoPorteiro !== 'essencial')
+        document.getElementById('porteiro-size-selection').classList.toggle('hidden-view', planoPorteiro === 'essencial')
+        document.querySelector('[data-step="storage"]').classList.toggle('hidden-view', planoPorteiro === 'essencial')
+        document.querySelector('[data-step="photo"]').textContent = planoPorteiro === 'essencial' ? '3 · Fotografar' : '4 · Fotografar'
+        document.querySelector('[data-step="success"]').textContent = planoPorteiro === 'essencial' ? '4 · Concluir' : '5 · Concluir'
+      }
 
       // Login associado ao condomínio; o token acompanha as requisições privadas.
       async function buscarCondominios(valor) {
@@ -855,6 +897,7 @@
           sessionStorage.setItem('docks_porteiro_token', porteiroToken)
           document.getElementById('porteiro-condo-name').innerText = data.condominio.nome
           document.getElementById('porteiro-name').innerText = data.porteiro.nome
+          aplicarPlanoPorteiro(data.plano)
           document.getElementById('porteiro-login').classList.add('hidden')
           showView('view-home')
         } catch (e) {
@@ -950,6 +993,8 @@
         'view-storage': 'storage',
         'view-photo-preview': 'photo',
         'view-success': 'success',
+        'view-essencial-list': 'home',
+        'view-essencial-entrega': 'form',
       }
       function showView(viewId) {
         document.querySelectorAll('main > section').forEach((el) => el.classList.add('hidden-view'))
@@ -993,7 +1038,7 @@
         } else {
           guide.className = 'guide-photo'
           title.innerText = 'Foto da encomenda'
-          subtitle.innerText = 'Mostre o pacote já guardado na prateleira'
+          subtitle.innerText = planoPorteiro === 'essencial' ? 'Mostre a encomenda recebida na portaria' : 'Mostre o pacote já guardado na prateleira'
           btnCapture.innerHTML = '<span class="w-3.5 h-3.5 rounded-full bg-ink"></span> Fotografar pacote'
         }
         showView('view-camera')
@@ -1048,6 +1093,7 @@
       }
 
       function retakePhoto() {
+        if (planoPorteiro === 'essencial' && essencialRequestId) return toast('O envio pode ter sido salvo. Tente confirmar esta mesma foto ou confira o dashboard.', 'info')
         openCamera('photo')
       }
       // OCR apenas sugere; a conferência de nome e Apto continua obrigatória.
@@ -1088,8 +1134,13 @@
         if (window.DocksValidation && !window.DocksValidation.validate(document.getElementById('view-form'))) return
         const nome = document.getElementById('input-nome').value
         const apt = document.getElementById('input-apt').value
-        if (!nome || !apt || !selectedSize || !selectedResidentId)
-          return toast('Preencha o morador e o tamanho antes de avançar.', 'error')
+        if (!nome || !apt || !selectedResidentId || (planoPorteiro !== 'essencial' && !selectedSize))
+          return toast(planoPorteiro === 'essencial' ? 'Selecione o morador antes de avançar.' : 'Preencha o morador e o tamanho antes de avançar.', 'error')
+        if (planoPorteiro === 'essencial') {
+          // Sem sala ou prateleira: fotografa o pacote recebido diretamente na portaria.
+          openCamera('photo')
+          return
+        }
         showView('view-loading')
         document.getElementById('loading-text').innerText = 'Reservando prateleira…'
         try {
@@ -1175,28 +1226,113 @@
         showView('view-loading')
         document.getElementById('loading-text').innerText = 'Salvando encomenda…'
         try {
-          const response = await fetch(`${API_URL}/api/encomendas`, {
+          if (planoPorteiro === 'essencial' && !essencialRequestId) {
+            const bytes = crypto.getRandomValues(new Uint8Array(16))
+            bytes[6] = (bytes[6] & 15) | 64
+            bytes[8] = (bytes[8] & 63) | 128
+            const hex = [...bytes].map((n) => n.toString(16).padStart(2, '0')).join('')
+            essencialRequestId = `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`
+          }
+          const response = await fetch(`${API_URL}${planoPorteiro === 'essencial' ? '/api/porteiro/essencial/encomendas' : '/api/encomendas'}`, {
             method: 'POST',
             headers: authHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify({
               morador_id: selectedResidentId,
               apartamento: apt,
-              tamanho: selectedSize,
+              ...(planoPorteiro === 'essencial' ? {} : { tamanho: selectedSize }),
               prateleira: prateleiraReservada,
               foto_pacote: photoBase64,
+              ...(planoPorteiro === 'essencial' ? { request_id: essencialRequestId } : {}),
             }),
           })
           const result = await response.json()
           if (response.ok) {
-            document.getElementById('success-shelf-tag').innerText = `Prateleira ${result.prateleira || '—'}`
+            document.getElementById('success-shelf-tag').innerText = planoPorteiro === 'essencial' ? `Encomenda #${result.id}` : `Prateleira ${result.prateleira || '—'}`
+            essencialRequestId = ''
             showView('view-success')
           } else {
             toast(result.error || 'Não foi possível salvar a encomenda.', 'error')
-            showView('view-form')
+            if (planoPorteiro === 'essencial') essencialRequestId = ''
+            showView(planoPorteiro === 'essencial' ? 'view-photo-preview' : 'view-form')
           }
         } catch (err) {
-          toast('Erro de conexão com o servidor Docks.', 'error')
-          showView('view-form')
+          toast(planoPorteiro === 'essencial' ? 'Sem resposta: repita a confirmação com a mesma foto para evitar cadastro duplicado.' : 'Erro de conexão com o servidor Docks.', 'error')
+          showView(planoPorteiro === 'essencial' ? 'view-photo-preview' : 'view-form')
+        }
+      }
+
+      async function abrirEntregasEssenciais() {
+        // O porteiro consulta apenas as pendências do condomínio autenticado.
+        showView('view-essencial-list')
+        const lista = document.getElementById('lista-entregas-porteiro')
+        lista.textContent = 'Carregando…'
+        try {
+          const resposta = await fetch(`${API_URL}/api/porteiro/essencial/encomendas`, { headers: authHeaders() })
+          const itens = await resposta.json()
+          if (!resposta.ok) throw new Error(itens.error || 'Não foi possível carregar.')
+          entregasEssenciais = itens
+          renderEntregasEssenciais()
+        } catch (erro) { lista.textContent = erro.message }
+      }
+
+      function renderEntregasEssenciais() {
+        // Filtra os dados já recebidos sem requisitar a rede a cada letra digitada.
+        const busca = document.getElementById('busca-entregas-porteiro').value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+        const itens = entregasEssenciais.filter((item) => item.morador.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(busca))
+        const lista = document.getElementById('lista-entregas-porteiro')
+        lista.replaceChildren()
+        if (!itens.length) lista.textContent = busca ? 'Nenhuma encomenda encontrada para este morador.' : 'Nenhuma encomenda aguardando entrega.'
+        itens.forEach((item) => {
+          const botao = document.createElement('button')
+          botao.className = 'bg-white border border-line rounded-xl p-4 text-left text-ink'
+          botao.textContent = `#${item.id} · ${item.morador} · Apto ${item.apartamento} · ${item.chegada}`
+          botao.onclick = () => {
+            encomendaEmEntrega = item
+            document.getElementById('essencial-entrega-pacote').textContent = botao.textContent
+            document.getElementById('essencial-recebedor').value = ''
+            document.getElementById('essencial-codigo').value = ''
+            document.getElementById('essencial-codigo-box').classList.toggle('hidden-view', !item.codigo_exigido || item.excecao_autorizada)
+            document.getElementById('essencial-codigo').disabled = item.tentativas_restantes === 0
+            document.getElementById('essencial-tentativas').textContent = `${item.tentativas_restantes} tentativa(s) restante(s).`
+            document.getElementById('essencial-excecao').classList.toggle('hidden-view', !item.excecao_autorizada)
+            showView('view-essencial-entrega')
+          }
+          lista.appendChild(botao)
+        })
+      }
+
+      async function confirmarEntregaEssencial() {
+        // A API confere código/exceção e impede uma segunda entrega da mesma encomenda.
+        if (!encomendaEmEntrega) return
+        const nome = document.getElementById('essencial-recebedor').value.trim()
+        const vinculo = document.getElementById('essencial-vinculo').value
+        const codigo = document.getElementById('essencial-codigo').value.trim()
+        if (encomendaEmEntrega.codigo_exigido && !encomendaEmEntrega.excecao_autorizada && encomendaEmEntrega.tentativas_restantes === 0) return toast('Código bloqueado. Solicite uma exceção ao síndico.', 'error')
+        if (!nome || (encomendaEmEntrega.codigo_exigido && !encomendaEmEntrega.excecao_autorizada && !/^\d{4}$/.test(codigo))) return toast('Confira o nome e os quatro dígitos do código.', 'error')
+        try {
+          const resposta = await fetch(`${API_URL}/api/porteiro/essencial/encomendas/${encomendaEmEntrega.id}/entregar`, { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ recebedor_nome: nome, vinculo, codigo }) })
+          const dados = await resposta.json()
+          if (!resposta.ok) throw new Error(dados.error || 'Não foi possível registrar a entrega.')
+          toast(`Entrega confirmada. Comprovante #${dados.comprovante.id}.`, 'success')
+          encomendaEmEntrega = null
+          abrirEntregasEssenciais()
+        } catch (erro) {
+          toast(erro.message, 'error')
+          if (/Código incorreto|Código bloqueado/.test(erro.message)) {
+            document.getElementById('essencial-codigo').value = ''
+            try {
+              const resposta = await fetch(`${API_URL}/api/porteiro/essencial/encomendas`, { headers: authHeaders() })
+              if (resposta.ok) {
+                const itens = await resposta.json()
+                const atualizado = itens.find((item) => item.id === encomendaEmEntrega.id)
+                if (atualizado) {
+                  encomendaEmEntrega = atualizado
+                  document.getElementById('essencial-codigo').disabled = atualizado.tentativas_restantes === 0
+                  document.getElementById('essencial-tentativas').textContent = `${atualizado.tentativas_restantes} tentativa(s) restante(s).`
+                }
+              }
+            } catch (_) { /* A mensagem de erro original continua visível. */ }
+          }
         }
       }
 
@@ -1209,6 +1345,7 @@
         selectedResidentId = null
         photoBase64 = ''
         prateleiraReservada = ''
+        essencialRequestId = ''
         document.querySelectorAll('.size-btn').forEach((b) => {
           b.className =
             'size-btn border-2 border-line rounded-2xl py-4 text-muted font-bold transition hover:border-blue/50'
@@ -1225,6 +1362,7 @@
           if (!res.ok) throw new Error()
           document.getElementById('porteiro-condo-name').innerText = data.condominio_nome
           document.getElementById('porteiro-name').innerText = data.porteiro_nome
+          aplicarPlanoPorteiro(data.plano)
           document.getElementById('porteiro-login').classList.add('hidden')
           showView('view-home')
         } catch (e) {

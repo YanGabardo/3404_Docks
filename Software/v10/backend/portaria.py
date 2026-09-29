@@ -13,7 +13,7 @@ from functools import wraps
 
 from flask import g, jsonify, request
 from werkzeug.security import check_password_hash
-from .models import db, Porteiro, Morador, Encomenda, CadastroPortaria
+from .models import db, Porteiro, Morador, Encomenda, CadastroPortaria, Condominio
 from .services import STATUS_AGUARDANDO, STATUS_EM_RETIRADA
 from .validation import validar_apartamento, validar_usuario
 
@@ -280,6 +280,7 @@ def registrar_rotas_portaria(
                 "token": token,
                 "porteiro": {"id": porteiro.id, "nome": porteiro.nome},
                 "condominio": {"id": condominio.id, "nome": condominio.nome},
+                "plano": condominio.plano,
             }
         )
 
@@ -287,7 +288,8 @@ def registrar_rotas_portaria(
     @porteiro_auth_required
     def porteiro_session_info():
         """Permite ao app restaurar nome e condomínio da sessão sem nova senha."""
-        return jsonify({"success": True, **g.porteiro_session})
+        plano = db.session.get(Condominio, g.porteiro_session["condominio_id"]).plano
+        return jsonify({"success": True, **g.porteiro_session, "plano": plano})
 
     @app.route("/api/porteiro/logout", methods=["POST"])
     @porteiro_auth_required
@@ -378,6 +380,8 @@ def registrar_rotas_portaria(
     @cadastro_exclusivo
     def reservar_prateleira():
         """Separa um local após conferir morador, apartamento e tamanho juntos."""
+        if db.session.get(Condominio, g.porteiro_session["condominio_id"]).plano != "completo":
+            return jsonify({"error": "O plano Essential não usa prateleiras."}), 403
         data = corpo_json()
         tamanho = normalizar_tamanho(data.get("tamanho"))
         apartamento, erro_apartamento = validar_apartamento(data.get("apartamento"))
@@ -485,6 +489,8 @@ def registrar_rotas_portaria(
     @cadastro_exclusivo
     def salvar_encomenda():
         """Efetiva foto, encomenda, log e notificação como uma única transação."""
+        if db.session.get(Condominio, g.porteiro_session["condominio_id"]).plano != "completo":
+            return jsonify({"error": "Use o cadastro do plano Essential."}), 403
         data = corpo_json()
         apartamento, erro_apartamento = validar_apartamento(data.get("apartamento"))
         morador_id = data.get("morador_id")

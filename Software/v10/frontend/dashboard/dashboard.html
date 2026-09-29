@@ -36,6 +36,11 @@
       .hidden-view {
         display: none !important;
       }
+      html[data-plano='essencial'] .full-only, html:not([data-plano='essencial']) .essential-only { display: none !important; }
+      html[data-plano='essencial'] .essential-events { grid-column: 1 / -1; }
+      @media (min-width: 1280px) {
+        html[data-plano='essencial'] #view-overview > .grid:first-child { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      }
       body {
         font-family: 'Inter', sans-serif;
       }
@@ -501,6 +506,16 @@
       .management-row:last-child {
         border-bottom: 0;
       }
+      #lista-moradores .management-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+      }
+      #lista-moradores .management-row > * {
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+      #lista-moradores .management-actions {
+        grid-column: 1 / -1;
+      }
       .management-actions {
         display: flex;
         gap: 6px;
@@ -543,6 +558,9 @@
         .management-row > *:nth-child(4) {
           display: none;
         }
+        #lista-moradores .management-row > *:nth-child(4) {
+          display: block;
+        }
       }
     </style>
     <script src="/assets/validation.js" defer></script>
@@ -572,6 +590,7 @@
           <span id="dashboard-condo-name" class="text-xs font-semibold text-white/70 block mt-2"
             >Condomínio</span
           >
+          <span id="dashboard-condo-plano" class="text-[10px] font-bold text-blue-200 block mt-1 uppercase tracking-wide">Plano Docks</span>
         </div>
         <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto">
           <div class="nav-group-label">Visão geral</div>
@@ -633,7 +652,7 @@
               switchView('view-shelves', this)
               carregarPrateleiras()
             "
-            class="nav-btn w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition"
+            class="nav-btn full-only w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition"
           >
             <svg
               class="w-4.5 h-4.5 flex-shrink-0"
@@ -652,6 +671,7 @@
             </svg>
             Prateleiras
           </button>
+          <button onclick="switchView('view-essencial', this)" class="nav-btn essential-only w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition"><span class="nav-letter-icon" aria-hidden="true"><span>E</span></span> Encomendas</button>
           <div class="nav-group-label">Segurança e auditoria</div>
           <button
             onclick="
@@ -709,7 +729,7 @@
           </button>
           <button
             onclick="switchView('view-camera', this)"
-            class="nav-btn w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition"
+            class="nav-btn full-only w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition"
           >
             <svg
               class="w-4.5 h-4.5 flex-shrink-0"
@@ -733,7 +753,7 @@
               switchView('view-gravacoes', this)
               carregarGravacoes()
             "
-            class="nav-btn w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition"
+            class="nav-btn full-only w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition"
           >
             <svg
               class="w-4.5 h-4.5 flex-shrink-0"
@@ -784,7 +804,7 @@
             Painel Central de Monitoramento
           </h2>
           <div class="flex items-center gap-4">
-            <div class="flex items-center gap-2 bg-paper px-3 py-1.5 rounded-lg border border-line">
+            <div class="full-only flex items-center gap-2 bg-paper px-3 py-1.5 rounded-lg border border-line">
               <span class="text-[10px] font-bold text-muted uppercase">Trava da Sala:</span>
               <div id="hw-door-status" class="flex items-center gap-1.5 text-xs font-bold text-brick">
                 <span class="w-1.5 h-1.5 rounded-full bg-brick"></span> BLOQUEADA
@@ -863,7 +883,7 @@
               </div>
             </div>
             <div
-              class="bg-white p-6 rounded-2xl shadow-sm border border-line flex items-center justify-between"
+              class="full-only bg-white p-6 rounded-2xl shadow-sm border border-line flex items-center justify-between"
             >
               <div class="w-full">
                 <p class="text-xs text-muted font-bold uppercase tracking-wide">Prateleiras livres</p>
@@ -882,7 +902,7 @@
           </div>
 
           <div
-            class="bg-white border border-line rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4"
+            class="full-only bg-white border border-line rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4"
           >
             <div>
               <p class="text-xs text-muted font-bold uppercase tracking-wide">Controle físico</p>
@@ -902,7 +922,7 @@
 
           <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 flex-1">
             <div
-              class="xl:col-span-2 bg-ink rounded-2xl shadow-sm overflow-hidden relative flex flex-col min-h-[320px]"
+              class="full-only xl:col-span-2 bg-ink rounded-2xl shadow-sm overflow-hidden relative flex flex-col min-h-[320px]"
             >
               <div class="absolute top-4 left-4 z-10 flex gap-2">
                 <span
@@ -930,7 +950,7 @@
             </div>
 
             <div
-              class="xl:col-span-1 bg-white rounded-2xl shadow-sm border border-line flex flex-col min-h-[320px]"
+              class="xl:col-span-1 bg-white rounded-2xl shadow-sm border border-line flex flex-col min-h-[320px] essential-events"
             >
               <div class="p-5 border-b border-line flex items-center justify-between">
                 <h3 class="font-display font-bold text-ink">Eventos recentes</h3>
@@ -951,10 +971,14 @@
         </div>
 
         <div id="view-moradores" class="view-section hidden-view p-6">
+          <div class="essential-only bg-blue-light border border-blue/20 text-blue-dark p-4 rounded-xl max-w-5xl mx-auto mb-5 text-sm font-semibold">
+            Comece cadastrando os moradores. Eles não precisam de aplicativo ou senha neste plano.
+          </div>
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl mx-auto items-stretch">
             <div class="bg-white p-8 rounded-2xl shadow-sm border border-line">
               <h3 class="font-display font-bold text-ink text-2xl mb-1">Cadastrar novo morador</h3>
-              <p class="text-sm text-muted mb-6">O acesso ao Portal do Morador é gerado automaticamente.</p>
+              <p class="text-sm text-muted mb-6 full-only">O acesso ao Portal do Morador é gerado automaticamente.</p>
+              <p class="text-sm text-muted mb-6 essential-only">O porteiro selecionará esta pessoa no recebimento da encomenda.</p>
               <div class="space-y-4">
                 <div>
                   <label class="block text-xs font-bold text-muted uppercase mb-2">Nome completo</label>
@@ -1007,10 +1031,11 @@
               </div>
             </div>
 
-            <div
-              id="credenciais-box"
-              class="hidden-view bg-white p-8 rounded-2xl shadow-sm border border-teal/30"
-            >
+            <div class="flex flex-col gap-6 min-w-0">
+              <div
+                id="credenciais-box"
+                class="hidden-view bg-white p-8 rounded-2xl shadow-sm border border-teal/30"
+              >
               <div class="flex items-center gap-3 mb-4">
                 <div class="bg-teal-light text-teal-dark p-2 rounded-xl">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1045,26 +1070,37 @@
               >
                 Fechar
               </button>
+              </div>
+              <div class="bg-white rounded-2xl shadow-sm border border-line overflow-hidden min-w-0">
+                <div class="p-5 border-b border-line flex items-center justify-between">
+                  <div>
+                    <h3 class="font-display font-bold text-ink text-lg">Moradores cadastrados</h3>
+                    <p class="text-xs text-muted mt-1">Edite os dados ou controle o acesso sem apagar o histórico.</p>
+                  </div>
+                  <button onclick="carregarMoradores()" class="text-xs font-bold text-blue-dark">Atualizar</button>
+                </div>
+                <div id="lista-moradores" class="management-list">
+                  <div class="p-6 text-sm text-muted text-center">Carregando moradores…</div>
+                </div>
+              </div>
             </div>
           </div>
+        </div>
 
-          <div
-            class="bg-white rounded-2xl shadow-sm border border-line max-w-5xl mx-auto mt-6 overflow-hidden"
-          >
-            <div class="p-5 border-b border-line flex items-center justify-between">
-              <div>
-                <h3 class="font-display font-bold text-ink text-lg">Moradores cadastrados</h3>
-                <p class="text-xs text-muted mt-1">
-                  Edite os dados ou controle o acesso sem apagar o histórico.
-                </p>
-              </div>
-              <button onclick="carregarMoradores()" class="text-xs font-bold text-blue-dark">
-                Atualizar
-              </button>
+        <div id="view-essencial" class="view-section hidden-view essential-only p-6">
+          <div class="max-w-5xl mx-auto">
+            <h3 class="font-display font-bold text-ink text-2xl">Encomendas da portaria</h3>
+            <p class="text-sm text-muted mt-1 mb-5">Recebimentos, entregas e comprovantes registrados pelos porteiros.</p>
+            <div class="flex flex-wrap gap-3 mb-4">
+              <select id="filtro-essencial" onchange="renderEncomendasEssenciais()" class="bg-white text-ink border border-line rounded-xl p-3">
+                <option value="todos">Todas</option>
+                <option value="aguardando">Aguardando entrega</option>
+                <option value="retirada">Entregues</option>
+              </select>
+              <input id="busca-essencial-morador" oninput="renderEncomendasEssenciais()" data-validate="generic" class="min-w-0 flex-1 bg-white text-ink border border-line rounded-xl p-3" placeholder="Buscar pelo nome do morador" aria-label="Buscar pelo nome do morador" />
+              <button onclick="carregarEncomendasEssenciais()" class="bg-blue text-white rounded-xl px-4 font-bold">Atualizar</button>
             </div>
-            <div id="lista-moradores" class="management-list">
-              <div class="p-6 text-sm text-muted text-center">Carregando moradores…</div>
-            </div>
+            <div id="lista-essencial" class="grid gap-3"></div>
           </div>
         </div>
 
@@ -1225,7 +1261,7 @@
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
               <div>
                 <h3 class="font-display font-bold text-ink text-2xl">Configurações operacionais</h3>
-                <p class="text-sm text-muted mt-1">Controle os parâmetros do condomínio sem editar o código.</p>
+                <p class="text-sm text-muted mt-1">Controle os parâmetros do condomínio.</p>
               </div>
               <button id="btn-salvar-configuracoes" onclick="salvarConfiguracoes()" class="bg-blue hover:bg-blue-dark text-white font-bold px-5 py-3 rounded-xl">Salvar configurações</button>
             </div>
@@ -1450,6 +1486,9 @@
       let modalAction = null
       let activeRecording = null
       let configurationSchema = []
+      let planoDashboard = 'completo'
+      let encomendasEssenciais = []
+      let ocorrenciasEssenciais = []
       let darkModeDashboard = localStorage.getItem('docks-theme') === 'dark'
       function applyDarkPreference() {
         const escuro = darkModeDashboard
@@ -1501,15 +1540,21 @@
           })
           const data = await res.json().catch(() => ({}))
           if (!res.ok || !data.success) throw new Error('Sessão inválida')
+          planoDashboard = data.plano === 'essencial' ? 'essencial' : 'completo'
+          document.documentElement.dataset.plano = planoDashboard
 
           const condoName = document.getElementById('dashboard-condo-name')
           if (condoName && data.condominio?.nome) condoName.innerText = data.condominio.nome
+          document.getElementById('dashboard-condo-plano').textContent = `Docks ${planoDashboard === 'essencial' ? 'Essential' : 'Smart'}`
 
           document.getElementById('view-dashboard-loading').classList.add('hidden-view')
           document.getElementById('app-shell').classList.remove('hidden-view')
           if (data.primeiro_login)
             document.getElementById('modal-primeiro-login').classList.remove('hidden-view')
-          else iniciarPainel()
+          else {
+            iniciarPainel()
+            if (data.cadastro_inicial_pendente) switchViewById('view-moradores')
+          }
         } catch (e) {
           sessionStorage.removeItem('docks_dashboard_token')
           window.location.replace(`${API_URL}/?login=condominio`)
@@ -1534,7 +1579,8 @@
         const id = `config-${field.chave}`
         const safeValue = htmlSeguro(value)
         if (field.tipo === 'bool') {
-          return `<select id="${id}" required><option value="true" ${value === true ? 'selected' : ''}>Ativado</option><option value="false" ${value === false ? 'selected' : ''}>Desativado</option></select>`
+          // Um seletor chamado "código" não deve ser validado como dígitos digitados.
+          return `<select id="${id}" data-validate="generic" required><option value="true" ${value === true ? 'selected' : ''}>Ativado</option><option value="false" ${value === false ? 'selected' : ''}>Desativado</option></select>`
         }
         if (field.tipo === 'textarea')
           return `<textarea id="${id}" data-config-type="textarea" data-validate="text" maxlength="${Number(field.max || 2000)}" required>${safeValue}</textarea>`
@@ -1618,7 +1664,7 @@
           document.getElementById('configuracoes-status').textContent = 'Últimas alterações salvas e aplicadas.'
           toast('Configurações salvas com sucesso.', 'success')
           atualizarStatus()
-          carregarPrateleiras()
+          if (planoDashboard === 'completo') carregarPrateleiras()
         } catch (error) {
           toast(error.message || 'Não foi possível salvar as configurações.', 'error')
         } finally {
@@ -1650,6 +1696,7 @@
           document.getElementById('modal-primeiro-login').classList.add('hidden-view')
           toast('Senha inicial substituída com sucesso.', 'success')
           iniciarPainel()
+          if (planoDashboard === 'essencial') switchViewById('view-moradores')
         } catch (e) {
           erro.innerText = e.message
           erro.classList.remove('hidden')
@@ -1687,13 +1734,13 @@
         const offlineHome = document.getElementById('camera-offline-home')
         const offlineFull = document.getElementById('camera-offline')
 
-        if (viewId === 'view-camera') {
+        if (viewId === 'view-camera' && planoDashboard === 'completo') {
           camHome.removeAttribute('src')
           camFull.classList.remove('hidden-view')
           offlineFull.classList.add('hidden-view')
 
           camFull.src = `${API_URL}/api/camera_stream?token=${dashboardToken}&t=${Date.now()}`
-        } else if (viewId === 'view-overview') {
+        } else if (viewId === 'view-overview' && planoDashboard === 'completo') {
           camFull.removeAttribute('src')
           camHome.classList.remove('hidden-view')
           offlineHome.classList.add('hidden-view')
@@ -1706,6 +1753,7 @@
 
         const titles = {
           'view-overview': 'Painel Central de Monitoramento',
+          'view-essencial': 'Encomendas da Portaria',
           'view-moradores': 'Gestão de Moradores',
           'view-porteiros': 'Gestão de Porteiros',
           'view-shelves': 'Mapeamento Físico de Prateleiras',
@@ -1719,20 +1767,11 @@
         if (viewId === 'view-moradores') carregarMoradores()
         if (viewId === 'view-porteiros') carregarPorteiros()
         if (viewId === 'view-configuracoes') carregarConfiguracoes()
+        if (viewId === 'view-essencial') carregarEncomendasEssenciais()
       }
       function switchViewById(viewId) {
-        const map = {
-          'view-overview': 0,
-          'view-moradores': 1,
-          'view-porteiros': 2,
-          'view-shelves': 3,
-          'view-logs': 4,
-          'view-relatorios': 5,
-          'view-configuracoes': 6,
-          'view-camera': 7,
-          'view-gravacoes': 8,
-        }
-        const btn = document.querySelectorAll('.nav-btn')[map[viewId]]
+        const btn = [...document.querySelectorAll('.nav-btn')].find((item) => item.getAttribute('onclick')?.includes(`'${viewId}'`))
+        if (!btn) return
         switchView(viewId, btn)
         if (viewId === 'view-logs') carregarLogs()
         if (viewId === 'view-shelves') carregarPrateleiras()
@@ -1783,6 +1822,10 @@
             .getElementById('stat-atrasadas-card')
             .classList.toggle('border-amber', Number(data.atrasadas) > 0)
           document.getElementById('stat-retiradas').innerText = data.retiradas_hoje
+          if (planoDashboard === 'essencial') {
+            setConnStatus(true)
+            return
+          }
           document.getElementById('stat-livres').innerText = data.livres
           const livresNum = parseInt(String(data.livres).split('/')[0].trim())
           const pct = isNaN(livresNum) ? 0 : Math.max(0, Math.min(100, (livresNum / 50) * 100))
@@ -1954,9 +1997,9 @@
 
       function logTagClass(tipo) {
         // Classes por categoria mantêm as tags legíveis nos dois temas.
-        if (tipo.includes('FALHA') || tipo.includes('SEGURANÇA') || tipo.includes('ALERTA'))
+        if (tipo.includes('FALHA') || tipo.includes('SEGURANÇA') || tipo.includes('ALERTA') || tipo.includes('EXCEÇÃO'))
           return 'log-tag log-tag--danger'
-        if (tipo.includes('RETIRADA')) return 'log-tag log-tag--success'
+        if (tipo.includes('RETIRADA') || tipo.includes('ENTREGA')) return 'log-tag log-tag--success'
         if (tipo.includes('HARDWARE')) return 'log-tag log-tag--hardware'
         if (tipo.includes('CÂMERA')) return 'log-tag log-tag--camera'
         if (tipo.includes('CADASTRO')) return 'log-tag log-tag--register'
@@ -1965,9 +2008,9 @@
 
       function logIcon(tipo) {
         const base = 'fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"'
-        if (tipo.includes('FALHA') || tipo.includes('ALERTA') || tipo.includes('SEGURANÇA'))
+        if (tipo.includes('FALHA') || tipo.includes('ALERTA') || tipo.includes('SEGURANÇA') || tipo.includes('EXCEÇÃO'))
           return `<svg ${base}><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 4h.01M10.3 3.7L2.4 17.4A2 2 0 004.1 20h15.8a2 2 0 001.7-2.6L13.7 3.7a2 2 0 00-3.4 0z"/></svg>`
-        if (tipo.includes('RETIRADA'))
+        if (tipo.includes('RETIRADA') || tipo.includes('ENTREGA'))
           return `<svg ${base}><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`
         if (tipo.includes('HARDWARE'))
           return `<svg ${base}><rect x="5" y="10" width="14" height="10" rx="2" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M8 10V7a4 4 0 118 0v3"/></svg>`
@@ -2040,9 +2083,11 @@
           const data = await res.json()
           if (data.success) {
             toast('Morador cadastrado com sucesso.', 'success')
-            document.getElementById('cred-usuario').innerText = data.usuario
-            document.getElementById('cred-senha').innerText = data.senha
-            document.getElementById('credenciais-box').classList.remove('hidden-view')
+            if (planoDashboard === 'completo') {
+              document.getElementById('cred-usuario').innerText = data.usuario
+              document.getElementById('cred-senha').innerText = data.senha
+              document.getElementById('credenciais-box').classList.remove('hidden-view')
+            }
             document.getElementById('cad-nome').value = ''
             document.getElementById('cad-apt').value = ''
             document.getElementById('cad-tel').value = ''
@@ -2065,6 +2110,98 @@
           (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[c],
         )
 
+      async function carregarEncomendasEssenciais() {
+        // A lista usa dados leves; fotos são buscadas somente quando abertas.
+        if (planoDashboard !== 'essencial') return
+        try {
+          const [resposta, respostaOcorrencias] = await Promise.all([
+            fetchDashboard('/api/dashboard/essencial/encomendas'),
+            fetchDashboard('/api/dashboard/ocorrencias'),
+          ])
+          const [dados, ocorrencias] = await Promise.all([resposta.json(), respostaOcorrencias.json()])
+          if (!resposta.ok || !respostaOcorrencias.ok) throw new Error(dados.error || 'Não foi possível carregar as encomendas.')
+          encomendasEssenciais = dados
+          ocorrenciasEssenciais = ocorrencias.filter((item) => item.encomenda_id)
+          renderEncomendasEssenciais()
+        } catch (erro) { document.getElementById('lista-essencial').textContent = erro.message }
+      }
+
+      function renderEncomendasEssenciais() {
+        // Une encomendas e ocorrências já carregadas sem uma consulta por cartão.
+        const filtro = document.getElementById('filtro-essencial').value
+        const busca = document.getElementById('busca-essencial-morador').value.trim().toLocaleLowerCase('pt-BR')
+        const itens = encomendasEssenciais.filter((item) =>
+          (filtro === 'todos' || item.status === filtro) && item.morador.toLocaleLowerCase('pt-BR').includes(busca),
+        )
+        document.getElementById('lista-essencial').innerHTML = itens.length
+          ? itens.map((item) => {
+              const ocorrencias = ocorrenciasEssenciais.filter((registro) => registro.encomenda_id === item.id)
+              return `<article class="bg-white border border-line rounded-2xl p-5 text-ink">
+                <div class="flex justify-between gap-4"><div><strong class="font-display text-lg">#${item.id} · ${htmlSeguro(item.morador)}</strong><p class="text-sm text-muted">Apto ${htmlSeguro(item.apartamento)}${item.tamanho && item.tamanho !== 'Não informado' ? ` · ${htmlSeguro(item.tamanho)}` : ''} · Chegada ${htmlSeguro(item.chegada)}</p></div><span class="font-bold ${item.status === 'aguardando' ? 'text-amber-dark' : 'text-teal-dark'}">${item.status === 'aguardando' ? 'Aguardando' : 'Entregue'}</span></div>
+                ${item.entrega ? `<p class="text-sm mt-3">Comprovante #${item.entrega.id}: ${htmlSeguro(item.entrega.recebedor)} (${htmlSeguro(item.entrega.vinculo)}), ${htmlSeguro(item.entregue_em)}. ${htmlSeguro(item.entrega.confirmacao)}.</p>` : ''}
+                <div class="flex flex-wrap gap-4 mt-3"><button onclick="abrirFotoEssencial(${item.id})" class="text-sm text-blue-dark font-bold">Ver foto</button><button onclick="abrirOcorrenciaEssencial(${item.id})" class="text-sm text-brick font-bold">Registrar ocorrência</button>${item.status === 'aguardando' && item.codigo_exigido && !item.excecao_autorizada ? `<button onclick="autorizarExcecao(${item.id})" class="text-sm text-blue-dark font-bold">Autorizar entrega sem código</button>` : ''}</div>
+                <div id="foto-essencial-${item.id}"></div>
+                ${item.excecao_autorizada ? '<p class="text-sm text-amber-dark mt-3">Exceção autorizada, aguardando confirmação do porteiro.</p>' : ''}
+                ${ocorrencias.map((registro) => `<div class="mt-3 text-sm border-t border-line pt-3">Ocorrência #${registro.id} · ${registro.status === 'resolvida' ? 'Resolvida' : 'Aberta'} · ${htmlSeguro(registro.descricao)} ${registro.status === 'aberta' ? `<button onclick="resolverOcorrenciaEssencial(${registro.id})" class="text-teal-dark font-bold ml-2">Marcar resolvida</button>` : ''}</div>`).join('')}
+              </article>`
+            }).join('')
+          : '<p class="text-muted">Nenhuma encomenda nesta seleção.</p>'
+      }
+
+      function abrirOcorrenciaEssencial(id) {
+        // O vínculo com a encomenda preserva a rastreabilidade sem vídeo de sala.
+        abrirModalAcao('Registrar ocorrência', `Relacione a ocorrência à encomenda #${id}.`, async () => {
+          const descricao = document.getElementById('descricao-essencial').value.trim()
+          const resposta = await fetchDashboard('/api/dashboard/ocorrencias', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ encomenda_id: id, descricao }) })
+          const dados = await resposta.json()
+          if (!resposta.ok) return toast(dados.error || dados.message || 'Não foi possível registrar.', 'error')
+          fecharModalAcao()
+          toast('Ocorrência registrada.', 'success')
+          carregarEncomendasEssenciais()
+          carregarLogs()
+        }, '<textarea id="descricao-essencial" class="modal-input" minlength="10" maxlength="1000" required placeholder="Descreva a ocorrência"></textarea>')
+      }
+
+      async function resolverOcorrenciaEssencial(id) {
+        // Resolver muda o estado do registro, mas mantém o histórico de auditoria.
+        const resposta = await fetchDashboard(`/api/dashboard/ocorrencias/${id}/status`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'resolvida' }) })
+        const dados = await resposta.json()
+        if (!resposta.ok) return toast(dados.error || dados.message || 'Não foi possível resolver.', 'error')
+        toast('Ocorrência resolvida.', 'success')
+        carregarEncomendasEssenciais()
+        carregarLogs()
+      }
+
+      async function abrirFotoEssencial(id) {
+        // Imagem grande só trafega quando o síndico abre o cartão correspondente.
+        const destino = document.getElementById(`foto-essencial-${id}`)
+        destino.textContent = 'Carregando foto…'
+        try {
+          const resposta = await fetchDashboard(`/api/dashboard/essencial/encomendas/${id}/foto`)
+          const dados = await resposta.json()
+          if (!resposta.ok || !/^data:image\/(jpeg|png|webp);base64,/.test(dados.foto_pacote || '')) throw new Error('Foto indisponível.')
+          const imagem = document.createElement('img')
+          imagem.src = dados.foto_pacote
+          imagem.alt = `Foto da encomenda ${id}`
+          imagem.className = 'mt-3 w-40 h-40 rounded-xl object-cover border border-line'
+          destino.replaceChildren(imagem)
+        } catch (erro) { destino.textContent = erro.message }
+      }
+
+      function autorizarExcecao(id) {
+        // A exceção deixa um motivo auditável e não confirma a retirada por conta própria.
+        abrirModalAcao('Autorizar exceção', `Encomenda #${id}: o porteiro poderá entregar sem o código. Informe o motivo.`, async () => {
+          const motivo = document.getElementById('motivo-excecao').value.trim()
+          const resposta = await fetchDashboard(`/api/dashboard/essencial/encomendas/${id}/excecao`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ motivo }) })
+          const dados = await resposta.json()
+          if (!resposta.ok) return toast(dados.error || 'Não foi possível autorizar.', 'error')
+          fecharModalAcao()
+          toast('Exceção registrada.', 'success')
+          carregarEncomendasEssenciais()
+          carregarLogs()
+        }, '<textarea id="motivo-excecao" class="modal-input" minlength="8" maxlength="300" required placeholder="Motivo da exceção"></textarea>')
+      }
+
       async function carregarMoradores() {
         const lista = document.getElementById('lista-moradores')
         if (!lista) return
@@ -2075,7 +2212,7 @@
             ? moradores
                 .map(
                   (m) =>
-                    `<div class="management-row"><span><strong class="text-ink">${htmlSeguro(m.nome)}</strong><small class="block text-muted mt-1">${htmlSeguro(m.usuario)}</small></span><span class="font-mono">Apto ${htmlSeguro(m.apartamento)}</span><span>${htmlSeguro(m.telefone)}</span><span class="font-bold ${m.ativo ? 'text-teal-dark' : 'text-muted'}">${m.ativo ? 'Ativo' : 'Inativo'}</span><span class="management-actions"><button onclick="editarMorador(JSON.parse(decodeURIComponent('${encodeURIComponent(JSON.stringify(m))}')))">Editar</button><button onclick="confirmarStatusMorador(${m.id},${!m.ativo},decodeURIComponent('${encodeURIComponent(m.nome)}'))">${m.ativo ? 'Desativar' : 'Ativar'}</button></span></div>`,
+                    `<div class="management-row"><span><strong class="text-ink">${htmlSeguro(m.nome)}</strong>${planoDashboard === 'completo' ? `<small class="block text-muted mt-1">${htmlSeguro(m.usuario)}</small>` : ''}</span><span class="font-mono">Apto ${htmlSeguro(m.apartamento)}</span><span>${htmlSeguro(m.telefone)}</span><span class="font-bold ${m.ativo ? 'text-teal-dark' : 'text-muted'}">${m.ativo ? 'Ativo' : 'Inativo'}</span><span class="management-actions"><button onclick="editarMorador(JSON.parse(decodeURIComponent('${encodeURIComponent(JSON.stringify(m))}')))">Editar</button><button onclick="confirmarStatusMorador(${m.id},${!m.ativo},decodeURIComponent('${encodeURIComponent(m.nome)}'))">${m.ativo ? 'Desativar' : 'Ativar'}</button></span></div>`,
                 )
                 .join('')
             : '<div class="p-6 text-sm text-muted text-center">Nenhum morador cadastrado.</div>'
@@ -2086,7 +2223,7 @@
       }
 
       function editarMorador(m) {
-        const campos = `<input id="edit-morador-nome" data-validate="name" maxlength="120" required class="modal-input" value="${htmlSeguro(m.nome)}" placeholder="Nome"><input id="edit-morador-apt" data-validate="apartment" maxlength="20" required class="modal-input" value="${htmlSeguro(m.apartamento)}" placeholder="Apartamento"><input id="edit-morador-tel" data-validate="phone" maxlength="20" required class="modal-input" value="${htmlSeguro(m.telefone)}" placeholder="Telefone"><input id="edit-morador-usuario" data-validate="username" maxlength="64" required class="modal-input" value="${htmlSeguro(m.usuario)}" placeholder="Usuário">`
+        const campos = `<input id="edit-morador-nome" data-validate="name" maxlength="120" required class="modal-input" value="${htmlSeguro(m.nome)}" placeholder="Nome"><input id="edit-morador-apt" data-validate="apartment" maxlength="20" required class="modal-input" value="${htmlSeguro(m.apartamento)}" placeholder="Apartamento"><input id="edit-morador-tel" data-validate="phone" maxlength="20" required class="modal-input" value="${htmlSeguro(m.telefone)}" placeholder="Telefone">${planoDashboard === 'completo' ? `<input id="edit-morador-usuario" data-validate="username" maxlength="64" required class="modal-input" value="${htmlSeguro(m.usuario)}" placeholder="Usuário">` : ''}`
         abrirModalAcao(
           'Editar morador',
           'Revise as informações deste cadastro.',
@@ -2095,7 +2232,7 @@
               nome: document.getElementById('edit-morador-nome').value.trim(),
               apartamento: document.getElementById('edit-morador-apt').value.trim(),
               telefone: document.getElementById('edit-morador-tel').value.trim(),
-              usuario: document.getElementById('edit-morador-usuario').value.trim(),
+              ...(planoDashboard === 'completo' ? { usuario: document.getElementById('edit-morador-usuario').value.trim() } : {}),
             }
             const res = await fetchDashboard(`/api/dashboard/moradores/${m.id}`, {
               method: 'PATCH',
@@ -2499,17 +2636,16 @@
       function iniciarPainel() {
         atualizarStatus()
         carregarLogs()
-        carregarPrateleiras()
         tickClock()
-
-        document.getElementById('camera-img-home').src =
-          `${API_URL}/api/camera_stream?token=${dashboardToken}&t=${Date.now()}`
-
+        if (planoDashboard === 'completo') {
+          carregarPrateleiras()
+          document.getElementById('camera-img-home').src = `${API_URL}/api/camera_stream?token=${dashboardToken}&t=${Date.now()}`
+          setInterval(carregarPrateleiras, 15000)
+          setInterval(syncHardware, 2000)
+        } else carregarEncomendasEssenciais()
         setInterval(atualizarStatus, 10000)
         setInterval(carregarLogs, 15000)
-        setInterval(carregarPrateleiras, 15000)
         setInterval(tickClock, 1000)
-        setInterval(syncHardware, 2000)
       }
 
       document.addEventListener('DOMContentLoaded', validarSessaoDashboard)

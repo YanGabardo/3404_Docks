@@ -303,26 +303,52 @@ export function Page({
   onSettings,
   back,
   refresh,
-  login = false,
-  identity,
 }: React.PropsWithChildren<{
   dark: boolean;
   toggleTheme: () => void;
   onSettings?: () => void;
   back?: () => void;
   refresh?: React.ReactElement<RefreshControlProps>;
-  login?: boolean;
-  identity?: string;
 }>) {
   // Safe layout centraliza conteúdo no telefone e acompanha abertura do teclado.
   const c = useColors();
-  const lightSurface = !dark && !login;
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1, backgroundColor: login ? "#001135" : c.bg }}
+      style={{ flex: 1, backgroundColor: "#001135" }}
     >
+      <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 6 }}>
+        <View style={[s.header, { width: "100%", maxWidth: 480, alignSelf: "center" }]}>
+          <Image
+            source={require("../assets/docks-brand.png")}
+            accessibilityLabel="Logo completa Docks"
+            style={{ width: 154, height: 48 }}
+            resizeMode="contain"
+          />
+          <View style={{ flexDirection: "row", gap: 6 }}>
+            {onSettings && (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Configurações"
+                onPress={onSettings}
+                style={s.iconButton}
+              >
+                <Icon name="settings" color="#fff" />
+              </Pressable>
+            )}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={dark ? "Ativar modo claro" : "Ativar modo escuro"}
+              onPress={toggleTheme}
+              style={s.iconButton}
+            >
+              <Icon name={dark ? "sun" : "moon"} color="#fff" />
+            </Pressable>
+          </View>
+        </View>
+      </View>
       <ScrollView
+        style={{ flex: 1, marginHorizontal: 8, marginBottom: 8, borderRadius: 22, overflow: "hidden", backgroundColor: c.bg }}
         keyboardShouldPersistTaps="handled"
         refreshControl={refresh}
         contentContainerStyle={{ flexGrow: 1, padding: 20, paddingBottom: 36 }}
@@ -330,72 +356,6 @@ export function Page({
         <View
           style={{ width: "100%", maxWidth: 480, alignSelf: "center", gap: 18 }}
         >
-          <View style={s.header}>
-            <View
-              style={{
-                alignSelf: "flex-start",
-                flexDirection: "row",
-                alignItems: "center",
-                backgroundColor: "transparent",
-                paddingHorizontal: 8,
-                paddingVertical: 4,
-              }}
-            >
-              {lightSurface ? (
-                <>
-                  {/* A versão clara preserva o símbolo azul e escreve o nome com contraste, sem fundo escuro. */}
-                  <View style={{ width: 50, height: 30, overflow: "hidden" }}>
-                    <Image
-                      source={require("../assets/docks-logo.png")}
-                      style={{ width: 50, height: 44 }}
-                      resizeMode="contain"
-                    />
-                  </View>
-                  <Text
-                    accessibilityLabel="Docks"
-                    style={{ fontFamily: "Display", fontSize: 27, lineHeight: 33, color: c.text }}
-                  >
-                    Docks
-                  </Text>
-                </>
-              ) : (
-                <Image
-                  source={login ? require("../assets/docks-brand.png") : require("../assets/docks-logo.png")}
-                  accessibilityLabel="Docks"
-                  style={{ width: login && dark ? 170 : login ? 150 : 110, height: 56 }}
-                  resizeMode="contain"
-                />
-              )}
-            </View>
-            <View style={{ flexDirection: "row", gap: 6 }}>
-              {onSettings && (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Configurações"
-                  onPress={onSettings}
-                  style={s.iconButton}
-                >
-                  <Icon
-                    name="settings"
-                    color={login || identity ? "#fff" : c.text}
-                  />
-                </Pressable>
-              )}
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={
-                  dark ? "Ativar modo claro" : "Ativar modo escuro"
-                }
-                onPress={toggleTheme}
-                style={s.iconButton}
-              >
-                <Icon
-                  name={dark ? "sun" : "moon"}
-                  color={login || identity ? "#fff" : c.text}
-                />
-              </Pressable>
-            </View>
-          </View>
           {back && (
             <Pressable
               accessibilityRole="button"

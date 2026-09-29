@@ -51,6 +51,7 @@ def registrar_rotas_morador(
                 Morador.usuario == usuario,
                 Morador.ativo.is_(True),
                 Condominio.ativo.is_(True),
+                Condominio.plano == "completo",
             )
             .all()
         )

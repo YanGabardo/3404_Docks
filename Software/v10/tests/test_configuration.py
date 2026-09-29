@@ -1,5 +1,6 @@
 """Garante que o painel edite apenas opções expostas sem perder ajustes internos."""
 
+import json
 import unittest
 from werkzeug.security import check_password_hash
 
@@ -11,7 +12,7 @@ from backend.configuration import (
     valores_padrao,
     valores_para_painel,
 )
-from backend.models import Condominio, Porteiro, db
+from backend.models import Condominio, Porteiro, TarefaPendente, db
 
 server = fixtures.server
 
@@ -113,6 +114,11 @@ class ConfigurationTests(unittest.TestCase):
             condominio = db.session.get(Condominio, resposta.json["condominio"]["id"])
             self.assertTrue(check_password_hash(condominio.senha, "Docks@2026"))
             self.assertTrue(condominio.primeiro_login)
+            aviso = TarefaPendente.query.filter_by(condominio_id=condominio.id, tipo="notificacao_whatsapp").one()
+            texto = json.loads(aviso.payload)["mensagem"]
+            self.assertIn("Área do Cliente", texto)
+            self.assertIn("Docks@2026", texto)
+            self.assertIn("ana", texto)
 
             login = self.client.post(
                 "/api/login", json={"usuario": "ana", "senha": "Docks@2026"}

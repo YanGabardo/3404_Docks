@@ -66,6 +66,7 @@ from .services import (
 from .dashboard import registrar_extensoes_dashboard
 from .resident import registrar_rotas_morador
 from .portaria import registrar_rotas_portaria
+from .essencial import registrar_rotas_essencial
 from .validador import registrar_rotas_validador, recuperar_validacoes_interrompidas
 from .offline import FilaTarefas
 from .video import TimedWriter, preview_frame, video_duration, frame_part
@@ -262,7 +263,7 @@ def morador_auth_required(f):
             return jsonify({"error": "Não autorizado. Faça login novamente."}), 401
         morador = db.session.get(Morador, sessao.get("morador_id"))
         condominio = db.session.get(Condominio, sessao.get("condominio_id"))
-        if not morador or not morador.ativo or not condominio or not condominio.ativo:
+        if not morador or not morador.ativo or not condominio or not condominio.ativo or condominio.plano != "completo":
             morador_sessions.pop(token, None)
             return jsonify({"error": "Acesso do morador inativo."}), 401
         g.morador_session = sessao
@@ -414,8 +415,15 @@ def init_db():
         "condominios": {
             "primeiro_login": "BOOLEAN NOT NULL DEFAULT 1",
             "telefone": "VARCHAR",
+            "plano": "VARCHAR NOT NULL DEFAULT 'completo'",
         },
-        "encomendas": {"condominio_id": "INTEGER"},
+        "encomendas": {
+            "condominio_id": "INTEGER",
+            "codigo_entrega_hash": "VARCHAR",
+            "codigo_tentativas": "INTEGER NOT NULL DEFAULT 0",
+            "excecao_autorizada_em": "VARCHAR",
+            "excecao_motivo": "VARCHAR",
+        },
         "logs": {"condominio_id": "INTEGER"},
         "qr_codes": {
             "condominio_id": "INTEGER",
@@ -427,6 +435,8 @@ def init_db():
             "preservada": "BOOLEAN NOT NULL DEFAULT 0",
             "ocorrencia_id": "INTEGER",
         },
+        "ocorrencias": {"encomenda_id": "INTEGER"},
+        "contatos": {"plano_interesse": "VARCHAR NOT NULL DEFAULT 'nao_informado'"},
     }
     alteracoes = []
     for tabela, desejadas in migracoes.items():
@@ -638,14 +648,12 @@ def executar_inicializacao_segura():
     teste.write_bytes(b"ok")
     teste.unlink(missing_ok=True)
     startup_state["gravacoes"] = True
-    condominio = (
-        Condominio.query.filter_by(ativo=True).order_by(Condominio.id.asc()).first()
-    )
+    condominio = Condominio.query.filter_by(ativo=True, plano="completo").order_by(Condominio.id.asc()).first()
     condominio_id = condominio.id if condominio else None
     configuracoes = obter_configuracoes(condominio_id)
     app.config["MAX_CONTENT_LENGTH"] = int(configuracoes["max_upload_mb"]) * 1024 * 1024
     startup_state["camera"] = False
-    if configuracoes["camera_rtsp_url"]:
+    if condominio and configuracoes["camera_rtsp_url"]:
         # Apenas a porta RTSP é sondada; abrir o stream inteiro atrasaria o boot.
         try:
             destino = urlparse(configuracoes["camera_rtsp_url"])
@@ -658,7 +666,7 @@ def executar_inicializacao_segura():
         except (OSError, ValueError, TypeError):
             startup_state["camera"] = False
     startup_state["fechadura"] = False
-    if configuracoes["tuya_device_id"] and configuracoes["tuya_local_key"]:
+    if condominio and configuracoes["tuya_device_id"] and configuracoes["tuya_local_key"]:
         # A busca falha de forma isolada: o painel continua acessível para diagnóstico.
         try:
             TUYA_IP_ATUAL[int(condominio_id or 0)] = achar_ip_tuya(condominio_id)
@@ -895,6 +903,10 @@ def processar_tarefa_pendente(tarefa):
     """Despacha cada tarefa conforme seu tipo e informa se já pode sair da fila."""
     payload = desserializar_payload(tarefa.payload)
     if tarefa.tipo == "notificacao_whatsapp":
+        if payload.get("encomenda_id"):
+            pacote = Encomenda.query.filter_by(id=payload["encomenda_id"], condominio_id=tarefa.condominio_id).first()
+            if not pacote or pacote.status != STATUS_AGUARDANDO:
+                return True
         # Um código de recuperação expirado não deve chegar tardiamente ao destinatário.
         expira_em = payload.get("expira_em")
         if expira_em:
@@ -1470,6 +1482,7 @@ def parar_gravacao_retirada(retirada_id):
 def cadastrar_morador():
     """Lista moradores ou cria cadastro com credencial inicial no condomínio ativo."""
     condominio_id = g.dashboard_session["condominio_id"]
+    essencial = db.session.get(Condominio, condominio_id).plano == "essencial"
     if request.method == "GET":
         moradores = (
             Morador.query.filter_by(condominio_id=condominio_id)
@@ -1506,7 +1519,7 @@ def cadastrar_morador():
     while Morador.query.filter_by(condominio_id=condominio_id, usuario=usuario).first():
         usuario = f"{usuario_base}{sufixo}"
         sufixo += 1
-    senha_gerada = f"Docks@{apartamento}1"
+    senha_gerada = secrets.token_urlsafe(24) if essencial else f"Docks@{apartamento}1"
     novo_morador = Morador(
         condominio_id=condominio_id,
         nome=nome,
@@ -1523,7 +1536,7 @@ def cadastrar_morador():
         condominio_id=condominio_id,
     )
     db.session.commit()
-    return jsonify({"success": True, "usuario": usuario, "senha": senha_gerada})
+    return jsonify({"success": True, **({} if essencial else {"usuario": usuario, "senha": senha_gerada})})
 
 
 @app.route("/api/dashboard/moradores/<int:morador_id>", methods=["PATCH"])
@@ -1916,6 +1929,8 @@ def dashboard_session_info():
             "primeiro_login": bool(
                 db.session.get(Condominio, sessao.get("condominio_id")).primeiro_login
             ),
+            "plano": db.session.get(Condominio, sessao.get("condominio_id")).plano,
+            "cadastro_inicial_pendente": db.session.get(Condominio, sessao.get("condominio_id")).plano == "essencial" and not Morador.query.filter_by(condominio_id=sessao.get("condominio_id"), ativo=True).first(),
         }
     )
 
@@ -2069,6 +2084,7 @@ def admin_condominios():
                     "email": c.email or "",
                     "telefone": c.telefone or "",
                     "ativo": bool(c.ativo),
+                    "plano": c.plano,
                     "criado_em": c.criado_em,
                 }
                 for c in condominios
@@ -2088,6 +2104,9 @@ def admin_condominios():
         return jsonify({"error": erro}), 400
     if Condominio.query.filter_by(usuario=usuario).first():
         return jsonify({"error": "Este usuário de acesso já está em uso."}), 409
+    plano = data.get("plano", "completo")
+    if plano not in {"completo", "essencial"}:
+        return jsonify({"error": "Plano inválido."}), 400
     condominio = Condominio(
         nome=nome,
         usuario=usuario,
@@ -2098,6 +2117,7 @@ def admin_condominios():
         ativo=True,
         criado_em=agora_str(),
         primeiro_login=True,
+        plano=plano,
     )
     db.session.add(condominio)
     db.session.flush()
@@ -2107,6 +2127,22 @@ def admin_condominios():
             valores=serializar_payload(valores_padrao()),
             atualizada_em=agora_str(),
         )
+    )
+    # O aviso entra na mesma transação e aguarda na fila se o WhatsApp estiver indisponível.
+    enfileirar_tarefa(
+        "notificacao_whatsapp",
+        {
+            "telefone": telefone,
+            "mensagem": (
+                f"Olá, {responsavel}! O condomínio {nome} já pode acessar o Docks "
+                f"no plano {'Essential' if plano == 'essencial' else 'Smart'}. "
+                f"Entre pela Área do Cliente com o usuário {usuario} e a senha inicial "
+                f"{SENHA_INICIAL_CONDOMINIO}. Você deverá trocá-la no primeiro acesso. "
+                "Peça à equipe Docks o endereço de acesso do seu condomínio."
+            ),
+        },
+        condominio_id=condominio.id,
+        commit=False,
     )
     db.session.commit()
     return (
@@ -2121,12 +2157,34 @@ def admin_condominios():
                     "email": condominio.email or "",
                     "telefone": condominio.telefone or "",
                     "ativo": True,
+                    "plano": condominio.plano,
                     "criado_em": condominio.criado_em,
                 },
             }
         ),
         201,
     )
+
+
+@app.route("/api/admin/condominios/<int:condominio_id>/plano", methods=["PATCH"])
+@admin_auth_required
+def admin_alterar_plano(condominio_id):
+    """Atribui o plano no servidor; a interface não decide quais rotas estão liberadas."""
+    condominio = db.session.get(Condominio, condominio_id)
+    if not condominio:
+        return jsonify({"error": "Condomínio não encontrado."}), 404
+    plano = (request.get_json(silent=True) or {}).get("plano")
+    if plano not in {"completo", "essencial"}:
+        return jsonify({"error": "Plano inválido."}), 400
+    if plano != condominio.plano and Encomenda.query.filter(
+        Encomenda.condominio_id == condominio_id,
+        Encomenda.status.in_([STATUS_AGUARDANDO, STATUS_EM_RETIRADA]),
+    ).first():
+        return jsonify({"error": "Conclua as encomendas pendentes antes de mudar o plano."}), 409
+    condominio.plano = plano
+    registrar_log("PLANO", f"Plano alterado para {'Essential' if plano == 'essencial' else 'Smart'}.", commit=False, condominio_id=condominio_id)
+    db.session.commit()
+    return jsonify({"success": True, "plano": plano})
 
 
 @app.route("/api/admin/condominios/<int:condominio_id>/status", methods=["PATCH"])
@@ -2193,18 +2251,33 @@ def criar_contato():
         email, erro = validar_email(data.get("email"))
     if not erro:
         mensagem, erro = validar_texto_livre(data.get("mensagem"), "mensagem", 10, 2000)
+    plano_interesse = data.get("plano_interesse")
     if erro:
         return jsonify({"error": erro}), 400
+    if plano_interesse not in {"essencial", "completo"}:
+        return jsonify({"error": "Selecione Docks Essential ou Docks Smart."}), 400
     campos = {
         "nome": nome,
         "condominio": condominio,
         "cidade": cidade,
         "telefone": telefone,
         "email": email,
+        "plano_interesse": plano_interesse,
         "mensagem": mensagem,
     }
     contato = Contato(**campos, status="novo", criado_em=agora_str())
     db.session.add(contato)
+    texto = (
+        f"Olá, {nome}! Recebemos sua mensagem sobre o Docks "
+        f"{'Essential' if plano_interesse == 'essencial' else 'Smart'}. "
+        "A equipe Docks entrará em contato em breve. Obrigado pelo interesse!"
+    )
+    # O contato e o aviso entram juntos no banco; a fila reenviará quando houver conexão.
+    enfileirar_tarefa(
+        "notificacao_whatsapp",
+        {"telefone": telefone, "mensagem": texto},
+        commit=False,
+    )
     db.session.commit()
     return (
         jsonify(
@@ -2231,6 +2304,7 @@ def listar_contatos_admin():
                 "cidade": contato.cidade or "",
                 "telefone": contato.telefone,
                 "email": contato.email,
+                "plano_interesse": contato.plano_interesse,
                 "mensagem": contato.mensagem,
                 "status": contato.status,
                 "criado_em": contato.criado_em,
@@ -2289,6 +2363,8 @@ def hardware_sync():
 def dashboard_acionar_tuya():
     """Permite teste manual da fechadura a partir do painel autorizado."""
     condominio_id = g.dashboard_session["condominio_id"]
+    if db.session.get(Condominio, condominio_id).plano != "completo":
+        return jsonify({"error": "O plano Essential não utiliza fechadura."}), 403
     ok, erro = acionar_tuya(origem="DASHBOARD MANUAL", condominio_id=condominio_id)
     if not ok:
         return jsonify({"success": False, "error": erro}), 503
@@ -2300,17 +2376,29 @@ def dashboard_acionar_tuya():
 def dashboard_configuracoes():
     """Entrega o esquema ao painel ou salva todos os campos após validação."""
     condominio_id = g.dashboard_session["condominio_id"]
+    essencial = db.session.get(Condominio, condominio_id).plano == "essencial"
     atuais = obter_configuracoes(condominio_id)
+    campos = esquema_publico()
+    if essencial:
+        campos = [campo for campo in campos if campo["chave"] in {
+            "codigo_entrega_ativo", "encomenda_alerta_dias",
+            "whatsapp_mensagem_essencial",
+        }]
+    else:
+        campos = [campo for campo in campos if campo["chave"] not in {"codigo_entrega_ativo", "whatsapp_mensagem_essencial"}]
     if request.method == "GET":
         return jsonify(
             {
                 "success": True,
-                "campos": esquema_publico(),
-                "valores": valores_para_painel(atuais),
+                "campos": campos,
+                "valores": {campo["chave"]: valores_para_painel(atuais)[campo["chave"]] for campo in campos},
             }
         )
     data = request.get_json(silent=True) or {}
-    valores, erro = validar_valores_painel(data.get("valores"), atuais)
+    recebidos = data.get("valores")
+    if not isinstance(recebidos, dict) or set(recebidos) != {campo["chave"] for campo in campos}:
+        return jsonify({"error": "Confira os campos do seu plano."}), 400
+    valores, erro = validar_valores_painel({**valores_para_painel(atuais), **recebidos}, atuais)
     if erro:
         return jsonify({"success": False, "error": erro}), 400
     salvar_configuracoes(condominio_id, valores)
@@ -2336,6 +2424,17 @@ def get_dashboard_status():
     """Agrega métricas e alertas em uma chamada leve para o painel."""
     condominio_id = g.dashboard_session["condominio_id"]
     configuracoes = obter_configuracoes(condominio_id)
+    if db.session.get(Condominio, condominio_id).plano == "essencial":
+        pendentes = Encomenda.query.filter_by(condominio_id=condominio_id, status=STATUS_AGUARDANDO).all()
+        hoje = datetime.datetime.now().strftime("%Y-%m-%d")
+        return jsonify({
+            "plano": "essencial", "aguardando": len(pendentes),
+            "atrasadas": sum(dias_desde(item.data_chegada) >= int(configuracoes["encomenda_alerta_dias"]) for item in pendentes),
+            "prazo_alerta_dias": int(configuracoes["encomenda_alerta_dias"]),
+            "retiradas_hoje": Encomenda.query.filter(Encomenda.condominio_id == condominio_id, Encomenda.status == STATUS_RETIRADA, Encomenda.data_retirada.like(f"{hoje}%")).count(),
+            "tarefas_pendentes": TarefaPendente.query.filter_by(condominio_id=condominio_id, status=STATUS_PENDENTE).count(),
+            "cadastro_inicial_pendente": not Morador.query.filter_by(condominio_id=condominio_id, ativo=True).first(),
+        })
     encomendas_pendentes = Encomenda.query.filter(
         Encomenda.condominio_id == condominio_id,
         Encomenda.status.in_([STATUS_AGUARDANDO, STATUS_EM_RETIRADA]),
@@ -2440,6 +2539,8 @@ def get_dashboard_logs():
 def get_dashboard_prateleiras():
     """Monta o mapa físico com ocupação e atraso de cada compartimento."""
     condominio_id = g.dashboard_session["condominio_id"]
+    if db.session.get(Condominio, condominio_id).plano != "completo":
+        return jsonify({"error": "O plano Essential não utiliza prateleiras."}), 403
     configuracoes = obter_configuracoes(condominio_id)
     encomendas = (
         db.session.query(Encomenda, Morador)
@@ -2703,6 +2804,8 @@ def gerar_frames_camera(condominio_id, configuracoes):
 def camera_stream():
     """Entrega a visão ao vivo do condomínio sem acumular quadros atrasados."""
     condominio_id = g.dashboard_session["condominio_id"]
+    if db.session.get(Condominio, condominio_id).plano != "completo":
+        return jsonify({"error": "O plano Essential não utiliza câmera da sala."}), 403
     configuracoes = obter_configuracoes(condominio_id)
     if not configuracoes["camera_rtsp_url"]:
         return jsonify({"error": "RTSP_URL não configurada."}), 503
@@ -2774,6 +2877,8 @@ registrar_rotas_portaria(
     mensagem_notificacao_encomenda,
     agora_str,
 )
+registrar_rotas_essencial(app, porteiro_auth_required, dashboard_auth_required,
+                          obter_configuracoes, enfileirar_tarefa, registrar_log, agora_str)
 registrar_extensoes_dashboard(app, dashboard_auth_required, registrar_log, agora_str)
 registrar_rotas_validador(
     app,

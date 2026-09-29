@@ -12,10 +12,12 @@ export function Capture({
   mode,
   onCapture,
   cancel,
+  essencial = false,
 }: {
   mode: "ocr" | "photo";
   onCapture: (photo: string) => void;
   cancel: () => void;
+  essencial?: boolean;
 }) {
   const camera = useRef<CameraView>(null);
   const mounted = useRef(true);
@@ -89,12 +91,12 @@ export function Capture({
   return (
     <>
       <Title>
-        {mode === "ocr" ? "Alinhe a etiqueta." : "Fotografe no local."}
+        {mode === "ocr" ? "Alinhe a etiqueta." : essencial ? "Fotografe a encomenda." : "Fotografe no local."}
       </Title>
       <Muted>
         {mode === "ocr"
           ? "Boa iluminação ajuda. O servidor tenta as quatro orientações."
-          : "Mostre a encomenda já guardada na prateleira indicada."}
+          : essencial ? "Mostre a encomenda recebida na portaria." : "Mostre a encomenda já guardada na prateleira indicada."}
       </Muted>
       {!permission?.granted ? (
         <Card>

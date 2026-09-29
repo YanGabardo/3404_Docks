@@ -5,6 +5,17 @@ export type Session = {
   token: string;
   porteiro: { id: number; nome: string };
   condominio: Condominium;
+  plano: "essencial" | "completo";
+};
+export type EssentialPackage = {
+  id: number;
+  morador: string;
+  apartamento: string;
+  tamanho: Size | "Não informado";
+  chegada: string;
+  codigo_exigido: boolean;
+  excecao_autorizada: boolean;
+  tentativas_restantes: number;
 };
 export type Size = "Pequeno" | "Médio" | "Grande";
 export type Receipt = {
@@ -114,22 +125,20 @@ export async function api<T>(
   }
 }
 
-export function submission(draft: Draft) {
+export function submission(draft: Draft, essencial = false) {
   // Somente o rascunho completo pode sair do celular para o servidor.
   if (
     !draft.resident ||
-    !["Pequeno", "Médio", "Grande"].includes(draft.size) ||
-    !draft.shelf ||
+    (!essencial && !["Pequeno", "Médio", "Grande"].includes(draft.size)) ||
+    (!essencial && !draft.shelf) ||
     !draft.photo ||
     !draft.requestId
   )
-    throw new Error(
-      "Selecione o morador, reserve o local e fotografe a encomenda antes de salvar.",
-    );
+    throw new Error(essencial ? "Selecione o morador e fotografe a encomenda antes de salvar." : "Selecione o morador, reserve o local e fotografe a encomenda antes de salvar.");
   return {
     morador_id: draft.resident.id,
     apartamento: draft.resident.apartamento,
-    tamanho: draft.size,
+    ...(essencial ? {} : { tamanho: draft.size }),
     prateleira: draft.shelf,
     foto_pacote: draft.photo,
     request_id: draft.requestId,

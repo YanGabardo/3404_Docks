@@ -5,11 +5,11 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 import { useFonts } from 'expo-font'
 import { randomUUID } from 'expo-crypto'
-import { api, ApiError, Draft, emptyDraft, Receipt, Resident, Session, submission } from './src/api'
+import { api, ApiError, Draft, emptyDraft, EssentialPackage, Receipt, Resident, Session, submission } from './src/api'
 import { defaults, persist, Preferences, restore } from './src/storage'
 import { Connection, Login, PackageForm, useAction } from './src/forms'
 import { Capture } from './src/Camera'
-import { Button, Card, Icon, Muted, Notice, Page, Steps, Text, Theme, Title } from './src/ui'
+import { Button, Card, Field, Icon, Muted, Notice, Page, Steps, Text, Theme, Title } from './src/ui'
 
 type Screen =
   | 'home'
@@ -21,6 +21,8 @@ type Screen =
   | 'storage'
   | 'preview'
   | 'success'
+  | 'deliveries'
+  | 'delivery'
 
 /** Uma máquina de estados pequena mantém as etapas explícitas e impede pular a foto. */
 export default function App() {
@@ -32,6 +34,12 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>('home')
   const [draft, setDraft] = useState<Draft>(emptyDraft)
   const [receipt, setReceipt] = useState<Receipt | null>(null)
+  const [deliveries, setDeliveries] = useState<EssentialPackage[]>([])
+  const [deliverySearch, setDeliverySearch] = useState('')
+  const [delivery, setDelivery] = useState<EssentialPackage | null>(null)
+  const [receiver, setReceiver] = useState('')
+  const [relationship, setRelationship] = useState('Próprio morador')
+  const [code, setCode] = useState('')
   const [message, setMessage] = useState('')
   const [progress, setProgress] = useState('')
   const action = useAction()
@@ -97,13 +105,15 @@ export default function App() {
   useEffect(() => {
     // Ao voltar do segundo plano, consulta a sessão sem refazer cadastro/OCR.
     if (!session || !server) return
+    const activeSession = session
     const controller = new AbortController()
     let checking = false
     async function check() {
       if (checking) return
       checking = true
       try {
-        await api(server, '/porteiro/session', session, undefined, controller.signal)
+        const remote = await api<{ plano: Session['plano'] }>(server, '/porteiro/session', activeSession, undefined, controller.signal)
+        if (remote.plano && remote.plano !== activeSession.plano) await save({ session: { ...activeSession, plano: remote.plano } })
       } catch (error) {
         if (controller.signal.aborted) return
         if (error instanceof ApiError && error.status === 401)
@@ -133,14 +143,16 @@ export default function App() {
     if (session) await api(server, '/porteiro/cancelar-reserva', session, {})
   }
   async function returnToForm() {
-    // Morador e tamanho permanecem, mas foto/ID pertencem à tentativa cancelada.
-    await releaseReservation()
+    // Dados preenchidos permanecem, mas foto e ID pertencem à tentativa cancelada.
+    if (session?.plano !== 'essencial') await releaseReservation()
     setDraft((value) => ({ ...value, shelf: '', photo: '', requestId: '' }))
     setScreen('form')
   }
   function back() {
     // Nunca permite voltar durante um POST ou uma pendência de resultado incerto.
     if (action.busy || pending) return
+    if (screen === 'delivery') { setScreen('deliveries'); return }
+    if (screen === 'deliveries') { setScreen('home'); return }
     if (['photo', 'storage', 'preview'].includes(screen)) run('Liberando reserva…', returnToForm)
     else if (screen === 'form')
       Alert.alert('Descartar este cadastro?', 'Nenhuma encomenda foi salva ainda.', [
@@ -179,7 +191,8 @@ export default function App() {
   }
   async function savePackage() {
     // requestId é salvo antes do POST para recuperar o resultado após queda de rede.
-    const body = submission(draft)
+    const essencial = session?.plano === 'essencial'
+    const body = submission(draft, essencial)
     if (!pending)
       await save({
         pending: {
@@ -189,7 +202,7 @@ export default function App() {
         },
       })
     try {
-      await complete(await api<Receipt>(server, '/encomendas', session, body))
+      await complete(await api<Receipt>(server, essencial ? '/porteiro/essencial/encomendas' : '/encomendas', session, body))
     } catch (error) {
       // 400/409 são recusas explícitas. Falha de rede/500 pode ocorrer depois do commit.
       if (error instanceof ApiError && [400, 409].includes(error.status)) {
@@ -232,6 +245,44 @@ export default function App() {
       )
     })
   }
+  async function loadDeliveries() {
+    // A lista sempre vem do servidor local para não permitir uma entrega duplicada.
+    const result = await api<{ resultado: EssentialPackage[] }>(server, '/porteiro/essencial/encomendas', session)
+    setDeliveries(result.resultado)
+    setScreen('deliveries')
+  }
+  async function refreshDelivery() {
+    // Após uma recusa, consulta o contador persistido; a tela não tenta adivinhar o resultado.
+    if (!delivery) return
+    const result = await api<{ resultado: EssentialPackage[] }>(server, '/porteiro/essencial/encomendas', session)
+    setDeliveries(result.resultado)
+    const current = result.resultado.find((item) => item.id === delivery.id)
+    if (current) setDelivery(current)
+    else {
+      setDelivery(null)
+      setScreen('deliveries')
+    }
+  }
+  async function confirmDelivery() {
+    if (!delivery) return
+    let result: { comprovante: { id: number } }
+    try {
+      result = await api<{ comprovante: { id: number } }>(server, `/porteiro/essencial/encomendas/${delivery.id}/entregar`, session, {
+        recebedor_nome: receiver.trim(), vinculo: relationship, codigo: code.trim(),
+      })
+    } catch (error) {
+      if (error instanceof ApiError && [400, 429].includes(error.status)) {
+        setCode('')
+        try { await refreshDelivery() } catch { /* A recusa original continua visível se a atualização falhar. */ }
+      }
+      throw error
+    }
+    setMessage(`Entrega registrada. Comprovante #${result.comprovante.id}.`)
+    setDelivery(null)
+    setReceiver('')
+    setCode('')
+    await loadDeliveries()
+  }
   function logout() {
     // A confirmação alerta que sair não desfaz um envio já salvo no servidor.
     Alert.alert(
@@ -256,6 +307,9 @@ export default function App() {
     )
   }
 
+  // A pesquisa é local: a lista de pendências só é atualizada ao entrar ou tocar em Atualizar.
+  const normalizeName = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR')
+  const visibleDeliveries = deliveries.filter((item) => normalizeName(item.morador).includes(normalizeName(deliverySearch.trim())))
   let content: React.ReactNode
   // A pendência tem prioridade sobre o formulário: evita cadastrar pacote duplicado.
   if (!ready || (!fonts && !fontError)) content = <ActivityIndicator color="#5a8cff" size="large" />
@@ -413,8 +467,9 @@ export default function App() {
         draft={draft}
         change={setDraft}
         busy={action.busy}
+        essencial={session.plano === 'essencial'}
         reserve={() =>
-          run('Reservando local…', async () => {
+          session.plano === 'essencial' ? setScreen('photo') : run('Reservando local…', async () => {
             const result = await api<{
               prateleira: string
               validade_segundos: number
@@ -440,6 +495,7 @@ export default function App() {
     content = (
       <Capture
         mode={screen}
+        essencial={session.plano === 'essencial'}
         onCapture={capture}
         cancel={() => (screen === 'photo' ? run('Liberando reserva…', returnToForm) : setScreen('form'))}
       />
@@ -483,7 +539,7 @@ export default function App() {
         <Card>
           <Image
             source={{ uri: draft.photo }}
-            accessibilityLabel="Foto da encomenda armazenada"
+            accessibilityLabel={session.plano === 'essencial' ? 'Foto da encomenda recebida na portaria' : 'Foto da encomenda armazenada'}
             style={{ width: '100%', height: 240, borderRadius: 16 }}
             resizeMode="contain"
           />
@@ -491,7 +547,7 @@ export default function App() {
             {draft.resident?.nome} · Apto {draft.resident?.apartamento}
           </Text>
           <Text>
-            Local {draft.shelf} · Pacote {draft.size}
+            {session.plano === 'essencial' ? 'Recebida na portaria' : `Local ${draft.shelf} · Pacote ${draft.size}`}
           </Text>
           <Button title="Confirmar cadastro" onPress={() => run('Salvando encomenda…', savePackage)} />
           <Button
@@ -512,7 +568,7 @@ export default function App() {
         <Title>Encomenda cadastrada.</Title>
         <Card>
           <Text style={{ fontFamily: 'Display', fontSize: 38, lineHeight: 48 }}>#{receipt.encomenda_id}</Text>
-          <Text>Armazenada em {receipt.prateleira}</Text>
+          <Text>{session.plano === 'essencial' ? 'Recebida na portaria' : `Armazenada em ${receipt.prateleira}`}</Text>
           <Muted>O morador será notificado via WhatsApp.</Muted>
           <Button
             title="Cadastrar outra encomenda"
@@ -522,6 +578,53 @@ export default function App() {
               setScreen('home')
             }}
           />
+        </Card>
+      </>
+    )
+  else if (screen === 'deliveries')
+    content = (
+      <>
+        <Title>Aguardando entrega</Title>
+        <Muted>Selecione o pacote apresentado na portaria.</Muted>
+        <Field label="Buscar pelo nome do morador" value={deliverySearch} onChangeText={setDeliverySearch} placeholder="Nome do morador" />
+        {visibleDeliveries.length ? visibleDeliveries.map((item) => (
+          <Card key={item.id}>
+            <Text>#{item.id} · {item.morador}</Text>
+            <Muted>Apto {item.apartamento} · {item.chegada}</Muted>
+            <Button title="Registrar entrega" onPress={() => {
+              setDelivery(item)
+              setReceiver('')
+              setCode('')
+              setScreen('delivery')
+            }} />
+          </Card>
+        )) : <Card><Muted>{deliverySearch.trim() ? 'Nenhuma encomenda encontrada para este morador.' : 'Nenhuma encomenda aguardando entrega.'}</Muted></Card>}
+        <Button title="Atualizar lista" secondary onPress={() => run('Atualizando…', loadDeliveries)} />
+      </>
+    )
+  else if (screen === 'delivery' && delivery)
+    content = (
+      <>
+        <Title>Confirmar entrega</Title>
+        <Card>
+          <Text>#{delivery.id} · {delivery.morador} · Apto {delivery.apartamento}</Text>
+          <Field label="Nome de quem recebe" value={receiver} onChangeText={setReceiver} maxLength={120} autoCapitalize="words" />
+          <Text>Vínculo com o morador</Text>
+          {['Próprio morador', 'Familiar', 'Terceiro autorizado'].map((item) => (
+            <Button key={item} title={`${relationship === item ? '●' : '○'} ${item}`} secondary onPress={() => setRelationship(item)} />
+          ))}
+          {delivery.codigo_exigido && !delivery.excecao_autorizada ? (
+            <>
+              <Field label="Código de 4 dígitos" value={code} onChangeText={(value) => setCode(value.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" maxLength={4} editable={delivery.tentativas_restantes > 0} />
+              <Muted>{delivery.tentativas_restantes} tentativa(s) restante(s). Se o WhatsApp falhar, solicite uma exceção no dashboard.</Muted>
+            </>
+          ) : delivery.excecao_autorizada ? (
+            <Muted>Exceção autorizada pelo síndico.</Muted>
+          ) : (
+            <Muted>Este condomínio não exige código para esta encomenda.</Muted>
+          )}
+          <Button title="Confirmar entrega" disabled={!receiver.trim() || (delivery.codigo_exigido && !delivery.excecao_autorizada && (code.length !== 4 || delivery.tentativas_restantes === 0))} onPress={() => run('Confirmando entrega…', confirmDelivery)} />
+          <Button title="Atualizar esta encomenda" secondary onPress={() => run('Atualizando…', refreshDelivery)} />
         </Card>
       </>
     )
@@ -564,11 +667,11 @@ export default function App() {
             setScreen('form')
           }}
         />
+        {session.plano === 'essencial' && <Button title="Entregar encomenda" onPress={() => run('Carregando entregas…', loadDeliveries)} />}
         <Muted>O OCR sugere o morador, mas a conferência final é sempre sua.</Muted>
       </View>
     )
 
-  const loginScreen = Boolean(server) && !session && screen !== 'connection'
   const step =
     screen === 'success'
       ? 4
@@ -576,22 +679,22 @@ export default function App() {
         ? 3
         : screen === 'storage'
           ? 2
-          : screen === 'form'
+          : screen === 'form' || screen === 'delivery'
             ? 1
             : 0
+  const essentialStep = screen === 'success' ? 3 : ['photo', 'preview'].includes(screen) ? 2 : ['form', 'delivery'].includes(screen) ? 1 : 0
   return (
     <SafeAreaProvider>
       <Theme.Provider value={dark}>
         <SafeAreaView
           style={{
             flex: 1,
-            backgroundColor: loginScreen ? '#001135' : dark ? '#0b1220' : '#faf8f3',
+            backgroundColor: '#001135',
           }}
         >
-          <StatusBar style={dark || loginScreen ? 'light' : 'dark'} />
+          <StatusBar style="light" />
           <Page
             dark={dark}
-            login={loginScreen}
             identity={session ? session.condominio.nome + '\n' + session.porteiro.nome : undefined}
             toggleTheme={() => {
               if (ready)
@@ -605,10 +708,7 @@ export default function App() {
             back={screen !== 'home' && Boolean(server) && !action.busy && !pending ? back : undefined}
           >
             {session && !pending && screen !== 'settings' && (
-              <Steps
-                labels={['Identificar', 'Confirmar', 'Armazenar', 'Fotografar', 'Concluir']}
-                current={step}
-              />
+              <Steps labels={session.plano === 'essencial' ? ['Identificar', 'Confirmar', 'Fotografar', 'Concluir'] : ['Identificar', 'Confirmar', 'Armazenar', 'Fotografar', 'Concluir']} current={session.plano === 'essencial' ? essentialStep : step} />
             )}
             <Notice message={message} />
             <Notice message={action.error} error />

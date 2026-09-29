@@ -128,7 +128,7 @@ def _pdf_comando_texto(texto, x, y, tamanho, fonte="F1", cor=(0.12, 0.16, 0.24))
     )
 
 
-def gerar_pdf(titulo, colunas, linhas, gerado_em):
+def gerar_pdf(titulo, colunas, linhas, gerado_em, condominio_nome="", plano_nome=""):
     """Produz relatório tabular sem depender de um serviço PDF externo."""
     # Muitas colunas usam página paisagem; os pesos preservam espaço para conteúdo longo.
     paisagem = len(colunas) >= 6
@@ -174,12 +174,12 @@ def gerar_pdf(titulo, colunas, linhas, gerado_em):
         registros.append((celulas, altura))
     paginas = []
     pagina = []
-    restante = altura_pagina - 165
+    restante = altura_pagina - 183
     for registro in registros:
         if pagina and registro[1] > restante:
             paginas.append(pagina)
             pagina = []
-            restante = altura_pagina - 165
+            restante = altura_pagina - 183
         pagina.append(registro)
         restante -= registro[1]
     if pagina or not paginas:
@@ -195,31 +195,39 @@ def gerar_pdf(titulo, colunas, linhas, gerado_em):
         pagina_id = conteudo_id + 1
         ids_paginas.append(pagina_id)
         comandos = [
-            f"0.063 0.098 0.169 rg 0 {altura_pagina - 78} {largura_pagina} 78 re f",
-            f"0.145 0.388 0.922 rg 0 {altura_pagina - 82} {largura_pagina} 4 re f",
+            f"0.063 0.098 0.169 rg 0 {altura_pagina - 96} {largura_pagina} 96 re f",
+            f"0.145 0.388 0.922 rg 0 {altura_pagina - 100} {largura_pagina} 4 re f",
             _pdf_comando_texto(
                 "DOCKS", margem, altura_pagina - 30, 9, "F2", (0.45, 0.68, 1)
             ),
             _pdf_comando_texto(titulo, margem, altura_pagina - 52, 17, "F2", (1, 1, 1)),
             _pdf_comando_texto(
-                f"Gerado em {gerado_em}",
+                f"Condomínio: {condominio_nome[:110]}",
                 margem,
                 altura_pagina - 68,
                 7.5,
                 "F1",
+                (0.88, 0.92, 1),
+            ),
+            _pdf_comando_texto(
+                f"Plano: {plano_nome} · Gerado em {gerado_em}",
+                margem,
+                altura_pagina - 83,
+                7.5,
+                "F1",
                 (0.78, 0.83, 0.91),
             ),
-            f"0.145 0.388 0.922 rg {margem} {altura_pagina - 112} {largura_tabela} 27 re f",
+            f"0.145 0.388 0.922 rg {margem} {altura_pagina - 130} {largura_tabela} 27 re f",
         ]
         x = margem
         for coluna, largura in zip(colunas, larguras):
             comandos.append(
                 _pdf_comando_texto(
-                    coluna, x + 5, altura_pagina - 102, 7.2, "F2", (1, 1, 1)
+                    coluna, x + 5, altura_pagina - 120, 7.2, "F2", (1, 1, 1)
                 )
             )
             x += largura
-        y = altura_pagina - 112
+        y = altura_pagina - 130
         if not registros_pagina:
             comandos.append(
                 _pdf_comando_texto(

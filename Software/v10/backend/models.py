@@ -17,6 +17,7 @@ class Condominio(db.Model):
     responsavel = db.Column(db.String)
     email = db.Column(db.String)
     telefone = db.Column(db.String)
+    plano = db.Column(db.String, default="completo", nullable=False)
     ativo = db.Column(db.Boolean, default=True, nullable=False)
     primeiro_login = db.Column(db.Boolean, default=True, nullable=False)
     criado_em = db.Column(db.String, nullable=False)
@@ -63,12 +64,14 @@ class Encomenda(db.Model):
     grupo_qr = db.Column(db.String)
     data_chegada = db.Column(db.String)
     data_retirada = db.Column(db.String)
+    codigo_entrega_hash = db.Column(db.String)
+    codigo_tentativas = db.Column(db.Integer, default=0, nullable=False)
+    excecao_autorizada_em = db.Column(db.String)
+    excecao_motivo = db.Column(db.String)
 
 
 class CadastroPortaria(db.Model):
     """Recibo de envio que torna o cadastro seguro contra repetição de requisição."""
-
-    """Recibo de envio: uma repetição após perda de conexão não duplica a encomenda."""
 
     __tablename__ = "cadastros_portaria"
 
@@ -82,6 +85,21 @@ class CadastroPortaria(db.Model):
     notificacao_id = db.Column(
         db.Integer, db.ForeignKey("tarefas_pendentes.id"), nullable=False
     )
+
+
+class EntregaPortaria(db.Model):
+    """Comprovante presencial: vincula pacote, recebedor, porteiro e forma de conferência."""
+
+    __tablename__ = "entregas_portaria"
+
+    id = db.Column(db.Integer, primary_key=True)
+    condominio_id = db.Column(db.Integer, db.ForeignKey("condominios.id"), nullable=False, index=True)
+    encomenda_id = db.Column(db.Integer, db.ForeignKey("encomendas.id"), nullable=False, unique=True)
+    porteiro_id = db.Column(db.Integer, db.ForeignKey("porteiros.id"), nullable=False)
+    recebedor_nome = db.Column(db.String, nullable=False)
+    vinculo = db.Column(db.String, nullable=False)
+    confirmacao = db.Column(db.String, nullable=False)
+    entregue_em = db.Column(db.String, nullable=False)
 
 
 class Log(db.Model):
@@ -204,6 +222,7 @@ class Contato(db.Model):
     cidade = db.Column(db.String)
     telefone = db.Column(db.String, nullable=False)
     email = db.Column(db.String, nullable=False)
+    plano_interesse = db.Column(db.String, nullable=False, default="nao_informado")
     mensagem = db.Column(db.Text, nullable=False)
     status = db.Column(db.String, default="novo", nullable=False)
     criado_em = db.Column(db.String, nullable=False)
@@ -219,6 +238,7 @@ class Ocorrencia(db.Model):
         db.Integer, db.ForeignKey("condominios.id"), nullable=False, index=True
     )
     retirada_id = db.Column(db.Integer, db.ForeignKey("retiradas_sessoes.id"))
+    encomenda_id = db.Column(db.Integer, db.ForeignKey("encomendas.id"))
     gravacao_id = db.Column(db.Integer, index=True)
     descricao = db.Column(db.Text, nullable=False)
     status = db.Column(db.String, default="aberta", nullable=False)

@@ -211,7 +211,7 @@ export function Login({
   )
 }
 
-/** Reúne morador, apartamento, tamanho e local antes da foto armazenada. */
+/** No Smart, reúne tamanho e local; no Essential, basta identificar o morador. */
 export function PackageForm({
   server,
   session,
@@ -219,6 +219,7 @@ export function PackageForm({
   change,
   reserve,
   busy,
+  essencial = false,
 }: {
   server: string
   session: Session
@@ -226,6 +227,7 @@ export function PackageForm({
   change: (draft: Draft) => void
   reserve: () => void
   busy: boolean
+  essencial?: boolean
 }) {
   // Busca obrigatória evita associar a encomenda ao apartamento homônimo errado.
   const c = useColors()
@@ -245,8 +247,8 @@ export function PackageForm({
           onSelect={(resident) => change({ ...draft, resident })}
         />
         {draft.resident && <Text style={{ fontFamily: 'InterSemi' }}>Apto {draft.resident.apartamento}</Text>}
-        <Text style={{ fontFamily: 'InterSemi' }}>Tamanho da encomenda</Text>
-        <View style={{ gap: 8 }}>
+        {!essencial && <Text style={{ fontFamily: 'InterSemi' }}>Tamanho da encomenda</Text>}
+        {!essencial && <View style={{ gap: 8 }}>
           {(['Pequeno', 'Médio', 'Grande'] as Size[]).map((size) => (
             <Pressable
               key={size}
@@ -267,11 +269,11 @@ export function PackageForm({
               </Text>
             </Pressable>
           ))}
-        </View>
+        </View>}
         <Button
-          title="Consultar local de armazenamento"
+          title={essencial ? "Fotografar encomenda recebida" : "Consultar local de armazenamento"}
           loading={busy}
-          disabled={!draft.resident || !draft.size}
+          disabled={!draft.resident || (!essencial && !draft.size)}
           onPress={reserve}
         />
       </Card>

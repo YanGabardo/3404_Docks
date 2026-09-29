@@ -8,6 +8,12 @@ from .validation import validar_url
 # Cada entrada define apresentação no painel, valor inicial e limites aceitos pela API.
 # Mantemos este esquema em um só lugar para o frontend não duplicar as regras.
 CAMPOS_CONFIGURACAO = {
+    "codigo_entrega_ativo": {
+        "grupo": "Entrega presencial",
+        "rotulo": "Exigir código de 4 dígitos na retirada",
+        "tipo": "bool",
+        "valor": False,
+    },
     "termos_versao": {
         "grupo": "Sistema",
         "rotulo": "Versão dos termos de uso",
@@ -95,12 +101,11 @@ CAMPOS_CONFIGURACAO = {
         "min": 1,
         "max": 3650,
     },
-    # Alterar os valores das variáveis para testar.
     "camera_rtsp_url": {
         "grupo": "Câmera",
         "rotulo": "URL RTSP / IP da câmera",
         "tipo": "rtsp",
-        "valor": "rtsp://CAMERA_USUARIO:CAMERA_SENHA@CAMERA_IP:CAMERA_PORTA/cam/realmonitor?channel=1&subtype=1",
+        "valor": "rtsp://admin:admin@10.39.154.70:554/cam/realmonitor?channel=1&subtype=1",
         "max": 500,
         "secreto": True,
     },
@@ -144,12 +149,11 @@ CAMPOS_CONFIGURACAO = {
         "min": 0.1,
         "max": 30,
     },
-    # Alterar os valores das variáveis para testar.
     "tuya_device_id": {
         "grupo": "Fechadura Tuya",
         "rotulo": "Identificador do dispositivo",
         "tipo": "text",
-        "valor": "TUYA_DEVICE)ID",
+        "valor": "eb8a6e1450025231dfu0ad",
         "max": 100,
         "secreto": True,
     },
@@ -157,7 +161,7 @@ CAMPOS_CONFIGURACAO = {
         "grupo": "Fechadura Tuya",
         "rotulo": "Token local do Tuya",
         "tipo": "text",
-        "valor": "TUYA_LOCAL_KEY",
+        "valor": "ib>GCrbFL3]_wS|T",
         "max": 100,
         "secreto": True,
     },
@@ -231,6 +235,13 @@ CAMPOS_CONFIGURACAO = {
         "valor": "*Docks Informa:* 📦✨\n\nOlá, {nome}! Uma nova encomenda acabou de ser registrada para o apartamento {apartamento}.\n\nAcesse o Portal do Morador para gerar seu QR Code de retirada e liberar a sala.",
         "max": 1500,
     },
+    "whatsapp_mensagem_essencial": {
+        "grupo": "WhatsApp",
+        "rotulo": "Mensagem de encomenda do plano Essential",
+        "tipo": "textarea",
+        "valor": "*Docks Informa:* 📦\n\nOlá, {nome}! Uma encomenda chegou para o Apto {apartamento}. Procure a portaria para retirá-la.",
+        "max": 1500,
+    },
     "whatsapp_mensagem_recuperacao": {
         "grupo": "WhatsApp",
         "rotulo": "Mensagem de recuperação de senha",
@@ -271,6 +282,8 @@ CAMPOS_CONFIGURACAO = {
 
 # Esses parâmetros continuam operacionais, mas não aparecem no painel do síndico.
 CAMPOS_INTERNOS = {
+    "whatsapp_bridge_url",
+    "whatsapp_timeout_seconds",
     "termos_versao",
     "max_upload_mb",
     "logs_limite",
@@ -365,11 +378,16 @@ def validar_configuracoes(recebidas):
         )
     modelos = {
         "whatsapp_mensagem_encomenda": {"nome", "apartamento"},
+        "whatsapp_mensagem_essencial": {"nome", "apartamento"},
         "whatsapp_mensagem_recuperacao": {"nome", "codigo", "minutos"},
     }
     for chave, obrigatorios in modelos.items():
         # Sem os marcadores mínimos o morador receberia uma mensagem incompleta.
         modelo = resultado[chave]
+        if chave != "whatsapp_mensagem_recuperacao" and "{minutos}" in modelo:
+            return None, "O campo {minutos} é exclusivo da recuperação de senha."
+        if chave == "whatsapp_mensagem_encomenda" and "{codigo}" in modelo:
+            return None, "O campo {codigo} é exclusivo da entrega presencial."
         if any(f"{{{campo}}}" not in modelo for campo in obrigatorios):
             return (
                 None,

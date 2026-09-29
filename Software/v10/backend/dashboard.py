@@ -13,6 +13,9 @@ from .models import (
     Ocorrencia,
     RetiradaSessao,
     TarefaPendente,
+    Condominio,
+    EntregaPortaria,
+    Porteiro,
 )
 from .services import dias_desde, gerar_pdf
 from .validation import validar_texto_livre
@@ -77,22 +80,32 @@ def dados_relatorio(tipo, condominio_id):
             .order_by(Morador.nome.asc())
             .all()
         )
+        essencial = db.session.get(Condominio, condominio_id).plano == "essencial"
         return (
             "Relatório de moradores",
-            ["ID", "Nome", "Apartamento", "Usuário", "Telefone", "Status"],
+            ["ID", "Nome", "Apartamento", "Telefone", "Status"] if essencial else ["ID", "Nome", "Apartamento", "Usuário", "Telefone", "Status"],
             [
-                [
+                ([m.id, m.nome, m.apartamento, m.telefone, "Ativo" if m.ativo else "Inativo"] if essencial else [
                     m.id,
                     m.nome,
                     m.apartamento,
                     m.usuario,
                     m.telefone,
                     "Ativo" if m.ativo else "Inativo",
-                ]
+                ])
                 for m in registros
             ],
         )
     if tipo == "retiradas":
+        if db.session.get(Condominio, condominio_id).plano == "essencial":
+            entregas = (db.session.query(EntregaPortaria, Encomenda, Morador, Porteiro)
+                        .join(Encomenda, EntregaPortaria.encomenda_id == Encomenda.id)
+                        .join(Morador, Encomenda.morador_id == Morador.id)
+                        .join(Porteiro, EntregaPortaria.porteiro_id == Porteiro.id)
+                        .filter(EntregaPortaria.condominio_id == condominio_id)
+                        .order_by(EntregaPortaria.id.desc()).all())
+            return ("Comprovantes de entrega", ["Comprovante", "Encomenda", "Apto", "Morador", "Recebedor", "Vínculo", "Porteiro", "Horário", "Confirmação"],
+                    [[r.id, e.id, m.apartamento, m.nome, r.recebedor_nome, r.vinculo, p.nome, r.entregue_em, r.confirmacao] for r, e, m, p in entregas])
         registros = (
             db.session.query(RetiradaSessao, Morador)
             .join(Morador, RetiradaSessao.morador_id == Morador.id)
@@ -175,7 +188,9 @@ def registrar_extensoes_dashboard(
                 404,
             )
         titulo, colunas, linhas = resultado
-        arquivo = gerar_pdf(titulo, colunas, linhas, agora_str())
+        condominio = db.session.get(Condominio, g.dashboard_session["condominio_id"])
+        plano_nome = "Essential" if condominio.plano == "essencial" else "Smart"
+        arquivo = gerar_pdf(titulo, colunas, linhas, agora_str(), condominio.nome, plano_nome)
         return send_file(
             BytesIO(arquivo),
             mimetype="application/pdf",
@@ -199,6 +214,7 @@ def registrar_extensoes_dashboard(
                     {
                         "id": item.id,
                         "retirada_id": item.retirada_id,
+                        "encomenda_id": item.encomenda_id,
                         "gravacao_id": item.gravacao_id,
                         "descricao": item.descricao,
                         "status": item.status,
@@ -226,6 +242,16 @@ def registrar_extensoes_dashboard(
                 ),
                 400,
             )
+        if db.session.get(Condominio, condominio_id).plano == "essencial":
+            pacote = Encomenda.query.filter_by(id=data.get("encomenda_id"), condominio_id=condominio_id).first()
+            if not pacote:
+                return jsonify({"error": "Selecione uma encomenda deste condomínio."}), 400
+            ocorrencia = Ocorrencia(condominio_id=condominio_id, encomenda_id=pacote.id, descricao=descricao, status="aberta", criada_em=agora_str())
+            db.session.add(ocorrencia)
+            db.session.flush()
+            registrar_log("OCORRÊNCIA · REGISTRADA", f"Ocorrência #{ocorrencia.id} registrada para encomenda #{pacote.id}.", commit=False, condominio_id=condominio_id)
+            db.session.commit()
+            return jsonify({"success": True, "ocorrencia_id": ocorrencia.id}), 201
         if not gravacao:
             return (
                 jsonify(

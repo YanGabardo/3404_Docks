@@ -1,6 +1,6 @@
 /** Coordena leitura, acionamento e confirmação sem repetir um comando físico incerto. */
 import React, { useEffect, useRef, useState } from "react";
-import { Alert, AppState, BackHandler, Image, View } from "react-native";
+import { Alert, AppState, BackHandler, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
@@ -13,7 +13,6 @@ import { Scanner } from "./src/Scanner";
 import {
   Button,
   Card,
-  colors,
   Loading,
   Muted,
   Notice,
@@ -274,31 +273,12 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#001135" }}>
         <StatusBar style="light" />
-        <Page>
+        <Page identity={condominium?.nome || "Docks · Validador"}>
           <Steps
             current={ended ? 2 : active?.status === "em_andamento" ? 1 : 0}
           />
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: 16,
-            }}
-          >
-            <Image
-              source={require("./assets/docks-brand.png")}
-              accessibilityLabel="Docks"
-              style={{ width: 150, height: 50 }}
-              resizeMode="contain"
-            />
-            <View style={{ flex: 1, minWidth: 180 }}>
-              <Text>{condominium?.nome || "Docks · Validador"}</Text>
-              <Muted>Retirada de encomendas</Muted>
-            </View>
-          </View>
           <Notice>{message}</Notice>
           {!ready ? (
             <>
