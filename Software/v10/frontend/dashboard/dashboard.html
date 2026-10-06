@@ -672,7 +672,7 @@
             Prateleiras
           </button>
           <button onclick="switchView('view-essencial', this)" class="nav-btn essential-only w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition"><span class="nav-letter-icon" aria-hidden="true"><span>E</span></span> Encomendas</button>
-          <div class="nav-group-label">Segurança e auditoria</div>
+          <div class="nav-group-label">Registros</div>
           <button
             onclick="
               switchView('view-logs', this)
@@ -801,7 +801,7 @@
           class="bg-white/80 backdrop-blur p-4 px-6 shadow-sm border-b border-line flex justify-between items-center z-10 sticky top-0"
         >
           <h2 id="header-title" class="text-lg font-display font-bold text-ink tracking-tight">
-            Painel Central de Monitoramento
+            Visão geral
           </h2>
           <div class="flex items-center gap-4">
             <div class="full-only flex items-center gap-2 bg-paper px-3 py-1.5 rounded-lg border border-line">
@@ -821,6 +821,16 @@
         </header>
 
         <div id="view-overview" class="view-section p-6 flex flex-col gap-6">
+          <div class="essential-only bg-blue-light border border-blue/20 rounded-2xl p-4 text-blue-dark text-sm">
+            Essential: para falar com a portaria, o morador deve usar o WhatsApp informado pelo condomínio.
+          </div>
+          <div class="bg-white border border-line rounded-2xl p-4 flex flex-wrap items-center gap-3">
+            <span class="font-display font-bold text-ink mr-2">Acesso rápido</span>
+            <button onclick="switchViewById('view-moradores')" class="bg-blue text-white font-bold px-4 py-2 rounded-xl">Moradores</button>
+            <button onclick="switchViewById('view-porteiros')" class="bg-blue-light text-blue-dark font-bold px-4 py-2 rounded-xl">Porteiros</button>
+            <button onclick="switchViewById('view-relatorios')" class="bg-blue-light text-blue-dark font-bold px-4 py-2 rounded-xl">Relatórios</button>
+            <button onclick="switchViewById('view-essencial')" class="essential-only bg-blue-light text-blue-dark font-bold px-4 py-2 rounded-xl">Encomendas</button>
+          </div>
           <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 w-full">
             <div
               class="bg-white p-6 rounded-2xl shadow-sm border border-line flex items-center justify-between"
@@ -1553,7 +1563,7 @@
             document.getElementById('modal-primeiro-login').classList.remove('hidden-view')
           else {
             iniciarPainel()
-            if (data.cadastro_inicial_pendente) switchViewById('view-moradores')
+            switchViewById('view-overview')
           }
         } catch (e) {
           sessionStorage.removeItem('docks_dashboard_token')
@@ -1696,7 +1706,7 @@
           document.getElementById('modal-primeiro-login').classList.add('hidden-view')
           toast('Senha inicial substituída com sucesso.', 'success')
           iniciarPainel()
-          if (planoDashboard === 'essencial') switchViewById('view-moradores')
+          switchViewById('view-overview')
         } catch (e) {
           erro.innerText = e.message
           erro.classList.remove('hidden')
@@ -1752,16 +1762,16 @@
         }
 
         const titles = {
-          'view-overview': 'Painel Central de Monitoramento',
-          'view-essencial': 'Encomendas da Portaria',
-          'view-moradores': 'Gestão de Moradores',
-          'view-porteiros': 'Gestão de Porteiros',
-          'view-shelves': 'Mapeamento Físico de Prateleiras',
-          'view-logs': 'Auditoria de Sistema',
-          'view-relatorios': 'Relatórios em PDF',
-          'view-configuracoes': 'Configurações Operacionais',
-          'view-camera': 'Monitoramento Ao Vivo',
-          'view-gravacoes': 'Gravações de Segurança',
+          'view-overview': 'Visão geral',
+          'view-essencial': 'Encomendas',
+          'view-moradores': 'Moradores',
+          'view-porteiros': 'Porteiros',
+          'view-shelves': 'Prateleiras',
+          'view-logs': 'Logs e auditoria',
+          'view-relatorios': 'Relatórios',
+          'view-configuracoes': 'Configurações',
+          'view-camera': 'Câmera ao vivo',
+          'view-gravacoes': 'Gravações',
         }
         document.getElementById('header-title').innerText = titles[viewId] || ''
         if (viewId === 'view-moradores') carregarMoradores()
@@ -2664,5 +2674,6 @@
         box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
       }
     </style>
+    <script src="/assets/font-size.js" defer></script>
   </body>
 </html>

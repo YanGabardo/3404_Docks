@@ -497,7 +497,7 @@
       </header>
 
       <div class="flex-shrink-0 px-4 pt-3">
-        <div class="max-w-md mx-auto flex items-center justify-center gap-2" aria-label="Etapas da retirada">
+        <div id="flow-morador" class="max-w-md mx-auto flex items-center justify-center gap-2" aria-label="Etapas da retirada">
           <span id="flow-dashboard" class="flow-step active"><span>1</span> • Encomendas</span>
           <span id="flow-qr" class="flow-step"><span>2</span> • <em class="qr-term">QR Code</em></span>
           <span id="flow-retirada" class="flow-step"><span>3</span> • Retirada</span>
@@ -524,6 +524,8 @@
               </svg>
             </div>
           </div>
+
+          <button id="btn-chat-morador" onclick="abrirChatMorador()" class="w-full bg-blue-light text-blue-dark font-bold py-3 rounded-2xl border border-line">Falar com a portaria</button>
 
           <div class="space-y-2.5 flex-1 min-h-0">
             <h3 class="font-display font-bold text-ink text-base">Suas encomendas</h3>
@@ -552,6 +554,20 @@
               <span id="btn-gerar-text">Abrir sala (gerar <em class="qr-term">QR Code</em>)</span>
             </button>
           </div>
+        </div>
+
+        <div id="view-chat" class="hidden-view flex flex-col flex-1 min-h-0 gap-3">
+          <div class="flex items-center justify-between gap-2">
+            <div><h2 class="font-display font-bold text-ink text-xl">Falar com a portaria</h2><p class="text-xs text-muted">Conversa compartilhada com os moradores do seu apartamento.</p></div>
+            <button onclick="showView('view-dashboard')" class="bg-white border border-line text-ink font-bold px-3 py-2 rounded-xl">Voltar</button>
+          </div>
+          <button id="chat-morador-antigas" onclick="carregarMensagensAntigasMorador()" class="hidden-view bg-white border border-line text-ink font-bold py-2 rounded-xl">Ver mensagens anteriores</button>
+          <div id="chat-morador-mensagens" class="flex-1 min-h-0 overflow-y-auto space-y-2" aria-live="polite"></div>
+          <form onsubmit="enviarMensagemMorador(event)" class="flex-shrink-0 space-y-2 pb-14 sm:pb-0">
+            <label for="chat-morador-texto" class="block text-sm font-bold text-ink">Sua mensagem</label>
+            <textarea id="chat-morador-texto" maxlength="500" rows="2" placeholder="Como a portaria pode ajudar?" class="w-full bg-white border border-line text-ink rounded-xl p-3" required></textarea>
+            <button type="submit" class="w-full bg-blue text-white font-bold py-3 rounded-xl">Enviar mensagem</button>
+          </form>
         </div>
 
         <div id="view-qr" class="hidden-view flex-col items-center justify-center flex-1 space-y-4">
@@ -1047,6 +1063,9 @@
       let cachedPackages = []
       let loadingPackages = false
       let currentQrToken = ''
+      let chatMoradorTimer = null
+      let chatMoradorUltimoId = 0
+      let chatMoradorBusy = false
       let aptRecuperacao = ''
       let usuarioRecuperacao = ''
       let condominioRecuperacao = null
@@ -1140,11 +1159,16 @@
 
       function showView(viewId) {
         // Exibe uma etapa por vez e preserva o estado do QR ao trocar de painel.
+        if (viewId !== 'view-chat') clearInterval(chatMoradorTimer)
+        document.querySelector('#area-logada main').classList.toggle('overflow-y-auto', viewId !== 'view-chat')
+        document.querySelector('#area-logada main').classList.toggle('overflow-y-hidden', viewId === 'view-chat')
+        document.getElementById('flow-morador').classList.toggle('hidden-view', viewId === 'view-chat')
         document.getElementById('view-login').classList.add('hidden-view')
         document.getElementById('area-logada').classList.add('hidden-view')
-        if (['area-logada', 'view-dashboard', 'view-qr', 'view-retirada'].includes(viewId)) {
+        if (['area-logada', 'view-dashboard', 'view-chat', 'view-qr', 'view-retirada'].includes(viewId)) {
           document.getElementById('area-logada').classList.remove('hidden-view')
           document.getElementById('view-dashboard').classList.add('hidden-view')
+          document.getElementById('view-chat').classList.add('hidden-view')
           document.getElementById('view-qr').classList.add('hidden-view')
           document.getElementById('view-retirada').classList.add('hidden-view')
           document
@@ -1154,7 +1178,10 @@
           document.getElementById(viewId).classList.remove('hidden-view')
         }
         atualizarFluxoMorador(viewId)
-        if (viewId === 'area-logada' || viewId === 'view-dashboard') iniciarAtualizacaoEncomendas()
+        if (viewId === 'area-logada' || viewId === 'view-dashboard') {
+          iniciarAtualizacaoEncomendas()
+          carregarNaoLidasMorador()
+        }
         else pararAtualizacaoEncomendas()
       }
 
@@ -1223,6 +1250,7 @@
 
       function fazerLogout() {
         // Limpa sessão e temporizadores para não consultar encomendas após a saída.
+        clearInterval(chatMoradorTimer)
         pararAtualizacaoEncomendas()
         if (moradorToken)
           fetch(`${API_URL}/api/morador/logout`, {
@@ -1235,6 +1263,7 @@
         localStorage.removeItem('docks_name')
         localStorage.removeItem('docks_token')
         localStorage.removeItem('docks_morador_id')
+        document.getElementById('btn-chat-morador').textContent = 'Falar com a portaria'
         document.getElementById('login-pwd').value = ''
         document.getElementById('modal-config').classList.add('hidden-view')
         showView('view-login')
@@ -1544,6 +1573,7 @@
             !dashboard.classList.contains('hidden-view')
           ) {
             carregarEncomendas(true)
+            carregarNaoLidasMorador()
           }
         }, 8000)
       }
@@ -1716,6 +1746,120 @@
         carregarEncomendas()
         showView('view-dashboard')
       }
+
+      // Mensagens são exibidas com textContent; texto de usuário nunca vira HTML.
+      async function carregarNaoLidasMorador() {
+        if (!moradorToken || !apartamentoLogado) return
+        try {
+          const res = await fetchMorador(`/api/morador/${encodeURIComponent(apartamentoLogado)}/chat/nao_lidas`)
+          if (!res.ok) return
+          const dados = await res.json()
+          document.getElementById('btn-chat-morador').textContent = dados.nao_lidas
+            ? `Portaria · ${dados.nao_lidas} ${dados.nao_lidas === 1 ? 'nova mensagem' : 'novas mensagens'}` : 'Falar com a portaria'
+        } catch { /* O chat permanece acessível mesmo se esta contagem falhar. */ }
+      }
+
+      function adicionarMensagemMorador(mensagem, rolar = true) {
+        if (document.getElementById(`chat-morador-${mensagem.id}`)) return
+        const box = document.createElement('div')
+        box.id = `chat-morador-${mensagem.id}`
+        box.className = `max-w-[92%] rounded-2xl border border-line p-3 ${mensagem.autor_tipo === 'morador' ? 'bg-blue-light ml-auto' : 'bg-white mr-auto'}`
+        const autor = document.createElement('p')
+        autor.className = 'text-xs font-bold text-blue-dark'
+        autor.textContent = mensagem.autor_tipo === 'porteiro' ? `Portaria · ${mensagem.autor_nome}` : mensagem.autor_nome
+        const texto = document.createElement('p')
+        texto.className = 'text-sm text-ink whitespace-pre-wrap break-words'
+        texto.textContent = mensagem.texto
+        const hora = document.createElement('p')
+        hora.className = 'text-xs text-muted mt-1'
+        hora.textContent = mensagem.criado_em
+        box.append(autor, texto, hora)
+        const lista = document.getElementById('chat-morador-mensagens')
+        if (!lista.children.length) lista.textContent = ''
+        const proxima = [...lista.children].find((item) => Number(item.dataset.chatId) > mensagem.id)
+        box.dataset.chatId = mensagem.id
+        box.dataset.chatDate = mensagem.criado_em
+        lista.insertBefore(box, proxima || null)
+        if (rolar) lista.scrollTop = lista.scrollHeight
+        chatMoradorUltimoId = Math.max(chatMoradorUltimoId, mensagem.id)
+      }
+
+      async function carregarChatMorador() {
+        if (chatMoradorBusy || !moradorToken) return
+        chatMoradorBusy = true
+        try {
+          const rota = `/api/morador/${encodeURIComponent(apartamentoLogado)}/chat`
+          const primeiraPagina = !chatMoradorUltimoId
+          const res = await fetchMorador(rota + (chatMoradorUltimoId ? `?apos=${chatMoradorUltimoId}` : ''))
+          const dados = await res.json()
+          if (!res.ok) throw new Error(dados.error || 'Falha ao consultar mensagens.')
+          if (primeiraPagina) document.getElementById('chat-morador-antigas').classList.toggle('hidden-view', !dados.tem_anteriores)
+          dados.mensagens.forEach(adicionarMensagemMorador)
+          const lista = document.getElementById('chat-morador-mensagens')
+          Array.from(lista.children).forEach((item) => { if (item.dataset.chatDate < dados.limite_retencao) item.remove() })
+          if (!lista.children.length) lista.textContent = 'Nenhuma mensagem ainda. Conte à portaria como ela pode ajudar.'
+        } catch (erro) {
+          toast(erro.message, 'error')
+        } finally {
+          chatMoradorBusy = false
+        }
+      }
+
+      function abrirChatMorador() {
+        document.getElementById('chat-morador-mensagens').replaceChildren()
+        document.getElementById('chat-morador-antigas').classList.add('hidden-view')
+        chatMoradorUltimoId = 0
+        showView('view-chat')
+        carregarChatMorador()
+        clearInterval(chatMoradorTimer)
+        chatMoradorTimer = setInterval(carregarChatMorador, 5000)
+      }
+
+      async function carregarMensagensAntigasMorador() {
+        const lista = document.getElementById('chat-morador-mensagens')
+        const primeiroId = Number(lista.firstElementChild?.dataset.chatId)
+        if (!primeiroId) return
+        const botao = document.getElementById('chat-morador-antigas')
+        botao.disabled = true
+        const alturaAnterior = lista.scrollHeight
+        try {
+          const res = await fetchMorador(`/api/morador/${encodeURIComponent(apartamentoLogado)}/chat?antes=${primeiroId}`)
+          const dados = await res.json()
+          if (!res.ok) throw new Error(dados.error || 'Falha ao carregar histórico.')
+          dados.mensagens.forEach((item) => adicionarMensagemMorador(item, false))
+          botao.classList.toggle('hidden-view', !dados.tem_anteriores)
+          lista.scrollTop += lista.scrollHeight - alturaAnterior
+        } catch (erro) {
+          toast(erro.message, 'error')
+        } finally {
+          botao.disabled = false
+        }
+      }
+
+      async function enviarMensagemMorador(event) {
+        event.preventDefault()
+        const campo = document.getElementById('chat-morador-texto')
+        const texto = campo.value.trim()
+        if (!texto) return
+        const botao = event.currentTarget.querySelector('button[type="submit"]')
+        botao.disabled = true
+        try {
+          const res = await fetchMorador(`/api/morador/${encodeURIComponent(apartamentoLogado)}/chat`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ texto }),
+          })
+          const dados = await res.json()
+          if (!res.ok) throw new Error(dados.error || 'Mensagem não enviada.')
+          campo.value = ''
+          const cursor = chatMoradorUltimoId
+          adicionarMensagemMorador(dados.mensagem)
+          chatMoradorUltimoId = cursor
+        } catch (erro) {
+          toast(erro.message, 'error')
+        } finally {
+          botao.disabled = false
+        }
+      }
     </script>
+    <script src="/assets/font-size.js" defer></script>
   </body>
 </html>

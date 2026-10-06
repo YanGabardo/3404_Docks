@@ -41,6 +41,7 @@ const dark = {
   success: "#7bd2a8",
 };
 export const Theme = createContext(false);
+export const FontScale = createContext(1);
 // O tema é lido em um só lugar para todos os cartões e controles do aplicativo.
 // Um único contexto troca contraste em todos os componentes sem prop drilling.
 export const useColors = () => (useContext(Theme) ? dark : light);
@@ -49,12 +50,15 @@ export const useColors = () => (useContext(Theme) ? dark : light);
 export function Text({ style, ...props }: TextProps) {
   // Respeita o tamanho de fonte do sistema e usa a mesma paleta do restante da tela.
   const c = useColors();
+  const scale = useContext(FontScale);
+  const size = StyleSheet.flatten(style) || {};
   return (
     <NativeText
       {...props}
       style={[
         { fontFamily: "Inter", color: c.text, fontSize: 15, lineHeight: 23 },
         style,
+        { fontSize: (size.fontSize || 15) * scale, lineHeight: (size.lineHeight || Math.max(23, (size.fontSize || 15) * 1.3)) * scale },
       ]}
     />
   );
@@ -232,6 +236,7 @@ export function Field({
 }: TextInputProps & { label: string; password?: boolean }) {
   // O olho alterna somente a apresentação; o texto da senha não é alterado.
   const c = useColors();
+  const fontScale = useContext(FontScale);
   const [visible, setVisible] = useState(false);
   return (
     <View style={{ gap: 6 }}>
@@ -249,7 +254,7 @@ export function Field({
             flex: 1,
             color: c.text,
             fontFamily: "Inter",
-            fontSize: 16,
+            fontSize: 16 * fontScale,
             minHeight: 48,
             padding: 12,
           }}
@@ -300,12 +305,18 @@ export function Page({
   children,
   dark,
   toggleTheme,
+  fontScale,
+  changeFontScale,
+  fixed = false,
   onSettings,
   back,
   refresh,
 }: React.PropsWithChildren<{
   dark: boolean;
   toggleTheme: () => void;
+  fontScale: number;
+  changeFontScale: (next: number) => void;
+  fixed?: boolean;
   onSettings?: () => void;
   back?: () => void;
   refresh?: React.ReactElement<RefreshControlProps>;
@@ -322,7 +333,7 @@ export function Page({
           <Image
             source={require("../assets/docks-brand.png")}
             accessibilityLabel="Logo completa Docks"
-            style={{ width: 154, height: 48 }}
+            style={{ width: 154, height: 48, flexShrink: 1 }}
             resizeMode="contain"
           />
           <View style={{ flexDirection: "row", gap: 6 }}>
@@ -347,7 +358,19 @@ export function Page({
           </View>
         </View>
       </View>
-      <ScrollView
+      <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 8, paddingBottom: 8 }}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Diminuir letras" onPress={() => changeFontScale(Math.max(0.9, Number((fontScale - 0.1).toFixed(2))))} style={s.iconButton}><Text style={{ color: "#fff" }}>A−</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Restaurar letras" onPress={() => changeFontScale(1)} style={s.iconButton}><Text style={{ color: "#fff", fontSize: 12 }}>{Math.round(fontScale * 100)}%</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Ampliar letras" onPress={() => changeFontScale(Math.min(1.25, Number((fontScale + 0.1).toFixed(2))))} style={s.iconButton}><Text style={{ color: "#fff" }}>A+</Text></Pressable>
+      </View>
+      {fixed ? (
+        <View style={{ flex: 1, minHeight: 0, marginHorizontal: 8, marginBottom: 8, borderRadius: 22, overflow: "hidden", backgroundColor: c.bg, padding: 20 }}>
+          <View style={{ flex: 1, minHeight: 0, width: "100%", maxWidth: 480, alignSelf: "center", gap: 18 }}>
+            {back && <Pressable accessibilityRole="button" onPress={back} style={{ minHeight: 44, justifyContent: "center" }}><Text style={{ color: c.blue }}>‹ Voltar</Text></Pressable>}
+            {children}
+          </View>
+        </View>
+      ) : <ScrollView
         style={{ flex: 1, marginHorizontal: 8, marginBottom: 8, borderRadius: 22, overflow: "hidden", backgroundColor: c.bg }}
         keyboardShouldPersistTaps="handled"
         refreshControl={refresh}
@@ -367,7 +390,7 @@ export function Page({
           )}
           {children}
         </View>
-      </ScrollView>
+      </ScrollView>}
     </KeyboardAvoidingView>
   );
 }

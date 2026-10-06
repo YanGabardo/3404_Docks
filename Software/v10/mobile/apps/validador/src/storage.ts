@@ -6,6 +6,7 @@ export type Preferences = {
   server: string;
   condominium: Condominium | null;
   facing: "front" | "back";
+  fontScale: number;
   pending: Pending | null;
   active: Withdrawal | null;
 };
@@ -13,6 +14,7 @@ export const defaults: Preferences = {
   server: "",
   condominium: null,
   facing: "front",
+  fontScale: 1,
   pending: null,
   active: null,
 };
@@ -30,7 +32,10 @@ export async function restore(): Promise<Preferences> {
   )
     // Evita iniciar a leitura com um endereço ou câmera incompatível após atualização.
     throw new Error("Configuração local inválida.");
-  return { ...defaults, ...parsed };
+  return {
+    ...defaults, ...parsed,
+    fontScale: typeof parsed.fontScale === "number" && parsed.fontScale >= 0.9 && parsed.fontScale <= 1.25 ? parsed.fontScale : 1,
+  };
 }
 /** Salva em uma única operação as preferências e o estado de retirada em andamento. */
 export async function persist(value: Preferences) {

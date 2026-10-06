@@ -7,12 +7,14 @@ export type Preferences = {
   server: string;
   session: Session | null;
   dark: boolean;
+  fontScale: number;
   pending: { id: string; porteiroId: number; condominioId: number } | null;
 };
 export const defaults: Preferences = {
   server: "",
   session: null,
   dark: false,
+  fontScale: 1,
   pending: null,
 };
 const key = "docks.porteiro.v1";
@@ -25,6 +27,7 @@ export async function restore(): Promise<Preferences> {
     return {
       server: typeof value.server === "string" ? value.server : "",
       dark: value.dark === true,
+      fontScale: typeof value.fontScale === "number" && value.fontScale >= 0.9 && value.fontScale <= 1.25 ? value.fontScale : 1,
       session:
         typeof value.session?.token === "string" &&
         Number.isInteger(value.session?.porteiro?.id) &&

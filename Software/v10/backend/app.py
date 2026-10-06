@@ -66,6 +66,7 @@ from .services import (
 from .dashboard import registrar_extensoes_dashboard
 from .resident import registrar_rotas_morador
 from .portaria import registrar_rotas_portaria
+from .chat import limpar_mensagens_expiradas, registrar_rotas_chat
 from .essencial import registrar_rotas_essencial
 from .validador import registrar_rotas_validador, recuperar_validacoes_interrompidas
 from .offline import FilaTarefas
@@ -121,6 +122,7 @@ DOCKS_LOGO_FILE = ASSETS_DIR / "docks-logo.png"
 DOCKS_LOGO2_FILE = ASSETS_DIR / "docks-logo2.png"
 FAVICON_FILE = ASSETS_DIR / "favicon.png"
 ACCESSIBILITY_FILE = SHARED_DIR / "accessibility.js"
+FONT_SIZE_FILE = SHARED_DIR / "font-size.js"
 VALIDATION_FILE = SHARED_DIR / "validation.js"
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
     "DOCKS_DATABASE_URI", "sqlite:///" + str(DATA_DIR / "docks.db")
@@ -239,7 +241,10 @@ def porteiro_auth_required(f):
             )
         porteiro = db.session.get(Porteiro, sessao.get("porteiro_id"))
         condominio = db.session.get(Condominio, sessao.get("condominio_id"))
-        if not porteiro or not porteiro.ativo or not condominio or not condominio.ativo:
+        if (
+            not porteiro or not porteiro.ativo or not condominio or not condominio.ativo
+            or porteiro.condominio_id != sessao.get("condominio_id")
+        ):
             porteiro_sessions.pop(token, None)
             return jsonify({"error": "Acesso da portaria inativo."}), 401
         g.porteiro_session = sessao
@@ -263,7 +268,12 @@ def morador_auth_required(f):
             return jsonify({"error": "Não autorizado. Faça login novamente."}), 401
         morador = db.session.get(Morador, sessao.get("morador_id"))
         condominio = db.session.get(Condominio, sessao.get("condominio_id"))
-        if not morador or not morador.ativo or not condominio or not condominio.ativo or condominio.plano != "completo":
+        if (
+            not morador or not morador.ativo or not condominio or not condominio.ativo
+            or condominio.plano != "completo"
+            or morador.condominio_id != sessao.get("condominio_id")
+            or morador.apartamento != sessao.get("apartamento")
+        ):
             morador_sessions.pop(token, None)
             return jsonify({"error": "Acesso do morador inativo."}), 401
         g.morador_session = sessao
@@ -818,6 +828,11 @@ def accessibility_asset():
     if not ACCESSIBILITY_FILE.exists():
         return "Recurso de acessibilidade não encontrado.", 404
     return send_file(ACCESSIBILITY_FILE, mimetype="application/javascript")
+
+
+@app.route("/assets/font-size.js", methods=["GET"])
+def font_size_asset():
+    return send_file(FONT_SIZE_FILE, mimetype="application/javascript")
 
 
 @app.route("/assets/validation.js", methods=["GET"])
@@ -2877,6 +2892,7 @@ registrar_rotas_portaria(
     mensagem_notificacao_encomenda,
     agora_str,
 )
+registrar_rotas_chat(app, morador_auth_required, porteiro_auth_required, agora_str)
 registrar_rotas_essencial(app, porteiro_auth_required, dashboard_auth_required,
                           obter_configuracoes, enfileirar_tarefa, registrar_log, agora_str)
 registrar_extensoes_dashboard(app, dashboard_auth_required, registrar_log, agora_str)
@@ -2896,6 +2912,7 @@ def iniciar_servidor():
     """Executa uma única inicialização explícita antes de aceitar conexões."""
     with app.app_context():
         init_db()
+        limpar_mensagens_expiradas(agora_str, forcar=True)
         startup_state["tarefas_recuperadas"] = fila_tarefas.recuperar_interrompidas()
         executar_inicializacao_segura()
         limpar_gravacoes_expiradas()

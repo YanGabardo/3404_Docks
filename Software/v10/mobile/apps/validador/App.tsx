@@ -13,6 +13,7 @@ import { Scanner } from "./src/Scanner";
 import {
   Button,
   Card,
+  FontScale,
   Loading,
   Muted,
   Notice,
@@ -274,8 +275,9 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1, backgroundColor: "#001135" }}>
+        <FontScale.Provider value={preferences.fontScale}>
         <StatusBar style="light" />
-        <Page identity={condominium?.nome || "Docks · Validador"}>
+        <Page identity={condominium?.nome || "Docks · Validador"} fontScale={preferences.fontScale} changeFontScale={(fontScale) => void save({ fontScale }).catch((error) => Alert.alert("Preferência não salva", error.message))}>
           <Steps
             current={ended ? 2 : active?.status === "em_andamento" ? 1 : 0}
           />
@@ -420,7 +422,7 @@ export default function App() {
                     )}
                     <Button
                       secondary
-                      label="Configurar tablet"
+                    label="Conexão e condomínio"
                       onPress={() => {
                         setSettings(true);
                         setMessage("");
@@ -431,6 +433,7 @@ export default function App() {
             </>
           )}
         </Page>
+        </FontScale.Provider>
       </SafeAreaView>
     </SafeAreaProvider>
   );

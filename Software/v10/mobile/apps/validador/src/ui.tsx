@@ -1,5 +1,5 @@
 /** Componentes de alto contraste para operação contínua no tablet. */
-import React, { PropsWithChildren } from "react";
+import React, { createContext, PropsWithChildren, useContext } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -21,18 +21,25 @@ export const colors = {
   blue: "#2563eb",
   danger: "#ffd0c9",
 };
+export const FontScale = createContext(1);
+function scaled(style: { fontSize?: number; lineHeight?: number }, scale: number) {
+  return { fontSize: (style.fontSize || 16) * scale, lineHeight: style.lineHeight ? style.lineHeight * scale : undefined };
+}
 /** Corpo de texto padronizado; evita discrepâncias entre as mensagens de cada tela. */
 export function Text({ children }: PropsWithChildren) {
-  return <NativeText style={styles.text}>{children}</NativeText>;
+  const scale = useContext(FontScale);
+  return <NativeText style={[styles.text, scaled(styles.text, scale)]}>{children}</NativeText>;
 }
 /** Texto de apoio menos destacado, ainda legível no fundo escuro fixo. */
 export function Muted({ children }: PropsWithChildren) {
-  return <NativeText style={styles.muted}>{children}</NativeText>;
+  const scale = useContext(FontScale);
+  return <NativeText style={[styles.muted, scaled(styles.muted, scale)]}>{children}</NativeText>;
 }
 /** Título semântico, reconhecido também pelos recursos de acessibilidade. */
 export function Title({ children }: PropsWithChildren) {
+  const scale = useContext(FontScale);
   return (
-    <NativeText accessibilityRole="header" style={styles.title}>
+    <NativeText accessibilityRole="header" style={[styles.title, scaled(styles.title, scale)]}>
       {children}
     </NativeText>
   );
@@ -43,6 +50,7 @@ export function Card({ children }: PropsWithChildren) {
 }
 /** Mostra o estágio atual sem permitir pular etapas da retirada. */
 export function Steps({ current }: { current: number }) {
+  const scale = useContext(FontScale);
   return (
     <View
       style={{
@@ -68,7 +76,7 @@ export function Steps({ current }: { current: number }) {
             accessibilityState={{ selected: index === current }}
             style={{
               fontFamily: "InterSemi",
-              fontSize: 13,
+              fontSize: 13 * scale,
               color: index < current ? "#7bd2a8" : colors.text,
             }}
           >
@@ -80,7 +88,7 @@ export function Steps({ current }: { current: number }) {
   );
 }
 /** Mantém o conteúdo utilizável no tablet com teclado aberto ou fonte ampliada. */
-export function Page({ children, identity }: PropsWithChildren<{ identity: string }>) {
+export function Page({ children, identity, fontScale, changeFontScale }: PropsWithChildren<{ identity: string; fontScale: number; changeFontScale: (next: number) => void }>) {
   return (
     <View style={{ flex: 1, backgroundColor: "#001135" }}>
       <View style={styles.frameHeader}>
@@ -91,9 +99,14 @@ export function Page({ children, identity }: PropsWithChildren<{ identity: strin
           resizeMode="contain"
         />
         <View style={{ flex: 1, minWidth: 180 }}>
-          <NativeText style={styles.frameTitle}>{identity}</NativeText>
-          <NativeText style={styles.frameSubtitle}>Retirada de encomendas</NativeText>
+          <NativeText style={[styles.frameTitle, scaled(styles.frameTitle, fontScale)]}>{identity}</NativeText>
+          <NativeText style={[styles.frameSubtitle, scaled(styles.frameSubtitle, fontScale)]}>Retirada de encomendas</NativeText>
         </View>
+      </View>
+      <View style={{ flexDirection: "row", justifyContent: "center", gap: 8, paddingBottom: 8 }}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Diminuir letras" onPress={() => changeFontScale(Math.max(0.9, Number((fontScale - 0.1).toFixed(2))))} style={styles.fontButton}><NativeText style={styles.fontButtonText}>A−</NativeText></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Restaurar letras" onPress={() => changeFontScale(1)} style={styles.fontButton}><NativeText style={styles.fontButtonText}>{Math.round(fontScale * 100)}%</NativeText></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Ampliar letras" onPress={() => changeFontScale(Math.min(1.25, Number((fontScale + 0.1).toFixed(2))))} style={styles.fontButton}><NativeText style={styles.fontButtonText}>A+</NativeText></Pressable>
       </View>
       <ScrollView
         style={styles.frameBody}
@@ -107,8 +120,9 @@ export function Page({ children, identity }: PropsWithChildren<{ identity: strin
 }
 /** Anuncia erros e avisos aos leitores de tela quando o texto muda. */
 export function Notice({ children }: PropsWithChildren) {
+  const scale = useContext(FontScale);
   return children ? (
-    <NativeText accessibilityLiveRegion="polite" style={styles.notice}>
+    <NativeText accessibilityLiveRegion="polite" style={[styles.notice, scaled(styles.notice, scale)]}>
       {children}
     </NativeText>
   ) : null;
@@ -125,6 +139,7 @@ export function Button({
   disabled?: boolean;
   secondary?: boolean;
 }) {
+  const scale = useContext(FontScale);
   return (
     <Pressable
       accessibilityRole="button"
@@ -137,7 +152,7 @@ export function Button({
         (disabled || pressed) && { opacity: 0.55 },
       ]}
     >
-      <NativeText style={styles.buttonText}>{label}</NativeText>
+      <NativeText style={[styles.buttonText, scaled(styles.buttonText, scale)]}>{label}</NativeText>
     </Pressable>
   );
 }
@@ -153,12 +168,13 @@ export function Input({
   onChangeText: (value: string) => void;
   keyboardType?: "default" | "url";
 }) {
+  const scale = useContext(FontScale);
   return (
     <View style={{ gap: 8 }}>
       <Text>{label}</Text>
       <TextInput
         accessibilityLabel={label}
-        style={styles.input}
+        style={[styles.input, scaled(styles.input, scale)]}
         value={value}
         onChangeText={onChangeText}
         keyboardType={keyboardType}
@@ -181,6 +197,8 @@ export function Loading({ message }: { message: string }) {
 }
 // Dimensões comuns evitam estilos distintos para a mesma operação em telas diferentes.
 const styles = StyleSheet.create({
+  fontButton: { minWidth: 54, minHeight: 44, borderRadius: 10, backgroundColor: "#193254", borderWidth: 1, borderColor: "#7390bd", alignItems: "center", justifyContent: "center" },
+  fontButtonText: { color: "#fff", fontFamily: "InterSemi", fontSize: 14 },
   text: {
     fontFamily: "Inter",
     fontSize: 18,

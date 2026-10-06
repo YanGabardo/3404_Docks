@@ -211,6 +211,25 @@ class Porteiro(db.Model):
     criado_em = db.Column(db.String, nullable=False)
 
 
+class MensagemPortaria(db.Model):
+    """Conversa local compartilhada pelos moradores de um apartamento e a portaria."""
+
+    __tablename__ = "mensagens_portaria"
+    __table_args__ = (
+        db.Index("ix_chat_condominio_apartamento_id", "condominio_id", "apartamento", "id"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    condominio_id = db.Column(db.Integer, db.ForeignKey("condominios.id"), nullable=False)
+    apartamento = db.Column(db.String(20), nullable=False)
+    autor_tipo = db.Column(db.String(10), nullable=False)
+    autor_id = db.Column(db.Integer, nullable=False)
+    autor_nome = db.Column(db.String(120), nullable=False)
+    texto = db.Column(db.String(500), nullable=False)
+    criado_em = db.Column(db.String, nullable=False)
+    lido_em = db.Column(db.String)
+
+
 class Contato(db.Model):
     """Solicitação comercial recebida pela landing e tratada no painel admin."""
 

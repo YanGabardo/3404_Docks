@@ -13,9 +13,11 @@ import { api, residentPath, Session } from "./src/api";
 import { defaults, persist, Preferences, restore } from "./src/storage";
 import { Connection, Login, PasswordForm, Recovery } from "./src/forms";
 import { Home, Terms } from "./src/panels";
+import { Chat } from "./src/Chat";
 import {
   Button,
   Card,
+  FontScale,
   Muted,
   Notice,
   Page,
@@ -31,9 +33,10 @@ export default function App() {
   const [preferences, setPreferences] = useState<Preferences>(defaults);
   const [ready, setReady] = useState(false);
   const [screen, setScreen] = useState<
-    "home" | "connection" | "recovery" | "settings" | "password"
+    "home" | "chat" | "connection" | "recovery" | "settings" | "password"
   >("home");
   const [message, setMessage] = useState("");
+  const [unread, setUnread] = useState(0);
   const [fonts, fontError] = useFonts({
     Inter: require("./assets/inter-400.ttf"),
     InterSemi: require("./assets/inter-600.ttf"),
@@ -74,6 +77,21 @@ export default function App() {
     expired,
   );
   const { session, server, dark } = preferences;
+  useEffect(() => {
+    // Contador leve mantém o chamado visível sem baixar o histórico na tela inicial.
+    setUnread(0);
+    if (!server || !session || screen !== "home") return;
+    let active = true;
+    async function loadUnread() {
+      try {
+        const result = await api<{ nao_lidas: number }>(server, residentPath(session!, "chat/nao_lidas"), session);
+        if (active) setUnread(result.nao_lidas);
+      } catch { /* A conversa mostrará o erro ao ser aberta; não bloqueia encomendas. */ }
+    }
+    void loadUnread();
+    const timer = setInterval(() => void loadUnread(), 15000);
+    return () => { active = false; clearInterval(timer); };
+  }, [server, session?.token, screen]);
   async function logout() {
     // O pedido ao servidor é melhor esforço; sair localmente continua possível offline.
     if (session)
@@ -235,6 +253,8 @@ export default function App() {
     content = (
       <PasswordForm first={panel.primeiro_login} onSave={changePassword} />
     );
+  else if (screen === "chat")
+    content = <Chat server={server} session={session} />;
   else
     // A home usa dados consultados periodicamente; comandos só são emitidos por toque.
     content = (
@@ -244,6 +264,8 @@ export default function App() {
         session={session}
         seconds={seconds}
         offline={Boolean(networkError)}
+        unread={unread}
+        openChat={() => setScreen("chat")}
         generate={async () => {
           await api(server, residentPath(session, "gerar_qr"), session, {});
           refresh();
@@ -260,6 +282,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <Theme.Provider value={dark}>
+        <FontScale.Provider value={preferences.fontScale}>
         <SafeAreaView
           style={{
             flex: 1,
@@ -269,6 +292,9 @@ export default function App() {
           <StatusBar style="light" />
           <Page
             dark={dark}
+            fixed={screen === "chat" && Boolean(session)}
+            fontScale={preferences.fontScale}
+            changeFontScale={(fontScale) => void save({ ...preferences, fontScale }).catch((error) => Alert.alert("Preferência não salva", error.message))}
             toggleTheme={() =>
               void save({ ...preferences, dark: !dark }).catch((error) =>
                 Alert.alert("Preferência não salva", error.message),
@@ -302,6 +328,7 @@ export default function App() {
             {content}
           </Page>
         </SafeAreaView>
+        </FontScale.Provider>
       </Theme.Provider>
     </SafeAreaProvider>
   );

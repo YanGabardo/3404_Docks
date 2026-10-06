@@ -184,6 +184,8 @@ export function Home({
   session,
   seconds,
   offline,
+  unread,
+  openChat,
   generate,
   cancel,
 }: {
@@ -192,6 +194,8 @@ export function Home({
   session: Session;
   seconds: number;
   offline: boolean;
+  unread: number;
+  openChat: () => void;
   generate: () => Promise<void>;
   cancel: () => Promise<void>;
 }) {
@@ -216,6 +220,7 @@ export function Home({
             : "Tudo pronto para facilitar sua rotina."}
         </Muted>
       </View>
+      <Button title={unread ? `Portaria · ${unread} ${unread === 1 ? "nova mensagem" : "novas mensagens"}` : "Falar com a portaria"} secondary onPress={openChat} />
       <Steps
         labels={["Encomendas", "QR Code", "Retirada"]}
         current={active ? 2 : qr ? 1 : 0}

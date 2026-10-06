@@ -257,31 +257,44 @@
         position: fixed;
         inset: 0;
         z-index: 80;
-        background: radial-gradient(circle at 80% 15%, rgba(16,152,255,.2), transparent 34%), #001135;
+        background: radial-gradient(circle at 78% 12%, rgba(16,152,255,.2), transparent 32%), #001135;
         display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: center;
-        padding: 20px;
+        gap: 24px;
+        overflow-y: auto;
+        padding: 64px 24px 24px;
       }
       .login-card {
-        width: min(420px, 100%);
+        width: min(384px, 100%);
         background: #fff;
-        border: 1px solid #e3e9f1;
-        border-radius: 28px;
-        padding: 30px;
-        box-shadow: 0 30px 90px rgba(0, 17, 53, 0.14);
+        border: 1px solid #e6e1d3;
+        border-radius: 32px;
+        padding: 24px;
+        box-shadow: 0 20px 40px rgba(0, 17, 53, 0.1);
       }
-      .login-card img {
-        width: 155px;
-        filter: drop-shadow(0 0 1px #001135) drop-shadow(0 1px 1px rgba(0, 17, 53, 0.55));
+      .login-brand {
+        margin-top: auto;
+        text-align: center;
       }
-      .login-logo-wrap {
-        display: inline-flex;
-        align-items: center;
-        padding: 0;
-        border-radius: 0;
-        background: transparent;
-        box-shadow: none;
+      .login-brand img {
+        width: 160px;
+        margin: 0 auto 12px;
+      }
+      .login-brand p,
+      .login-help {
+        color: rgba(255,255,255,.72);
+        font-size: 12px;
+        text-align: center;
+      }
+      .login-brand p {
+        font-weight: 600;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+      }
+      .login-help {
+        max-width: 320px;
+        margin-bottom: auto;
       }
       .login-theme-button {
         position: fixed;
@@ -292,10 +305,10 @@
         height: 40px;
         display: grid;
         place-items: center;
-        border: 1px solid rgba(255,255,255,.22);
-        border-radius: 12px;
-        background: rgba(255,255,255,.1);
-        color: #fff;
+        border: 1px solid #e6e1d3;
+        border-radius: 999px;
+        background: #fff;
+        color: #8c8571;
         cursor: pointer;
       }
       .login-theme-button svg { width: 17px; height: 17px; }
@@ -306,7 +319,7 @@
         background: #16213a;
         border-color: #2b3a54;
       }
-      html.dark .login-card img { filter: none; }
+      html.dark .login-theme-button { background: #16213a; border-color: #2b3a54; color: #fff; }
       html.dark .login-field label { color: #b7c3d5; }
       html.dark .login-field input,
       html.dark .login-results,
@@ -346,19 +359,19 @@
       }
       .login-field label {
         display: block;
-        font-size: 10px;
+        font-size: 12px;
         font-weight: 800;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.04em;
         text-transform: uppercase;
-        color: #728096;
-        margin-bottom: 6px;
+        color: #8c8571;
+        margin-bottom: 8px;
       }
       .login-field input {
         width: 100%;
-        border: 1px solid #dfe6ef;
-        background: #f7f9fc;
+        border: 1px solid #e6e1d3;
+        background: #faf8f3;
         border-radius: 12px;
-        padding: 13px;
+        padding: 14px;
         outline: none;
       }
       .login-field input:focus {
@@ -401,6 +414,7 @@
         .login-card {
           padding: 22px;
         }
+        #porteiro-login { gap: 16px; }
         #video-container {
           max-width: 300px;
         }
@@ -424,11 +438,11 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
         </svg>
       </button>
+      <div class="login-brand"><img src="/assets/docks-logo.png" alt="Docks" /><p>Portal do Porteiro</p></div>
       <form class="login-card" onsubmit="loginPorteiro(event)">
-        <span class="login-logo-wrap"><img src="/assets/docks-logo.png" alt="Docks" /></span>
-        <h1 class="text-2xl font-display font-bold text-ink mt-5">Acesso da portaria</h1>
+        <h1 class="text-2xl font-display font-bold text-ink">Entre na sua conta</h1>
         <p class="text-sm text-muted mt-1">
-          Entre com o condomínio e as credenciais cadastradas pelo responsável.
+          Use o acesso fornecido pela administração do condomínio.
         </p>
         <div class="login-field">
           <label>Condomínio</label
@@ -456,12 +470,13 @@
         ></p>
         <button
           id="btn-login-porteiro"
-          class="w-full bg-ink text-white font-bold py-3.5 rounded-xl mt-5"
+          class="w-full bg-ink hover:bg-inkalt text-white font-bold py-3.5 rounded-xl mt-5 shadow-md transition-all active:scale-95"
           type="submit"
         >
-          Entrar na portaria
+          Acessar conta
         </button>
       </form>
+      <p class="login-help">Precisa de acesso? Solicite suas credenciais à administração do condomínio.</p>
     </div>
 
     <header
@@ -475,6 +490,7 @@
         </div>
       </div>
       <div class="flex items-center gap-2">
+        <span id="chat-portaria-aviso" class="hidden-view text-xs font-bold text-blue bg-white/10 px-2 py-1 rounded-full" aria-live="polite"></span>
         <button
           onclick="toggleDarkMode()"
           id="btn-dark-toggle"
@@ -547,6 +563,29 @@
           Ou digite os dados manualmente
         </button>
         <button id="btn-entregas-essencial" onclick="abrirEntregasEssenciais()" class="hidden-view w-full max-w-xs bg-blue text-white font-bold py-4 rounded-2xl">Entregar encomenda</button>
+        <button id="btn-conversas-portaria" onclick="abrirConversasPorteiro()" class="w-full max-w-xs bg-blue-light text-blue-dark border border-line font-bold py-3 rounded-2xl">Mensagens dos apartamentos</button>
+        <p id="aviso-whatsapp-essencial" class="hidden-view max-w-xs text-center text-sm text-muted">Essential: oriente o morador a falar com a portaria pelo WhatsApp informado pelo condomínio.</p>
+      </section>
+
+      <section id="view-chat-list" class="hidden-view flex-col flex-1 min-h-0 gap-3 py-3">
+        <div class="flex items-center justify-between gap-2"><h2 class="font-display font-bold text-ink text-xl">Mensagens</h2><button onclick="showView('view-home')" class="bg-white border border-line text-ink font-bold px-3 py-2 rounded-xl">Voltar</button></div>
+        <p class="text-sm text-muted">Escolha um apartamento para ler ou enviar uma mensagem.</p>
+        <label for="chat-busca-portaria" class="text-sm font-bold text-ink">Buscar apartamento ou morador</label>
+        <input id="chat-busca-portaria" oninput="renderizarConversasPorteiro()" placeholder="Ex.: 101 ou Maria" class="bg-white border border-line text-ink p-3 rounded-xl" />
+        <div id="chat-lista-portaria" class="flex-1 min-h-0 overflow-y-auto space-y-2"></div>
+        <button onclick="carregarConversasPorteiro()" class="bg-white border border-line text-ink font-bold py-3 rounded-xl">Atualizar mensagens</button>
+      </section>
+
+      <section id="view-chat-thread" class="hidden-view flex-col flex-1 min-h-0 gap-3 py-3">
+        <div class="flex items-center justify-between gap-2"><h2 id="chat-titulo-portaria" class="font-display font-bold text-ink text-xl">Conversa</h2><button onclick="abrirConversasPorteiro()" class="bg-white border border-line text-ink font-bold px-3 py-2 rounded-xl">Voltar</button></div>
+        <p class="text-xs text-muted">Todos os moradores deste apartamento podem ver as mensagens.</p>
+        <button id="chat-antigas-portaria" onclick="carregarMensagensAntigasPorteiro()" class="hidden-view bg-white border border-line text-ink font-bold py-2 rounded-xl">Ver mensagens anteriores</button>
+        <div id="chat-mensagens-portaria" class="flex-1 min-h-0 overflow-y-auto space-y-2" aria-live="polite"></div>
+        <form onsubmit="enviarMensagemPorteiro(event)" class="flex-shrink-0 space-y-2 pb-14 sm:pb-0">
+          <label for="chat-texto-portaria" class="block text-sm font-bold text-ink">Mensagem para o apartamento</label>
+          <textarea id="chat-texto-portaria" maxlength="500" rows="2" placeholder="Escreva sua resposta" class="w-full bg-white border border-line text-ink rounded-xl p-3" required></textarea>
+          <button type="submit" class="w-full bg-blue text-white font-bold py-3 rounded-xl">Enviar mensagem</button>
+        </form>
       </section>
 
       <section id="view-camera" class="hidden-view flex-col items-center flex-1 space-y-5 py-4">
@@ -823,11 +862,24 @@
       let planoPorteiro = 'completo'
       let encomendaEmEntrega = null
       let essencialRequestId = ''
+      let conversasPortaria = []
+      let chatPortariaApartamento = ''
+      let chatPortariaUltimoId = 0
+      let chatPortariaTimer = null
+      let chatPortariaBusy = false
+      let chatPortariaResumoTimer = null
 
       function aplicarPlanoPorteiro(plano) {
         // O fluxo é escolhido pelo plano retornado pelo servidor, nunca por preferência local.
         planoPorteiro = plano === 'essencial' ? 'essencial' : 'completo'
         document.getElementById('btn-entregas-essencial').classList.toggle('hidden-view', planoPorteiro !== 'essencial')
+        document.getElementById('btn-conversas-portaria').classList.toggle('hidden-view', planoPorteiro !== 'completo')
+        document.getElementById('aviso-whatsapp-essencial').classList.toggle('hidden-view', planoPorteiro !== 'essencial')
+        if (planoPorteiro !== 'completo') {
+          clearInterval(chatPortariaResumoTimer)
+          chatPortariaResumoTimer = null
+          document.getElementById('chat-portaria-aviso').classList.add('hidden-view')
+        }
         document.getElementById('porteiro-size-selection').classList.toggle('hidden-view', planoPorteiro === 'essencial')
         document.querySelector('[data-step="storage"]').classList.toggle('hidden-view', planoPorteiro === 'essencial')
         document.querySelector('[data-step="photo"]').textContent = planoPorteiro === 'essencial' ? '3 · Fotografar' : '4 · Fotografar'
@@ -905,7 +957,7 @@
           erro.classList.remove('hidden')
         } finally {
           btn.disabled = false
-          btn.innerText = 'Entrar na portaria'
+          btn.innerText = 'Acessar conta'
         }
       }
 
@@ -917,6 +969,9 @@
         // Remove o token deste navegador e encerra a sessão também no servidor.
         const tokenAtual = porteiroToken
         stopCamera()
+        clearInterval(chatPortariaTimer)
+        clearInterval(chatPortariaResumoTimer)
+        chatPortariaResumoTimer = null
         porteiroToken = ''
         sessionStorage.removeItem('docks_porteiro_token')
         if (tokenAtual) {
@@ -995,16 +1050,197 @@
         'view-success': 'success',
         'view-essencial-list': 'home',
         'view-essencial-entrega': 'form',
+        'view-chat-list': 'home',
+        'view-chat-thread': 'home',
       }
       function showView(viewId) {
+        if (!['view-chat-list', 'view-chat-thread'].includes(viewId)) clearInterval(chatPortariaTimer)
+        const telaChat = ['view-chat-list', 'view-chat-thread'].includes(viewId)
+        document.querySelector('main').classList.toggle('overflow-y-auto', !telaChat)
+        document.querySelector('main').classList.toggle('overflow-y-hidden', telaChat)
         document.querySelectorAll('main > section').forEach((el) => el.classList.add('hidden-view'))
         const view = document.getElementById(viewId)
         view.classList.remove('hidden-view')
         view.style.display = 'flex'
+        if (porteiroToken && planoPorteiro === 'completo' && !chatPortariaResumoTimer) {
+          atualizarNaoLidasPorteiro()
+          chatPortariaResumoTimer = setInterval(atualizarNaoLidasPorteiro, 15000)
+        }
+        document.getElementById('stepper').classList.toggle('hidden-view', ['view-home', 'view-chat-list', 'view-chat-thread', 'view-essencial-list', 'view-essencial-entrega'].includes(viewId))
         if (viewId !== 'view-loading') {
           const step =
             viewId === 'view-camera' && cameraMode === 'photo' ? 'photo' : STEP_MAP[viewId] || 'home'
           updateStepper(step)
+        }
+      }
+
+      // A portaria só vê apartamentos do seu condomínio; a API revalida o token em cada chamada.
+      async function atualizarNaoLidasPorteiro() {
+        if (!porteiroToken || planoPorteiro !== 'completo') return
+        try {
+          const res = await fetch(`${API_URL}/api/porteiro/conversas`, { headers: authHeaders() })
+          if (!res.ok) return
+          const dados = await res.json()
+          const quantidade = dados.conversas.reduce((total, item) => total + item.nao_lidas, 0)
+          document.getElementById('btn-conversas-portaria').textContent = quantidade
+            ? `Mensagens · ${quantidade} ${quantidade === 1 ? 'nova' : 'novas'}` : 'Mensagens dos apartamentos'
+          const aviso = document.getElementById('chat-portaria-aviso')
+          aviso.textContent = quantidade ? `${quantidade} ${quantidade === 1 ? 'nova' : 'novas'}` : ''
+          aviso.classList.toggle('hidden-view', !quantidade)
+        } catch { /* A portaria continua operando se o aviso não puder ser atualizado. */ }
+      }
+
+      async function carregarConversasPorteiro() {
+        try {
+          const res = await fetch(`${API_URL}/api/porteiro/conversas`, { headers: authHeaders() })
+          const dados = await res.json()
+          if (!res.ok) throw new Error(dados.error || 'Falha ao buscar conversas.')
+          conversasPortaria = dados.conversas
+          renderizarConversasPorteiro()
+        } catch (erro) {
+          toast(erro.message, 'error')
+        }
+      }
+
+      function renderizarConversasPorteiro() {
+        const lista = document.getElementById('chat-lista-portaria')
+        lista.replaceChildren()
+        const busca = document.getElementById('chat-busca-portaria').value.trim().toLocaleLowerCase('pt-BR')
+        const visiveis = conversasPortaria.filter((item) => `${item.apartamento} ${item.moradores.join(' ')}`.toLocaleLowerCase('pt-BR').includes(busca))
+          .sort((a, b) => b.nao_lidas - a.nao_lidas || (b.ultima_mensagem?.id || 0) - (a.ultima_mensagem?.id || 0))
+        if (!visiveis.length) {
+          lista.textContent = busca ? 'Nenhum apartamento encontrado.' : 'Nenhum morador ativo para conversar.'
+          return
+        }
+        visiveis.forEach((item) => {
+          const card = document.createElement('button')
+          card.type = 'button'
+          card.className = 'w-full text-left bg-white border border-line rounded-2xl p-4 space-y-1'
+          const titulo = document.createElement('span')
+          titulo.className = 'block text-ink font-bold'
+          titulo.textContent = `Apto ${item.apartamento}${item.nao_lidas ? ` · ${item.nao_lidas} ${item.nao_lidas === 1 ? 'nova' : 'novas'}` : ''}`
+          const nomes = document.createElement('span')
+          nomes.className = 'block text-sm text-muted'
+          nomes.textContent = item.moradores.join(', ')
+          card.append(titulo, nomes)
+          if (item.ultima_mensagem) {
+            const previa = document.createElement('span')
+            previa.className = 'block text-sm text-muted'
+            previa.textContent = `${item.ultima_mensagem.autor_nome}: ${item.ultima_mensagem.texto.slice(0, 90)}`
+            card.appendChild(previa)
+          }
+          card.onclick = () => abrirConversaPorteiro(item.apartamento)
+          lista.appendChild(card)
+        })
+      }
+
+      function abrirConversasPorteiro() {
+        showView('view-chat-list')
+        carregarConversasPorteiro()
+        clearInterval(chatPortariaTimer)
+        chatPortariaTimer = setInterval(carregarConversasPorteiro, 10000)
+      }
+
+      function adicionarMensagemPorteiro(mensagem, rolar = true) {
+        if (document.getElementById(`chat-portaria-${mensagem.id}`)) return
+        const lista = document.getElementById('chat-mensagens-portaria')
+        if (!lista.children.length) lista.textContent = ''
+        const box = document.createElement('div')
+        box.id = `chat-portaria-${mensagem.id}`
+        box.className = `max-w-[92%] rounded-2xl border border-line p-3 ${mensagem.autor_tipo === 'porteiro' ? 'bg-blue-light ml-auto' : 'bg-white mr-auto'}`
+        const autor = document.createElement('p')
+        autor.className = 'text-xs font-bold text-blue-dark'
+        autor.textContent = mensagem.autor_tipo === 'porteiro' ? `Portaria · ${mensagem.autor_nome}` : mensagem.autor_nome
+        const texto = document.createElement('p')
+        texto.className = 'text-sm text-ink whitespace-pre-wrap break-words'
+        texto.textContent = mensagem.texto
+        const hora = document.createElement('p')
+        hora.className = 'text-xs text-muted mt-1'
+        hora.textContent = mensagem.criado_em
+        box.append(autor, texto, hora)
+        const proxima = [...lista.children].find((item) => Number(item.dataset.chatId) > mensagem.id)
+        box.dataset.chatId = mensagem.id
+        box.dataset.chatDate = mensagem.criado_em
+        lista.insertBefore(box, proxima || null)
+        if (rolar) lista.scrollTop = lista.scrollHeight
+        chatPortariaUltimoId = Math.max(chatPortariaUltimoId, mensagem.id)
+      }
+
+      async function carregarMensagensPorteiro() {
+        if (chatPortariaBusy || !chatPortariaApartamento) return
+        chatPortariaBusy = true
+        try {
+          const rota = `/api/porteiro/conversas/${encodeURIComponent(chatPortariaApartamento)}`
+          const primeiraPagina = !chatPortariaUltimoId
+          const res = await fetch(`${API_URL}${rota}${chatPortariaUltimoId ? `?apos=${chatPortariaUltimoId}` : ''}`, { headers: authHeaders() })
+          const dados = await res.json()
+          if (!res.ok) throw new Error(dados.error || 'Falha ao buscar mensagens.')
+          if (primeiraPagina) document.getElementById('chat-antigas-portaria').classList.toggle('hidden-view', !dados.tem_anteriores)
+          dados.mensagens.forEach(adicionarMensagemPorteiro)
+          const lista = document.getElementById('chat-mensagens-portaria')
+          Array.from(lista.children).forEach((item) => { if (item.dataset.chatDate < dados.limite_retencao) item.remove() })
+          if (!lista.children.length) lista.textContent = 'Ainda não há mensagens. Você pode iniciar a conversa.'
+        } catch (erro) {
+          toast(erro.message, 'error')
+        } finally {
+          chatPortariaBusy = false
+        }
+      }
+
+      function abrirConversaPorteiro(apartamento) {
+        chatPortariaApartamento = apartamento
+        chatPortariaUltimoId = 0
+        document.getElementById('chat-mensagens-portaria').replaceChildren()
+        document.getElementById('chat-antigas-portaria').classList.add('hidden-view')
+        document.getElementById('chat-titulo-portaria').textContent = `Conversa · Apto ${apartamento}`
+        showView('view-chat-thread')
+        carregarMensagensPorteiro()
+        clearInterval(chatPortariaTimer)
+        chatPortariaTimer = setInterval(carregarMensagensPorteiro, 5000)
+      }
+
+      async function carregarMensagensAntigasPorteiro() {
+        const lista = document.getElementById('chat-mensagens-portaria')
+        const primeiroId = Number(lista.firstElementChild?.dataset.chatId)
+        if (!primeiroId) return
+        const botao = document.getElementById('chat-antigas-portaria')
+        botao.disabled = true
+        const alturaAnterior = lista.scrollHeight
+        try {
+          const res = await fetch(`${API_URL}/api/porteiro/conversas/${encodeURIComponent(chatPortariaApartamento)}?antes=${primeiroId}`, { headers: authHeaders() })
+          const dados = await res.json()
+          if (!res.ok) throw new Error(dados.error || 'Falha ao carregar histórico.')
+          dados.mensagens.forEach((item) => adicionarMensagemPorteiro(item, false))
+          botao.classList.toggle('hidden-view', !dados.tem_anteriores)
+          lista.scrollTop += lista.scrollHeight - alturaAnterior
+        } catch (erro) {
+          toast(erro.message, 'error')
+        } finally {
+          botao.disabled = false
+        }
+      }
+
+      async function enviarMensagemPorteiro(event) {
+        event.preventDefault()
+        const campo = document.getElementById('chat-texto-portaria')
+        const texto = campo.value.trim()
+        if (!texto) return
+        const botao = event.currentTarget.querySelector('button[type="submit"]')
+        botao.disabled = true
+        try {
+          const res = await fetch(`${API_URL}/api/porteiro/conversas/${encodeURIComponent(chatPortariaApartamento)}`, {
+            method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ texto }),
+          })
+          const dados = await res.json()
+          if (!res.ok) throw new Error(dados.error || 'Mensagem não enviada.')
+          campo.value = ''
+          const cursor = chatPortariaUltimoId
+          adicionarMensagemPorteiro(dados.mensagem)
+          chatPortariaUltimoId = cursor
+        } catch (erro) {
+          toast(erro.message, 'error')
+        } finally {
+          botao.disabled = false
         }
       }
       function updateStepper(current) {
@@ -1368,10 +1604,14 @@
         } catch (e) {
           sessionStorage.removeItem('docks_porteiro_token')
           porteiroToken = ''
+          clearInterval(chatPortariaResumoTimer)
+          chatPortariaResumoTimer = null
+          document.getElementById('chat-portaria-aviso').classList.add('hidden-view')
         }
       }
       showView('view-home')
       iniciarPortaria()
     </script>
+    <script src="/assets/font-size.js" defer></script>
   </body>
 </html>

@@ -242,7 +242,7 @@
     ></div>
 
     <div class="totem-flow" aria-label="Etapas da retirada">
-      <span id="totem-step-scan" class="totem-step active">1 · Validar <em class="qr-term">QR</em></span>
+      <span id="totem-step-scan" class="totem-step active">1 · Ler <em class="qr-term">QR</em></span>
       <span id="totem-step-retirada" class="totem-step">2 · Retirar</span>
       <span id="totem-step-final" class="totem-step">3 · Confirmar</span>
     </div>
@@ -390,7 +390,7 @@
           onclick="confirmarRetirada()"
           class="w-full mt-6 bg-teal hover:bg-teal-dark text-white font-display font-bold text-lg py-4 rounded-2xl shadow-xl transition active:scale-[0.99]"
         >
-          Confirmar retirada e encerrar gravação
+          Confirmar retirada
         </button>
       </div>
     </main>
@@ -759,5 +759,6 @@
       if (!condominioValidadorId || !condominioValidadorNome) openCondoSetup()
       initScanner()
     </script>
+    <script src="/assets/font-size.js" defer></script>
   </body>
 </html>

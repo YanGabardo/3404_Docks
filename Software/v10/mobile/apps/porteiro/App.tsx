@@ -9,7 +9,8 @@ import { api, ApiError, Draft, emptyDraft, EssentialPackage, Receipt, Resident, 
 import { defaults, persist, Preferences, restore } from './src/storage'
 import { Connection, Login, PackageForm, useAction } from './src/forms'
 import { Capture } from './src/Camera'
-import { Button, Card, Field, Icon, Muted, Notice, Page, Steps, Text, Theme, Title } from './src/ui'
+import { ChatList, ChatThread } from './src/Chat'
+import { Button, Card, Field, FontScale, Icon, Muted, Notice, Page, Steps, Text, Theme, Title } from './src/ui'
 
 type Screen =
   | 'home'
@@ -23,6 +24,8 @@ type Screen =
   | 'success'
   | 'deliveries'
   | 'delivery'
+  | 'chats'
+  | 'chat'
 
 /** Uma máquina de estados pequena mantém as etapas explícitas e impede pular a foto. */
 export default function App() {
@@ -37,6 +40,8 @@ export default function App() {
   const [deliveries, setDeliveries] = useState<EssentialPackage[]>([])
   const [deliverySearch, setDeliverySearch] = useState('')
   const [delivery, setDelivery] = useState<EssentialPackage | null>(null)
+  const [chatApartment, setChatApartment] = useState('')
+  const [unreadChats, setUnreadChats] = useState(0)
   const [receiver, setReceiver] = useState('')
   const [relationship, setRelationship] = useState('Próprio morador')
   const [code, setCode] = useState('')
@@ -49,6 +54,21 @@ export default function App() {
     Display: require('./assets/space-grotesk-700.ttf'),
   })
   const { server, session, pending, dark } = preferences
+  useEffect(() => {
+    // Na tela inicial, consulta só os resumos para avisar sobre pedidos dos moradores.
+    setUnreadChats(0)
+    if (!server || !session || session.plano !== 'completo' || ['chat', 'chats'].includes(screen)) return
+    let active = true
+    async function loadUnread() {
+      try {
+        const result = await api<{ conversas: { nao_lidas: number }[] }>(server, '/porteiro/conversas', session)
+        if (active) setUnreadChats(result.conversas.reduce((total, item) => total + item.nao_lidas, 0))
+      } catch { /* Falha de rede não deve impedir o cadastro de encomendas. */ }
+    }
+    void loadUnread()
+    const timer = setInterval(() => void loadUnread(), 15000)
+    return () => { active = false; clearInterval(timer) }
+  }, [server, session?.token, session?.plano, screen])
   // Prepara o modelo enquanto o porteiro enquadra a etiqueta, sem bloquear o acesso.
   useEffect(() => {
     // O aquecimento ocorre após login; o modelo pesado não atrasa a tela inicial.
@@ -151,6 +171,8 @@ export default function App() {
   function back() {
     // Nunca permite voltar durante um POST ou uma pendência de resultado incerto.
     if (action.busy || pending) return
+    if (screen === 'chat') { setScreen('chats'); return }
+    if (screen === 'chats') { setScreen('home'); return }
     if (screen === 'delivery') { setScreen('deliveries'); return }
     if (screen === 'deliveries') { setScreen('home'); return }
     if (['photo', 'storage', 'preview'].includes(screen)) run('Liberando reserva…', returnToForm)
@@ -449,6 +471,10 @@ export default function App() {
         </Card>
       </>
     )
+  else if (screen === 'chats')
+    content = <ChatList server={server} session={session} open={(apartment) => { setChatApartment(apartment); setScreen('chat') }} />
+  else if (screen === 'chat')
+    content = <ChatThread server={server} session={session} apartment={chatApartment} />
   else if (action.busy)
     content = (
       <Card>
@@ -668,7 +694,8 @@ export default function App() {
           }}
         />
         {session.plano === 'essencial' && <Button title="Entregar encomenda" onPress={() => run('Carregando entregas…', loadDeliveries)} />}
-        <Muted>O OCR sugere o morador, mas a conferência final é sempre sua.</Muted>
+        {session.plano === 'completo' && <Button title={unreadChats ? `Mensagens · ${unreadChats} ${unreadChats === 1 ? 'nova' : 'novas'}` : 'Mensagens dos apartamentos'} onPress={() => setScreen('chats')} />}
+        <Muted>{session.plano === 'essencial' ? 'Oriente o morador a falar com a portaria pelo WhatsApp informado pelo condomínio.' : 'Confira o nome do morador antes de salvar.'}</Muted>
       </View>
     )
 
@@ -686,6 +713,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <Theme.Provider value={dark}>
+        <FontScale.Provider value={preferences.fontScale}>
         <SafeAreaView
           style={{
             flex: 1,
@@ -695,6 +723,9 @@ export default function App() {
           <StatusBar style="light" />
           <Page
             dark={dark}
+            fixed={screen === 'chat' || screen === 'chats'}
+            fontScale={preferences.fontScale}
+            changeFontScale={(fontScale) => void save({ fontScale }).catch((error) => Alert.alert('Preferência não salva', error.message))}
             identity={session ? session.condominio.nome + '\n' + session.porteiro.nome : undefined}
             toggleTheme={() => {
               if (ready)
@@ -707,14 +738,16 @@ export default function App() {
             }
             back={screen !== 'home' && Boolean(server) && !action.busy && !pending ? back : undefined}
           >
-            {session && !pending && screen !== 'settings' && (
+            {session && !pending && ['form', 'ocr', 'photo', 'storage', 'preview', 'success'].includes(screen) && (
               <Steps labels={session.plano === 'essencial' ? ['Identificar', 'Confirmar', 'Fotografar', 'Concluir'] : ['Identificar', 'Confirmar', 'Armazenar', 'Fotografar', 'Concluir']} current={session.plano === 'essencial' ? essentialStep : step} />
             )}
             <Notice message={message} />
+            <Notice message={unreadChats && !['home', 'chats', 'chat'].includes(screen) ? `${unreadChats} ${unreadChats === 1 ? 'mensagem nova' : 'mensagens novas'} de moradores. Ao terminar esta etapa, abra Mensagens na tela inicial.` : ''} />
             <Notice message={action.error} error />
             {content}
           </Page>
         </SafeAreaView>
+        </FontScale.Provider>
       </Theme.Provider>
     </SafeAreaProvider>
   )

@@ -7,9 +7,10 @@ export type Preferences = {
   server: string;
   session: Session | null;
   dark: boolean;
+  fontScale: number;
 };
 const key = "docks.morador.v1";
-export const defaults: Preferences = { server: "", session: null, dark: false };
+export const defaults: Preferences = { server: "", session: null, dark: false, fontScale: 1 };
 export async function restore(): Promise<Preferences> {
   // Dados inválidos ou de versão antiga voltam a um estado seguro sem sessão.
   const value = await SecureStore.getItemAsync(key);
@@ -19,6 +20,7 @@ export async function restore(): Promise<Preferences> {
     return {
       server: typeof parsed.server === "string" ? parsed.server : "",
       dark: parsed.dark === true,
+      fontScale: typeof parsed.fontScale === "number" && parsed.fontScale >= 0.9 && parsed.fontScale <= 1.25 ? parsed.fontScale : 1,
       session:
         typeof parsed.session?.token === "string" &&
         typeof parsed.session?.apartamento === "string"

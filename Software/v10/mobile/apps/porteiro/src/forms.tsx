@@ -180,8 +180,9 @@ export function Login({
   return (
     <>
       <Card>
-        <Title>Acesso da portaria</Title>
-        <Muted>Entre com o condomínio e as credenciais cadastradas pelo responsável.</Muted>
+        <Muted>PORTAL DO PORTEIRO</Muted>
+        <Title>Entre na sua conta</Title>
+        <Muted>Use o acesso fornecido pela administração do condomínio.</Muted>
         <Selection
           server={server}
           path="/condominios/buscar"
