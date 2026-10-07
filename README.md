@@ -28,7 +28,7 @@
 
 ## Uma encomenda não é só uma caixa
 
-Quando uma entrega chega ao condomínio, começa uma sequência de perguntas: **para quem é, onde ficou, quem foi avisado e como comprovar a retirada?** Com vários moradores e muitas entregas, depender de anotações e recados torna essa rotina difícil de acompanhar.
+Quando uma entrega chega ao condomínio, começa uma sequência de perguntas: **para quem é, onde ficou, quem foi avisado e como comprovar a retirada?** Com vários moradores e muitas entregas, depender de anotações e recados torna essa rotina mais difícil de acompanhar.
 
 O **Docks** conecta essas etapas. A portaria registra a chegada, o morador recebe a orientação para retirar e a administração acompanha o histórico. No plano **Essential**, a entrega continua com o porteiro. No **Smart**, aplicativos, sala de encomendas, câmera e fechadura trabalham juntos para organizar a retirada.
 
