@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="432" viewBox="0 0 1280 432" role="img" aria-labelledby="title desc">
+  <title id="title">Docks: receber, informar e entregar</title>
+  <desc id="desc">A encomenda é identificada e fotografada, o morador recebe o aviso e a retirada fica registrada. Essential e Smart compartilham esse ciclo.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#001135"/>
+      <stop offset="1" stop-color="#071f47"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop stop-color="#0085ff"/>
+      <stop offset="1" stop-color="#00b7f3"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="432" rx="24" fill="url(#background)"/>
+  <path d="M1088 0v432M1156 0v432M1224 0v432" stroke="#14335c" stroke-width="1" opacity=".45"/>
+  <rect x="48" y="34" width="36" height="5" rx="2.5" fill="url(#accent)"/>
+  <g font-family="Inter, Arial, sans-serif">
+    <text x="98" y="42" font-size="16" font-weight="700" letter-spacing="2.5" fill="#99c9ff">O CAMINHO DE UMA ENCOMENDA</text>
+    <text x="48" y="103" font-size="43" font-weight="700" letter-spacing="-1.2" fill="#ffffff">Receber é só o começo.</text>
+    <text x="48" y="134" font-size="20" fill="#c0d0e5">O Docks conecta as etapas que fazem a diferença na rotina do condomínio.</text>
+
+    <rect x="48" y="166" width="376" height="210" rx="18" fill="#0c254b" stroke="#2a456b"/>
+    <rect x="452" y="166" width="376" height="210" rx="18" fill="#0c254b" stroke="#2a456b"/>
+    <rect x="856" y="166" width="376" height="210" rx="18" fill="#0c254b" stroke="#2a456b"/>
+    <path d="M432 267h12m-5-5 5 5-5 5M836 267h12m-5-5 5 5-5 5" fill="none" stroke="#53b3ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <text x="76" y="210" font-size="17" font-weight="700" letter-spacing="2" fill="#53b3ff">01 / RECEBER</text>
+    <text x="480" y="210" font-size="17" font-weight="700" letter-spacing="2" fill="#53b3ff">02 / INFORMAR</text>
+    <text x="884" y="210" font-size="17" font-weight="700" letter-spacing="2" fill="#53b3ff">03 / ENTREGAR</text>
+
+    <g fill="none" stroke="#cce4ff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m365 193 17 9v21l-17 9-17-9v-21zm-17 9 17 9 17-9m-17 9v21m-8-34 17 9v7"/>
+      <path d="M756 197h28a5 5 0 0 1 5 5v19a5 5 0 0 1-5 5h-13l-10 7v-7h-5a5 5 0 0 1-5-5v-19a5 5 0 0 1 5-5zm4 10h21m-21 9h14"/>
+      <rect x="1154" y="194" width="32" height="38" rx="5"/>
+      <path d="m1162 213 6 6 10-12m-14-13v-4h12v4"/>
+    </g>
+
+    <text x="76" y="266" font-size="30" font-weight="700" letter-spacing="-.5" fill="#ffffff">Registro na chegada.</text>
+    <text x="76" y="305" font-size="21" fill="#c0d0e5">Destinatário, foto e identificação</text>
+    <text x="76" y="335" font-size="21" fill="#c0d0e5">da encomenda em um só fluxo.</text>
+
+    <text x="480" y="266" font-size="30" font-weight="700" letter-spacing="-.5" fill="#ffffff">Aviso ao morador.</text>
+    <text x="480" y="305" font-size="21" fill="#c0d0e5">Aviso pelo WhatsApp e orientação</text>
+    <text x="480" y="335" font-size="21" fill="#c0d0e5">para a retirada no seu plano.</text>
+
+    <text x="884" y="266" font-size="30" font-weight="700" letter-spacing="-.5" fill="#ffffff">Histórico da retirada.</text>
+    <text x="884" y="305" font-size="21" fill="#c0d0e5">Confirmação, comprovante</text>
+    <text x="884" y="335" font-size="21" fill="#c0d0e5">e rastreabilidade para a gestão.</text>
+    <text x="48" y="407" font-size="17" fill="#b4c5df">DOIS PLANOS. UM MESMO CUIDADO COM CADA ENCOMENDA.</text>
+    <text x="1232" y="407" text-anchor="end" font-size="17" font-weight="700" fill="#53b3ff">ESSENTIAL + SMART</text>
+  </g>
+</svg>

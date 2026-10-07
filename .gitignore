@@ -121,8 +121,8 @@ tmp/
 # Gravações e capturas
 **/gravacoes/*
 !**/gravacoes/.gitkeep
-Software/Testes Isolados/**/captura.jpg
-Software/Testes Isolados/**/gravacao_*.avi
+Testes Isolados/**/captura.jpg
+Testes Isolados/**/gravacao_*.avi
 
 # Logs
 *.log
