@@ -4,7 +4,7 @@
 
 <p align="center">
   Gestão e rastreabilidade de encomendas para condomínios.<br>
-  Um projeto do <strong>Grupo 3404</strong>, desenvolvido para o <strong>PROJETE 2026</strong>.
+  Um projeto do <strong>Grupo 3404</strong>, desenvolvido para a <strong>PROJETE 2026</strong>.
 </p>
 
 <p align="center">
@@ -65,14 +65,12 @@ O **Docks** conecta essas etapas. A portaria registra a chegada, o morador receb
 | **Gestão e auditoria**                | Encomendas, comprovantes, ocorrências, logs e PDFs | Esses recursos mais a gestão da sala e das gravações          |
 | **Aplicativos utilizados**            | Porteiro                                           | Porteiro, morador e validador                                 |
 
-O plano é selecionado no **Painel Admin**. A v10 não integra pagamentos. Moradores são cadastrados manualmente nos dois planos; a importação por CSV está desativada.
-
 <a id="fluxos"></a>
 
 ## Da chegada ao comprovante
 
 <details open>
-<summary><strong>Smart — uma encomenda chega para o apartamento 202</strong></summary>
+<summary><strong>Smart — uma encomenda chega para o apartamento 3404</strong></summary>
 
 1. **Identificar.** O porteiro fotografa a etiqueta. O OCR sugere o destinatário, e o porteiro confere os dados.
 2. **Guardar.** Após informar o tamanho, o sistema indica uma posição disponível. O porteiro armazena a encomenda e fotografa o pacote no local.
@@ -111,7 +109,7 @@ Cinco erros bloqueiam a confirmação por código. Uma entrega por exceção exi
 ### Recursos que fazem diferença no uso diário
 
 - **Cadastros ligados ao condomínio.** Moradores têm ID próprio, mesmo quando compartilham um apartamento. Porteiros usam credenciais criadas pelo síndico.
-- **Primeiro acesso orientado.** As credenciais iniciais do condomínio e dos moradores Smart são enviadas pelo WhatsApp. A troca de senha faz parte do primeiro acesso; o síndico não recebe a senha do morador na tela.
+- **Primeiro acesso orientado.** As credenciais iniciais do condomínio e dos moradores Smart são enviadas pelo WhatsApp. A troca de senha faz parte do primeiro acesso.
 - **Cadastro protegido contra repetição.** O recibo da operação evita duplicar uma encomenda quando o aplicativo repete a mesma solicitação após perder a resposta da rede.
 - **Armazenamento visível.** O Smart apresenta posições agrupadas por tamanho, capacidade ocupada e encomendas que já ultrapassaram o prazo de alerta.
 - **Conversas por apartamento.** O chat Smart atualiza automaticamente e mantém as mensagens por 14 dias. Todos os moradores ativos do apartamento compartilham a conversa.
@@ -268,14 +266,6 @@ npm start
 
 A ponte tenta localizar automaticamente Chrome, Edge ou Chromium. Quando aparecer o código de vinculação, abra **WhatsApp → Aparelhos conectados → Conectar aparelho** e escaneie. Aguarde a indicação de que o cliente está pronto.
 
-Para verificar o estado em outro terminal:
-
-```powershell
-Invoke-RestMethod http://127.0.0.1:3000/status
-```
-
-A ponte responde **200 quando pronta** e **503 enquanto indisponível**. Ela utiliza WhatsApp Web; não é uma integração com a API oficial da Meta.
-
 ### 4. Prepare o condomínio
 
 1. Entre no **Painel Admin**, em `/admin`, com o acesso definido na instalação.
@@ -285,8 +275,6 @@ A ponte responde **200 quando pronta** e **503 enquanto indisponível**. Ela uti
 5. No **Smart**, confira a URL RTSP da câmera, os dados do Tuya, posições/capacidade, validade do _QR Code_, gravação e retenção.
 6. No **Essential**, defina se a entrega exige o código de quatro dígitos e ajuste o prazo de alerta.
 7. Use o botão **Salvar configurações** no topo do painel.
-
-As mensagens do WhatsApp são definidas pelo sistema e não são editadas pelo síndico nas configurações.
 
 <a id="mobile"></a>
 
@@ -329,35 +317,9 @@ O login Expo pode ser feito uma vez no computador. Use a mesma conta no Expo Go 
 
 Escaneie o código do terminal correspondente com o Expo Go. No iPhone/iPad, ele pode ser aberto pela câmera do aparelho. No aplicativo Docks, informe o endereço do **backend**, por exemplo `http://192.168.0.106:5000`, e conceda as permissões de câmera quando pedidas.
 
-Use `ipconfig` no PC para descobrir o IPv4. O endereço `localhost` no celular aponta para o próprio aparelho. As portas **8081–8083** entregam o app; a **5000** atende às operações do Docks.
+Use `ipconfig` no PC para descobrir o IPv4. As portas **8081–8083** entregam o app; a **5000** atende às operações do Docks.
 
 No primeiro acesso do morador **Smart**, use as credenciais recebidas pelo WhatsApp, troque a senha provisória e aceite os termos antes de gerar um _QR Code_.
-
-<details>
-<summary><strong>Gerar aplicativos instaláveis e distinguir build de exportação</strong></summary>
-
-Em cada aplicativo **morador** ou **porteiro**:
-
-```powershell
-npm run build:inspect
-npm run build:apk
-```
-
-No **validador**:
-
-```powershell
-npm run build:inspect
-npm run build:android
-npm run build:ios
-```
-
-Os scripts usam **EAS Build na nuvem** e limitam o projeto enviado à pasta do aplicativo. O perfil `preview` gera APK no Android. Confira o arquivo inspecionado antes de enviar o build e siga a configuração da conta Expo solicitada pelo EAS.
-
-`npm run export:android` nos apps Android e `npm run export:apps` no validador exportam JavaScript e recursos; não produzem um aplicativo instalável assinado.
-
-**Testar no Expo Go em um iPad não exige assinatura de distribuição Apple.** Um build iOS independente para aparelho físico exige o fluxo de assinatura e provisionamento da Apple descrito na [documentação do Expo](https://docs.expo.dev/build/setup/).
-
-</details>
 
 <a id="teste"></a>
 
@@ -462,10 +424,9 @@ Instale as dependências de cada componente na sua própria pasta. A pasta `mobi
 | **API do morador**                                     | [Contrato e rotas](Software/v10/docs/API-MORADOR.md)                                 |
 | **API do porteiro e diferenças entre planos**          | [Contrato e rotas](Software/v10/docs/API-PORTEIRO.md)                                |
 | **Validação, confirmação e recuperação de tentativas** | [API do Validador](Software/v10/docs/API-VALIDADOR.md)                               |
-| **Decisões de interface e vídeo**                      | [Revisão visual e de vídeo](Software/v10/docs/REVISAO-VISUAL-E-VIDEO.md)             |
 | **Regras e persistência**                              | [Backend](Software/v10/backend) · [Modelos do banco](Software/v10/backend/models.py) |
 | **Fila e funcionamento sem internet externa**          | [Serviço offline](Software/v10/backend/offline.py)                                   |
-| **Experimentos independentes**                         | [Testes Isolados](Software/Testes%20Isolados)                                        |
+| **Experimentos independentes**                         | [Testes Isolados](Testes%20Isolados)                                                 |
 
 As rotas móveis usam **`/api/v1/`**. As rotas **`/api/...`** continuam atendendo os clientes web. Respostas JSON versionadas usam `success`, `message`, `data` e `code`; fotos, vídeos e documentos preservam seu formato de arquivo.
 
@@ -490,6 +451,12 @@ Fotos, conversas e gravações exigem cuidado no armazenamento e no compartilham
 A execução documentada utiliza **HTTP e o servidor de desenvolvimento Flask em rede local controlada**. Colocar a instalação em produção ou expô-la à internet exige preparar hospedagem, HTTPS, controles de acesso e operação apropriados.
 
 Antes de publicar os códigos, confira credenciais embutidas, chaves Tuya e URLs de câmera que incluam usuário ou senha. O [`.gitignore`](.gitignore) trata arquivos de execução; ele não remove segredos escritos dentro dos códigos.
+
+## Da ideia ao Docks
+
+Nosso diário de bordo registra a evolução do projeto: decisões, testes, dificuldades e soluções encontradas pela equipe.
+
+📘 [Conheça o diário de bordo do Docks](https://app.notion.com/p/Di-rio-de-Bordo-3404-66832219a43a835197418127dda5b4af?source=copy_link)
 
 <a id="equipe"></a>
 
