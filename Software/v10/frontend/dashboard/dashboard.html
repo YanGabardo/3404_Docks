@@ -494,6 +494,31 @@
         max-height: calc(100vh - 260px);
         overflow: auto;
       }
+      #lista-moradores {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-content: start;
+        gap: 12px;
+        padding: 16px;
+      }
+      #lista-moradores > :not(.management-row) {
+        grid-column: 1 / -1;
+      }
+      .shelf-grid {
+        display: grid;
+        grid-template-columns: repeat(var(--shelf-mobile), minmax(0, 1fr));
+        gap: 0.75rem;
+      }
+      @media (min-width: 640px) {
+        .shelf-grid {
+          grid-template-columns: repeat(var(--shelf-tablet), minmax(0, 1fr));
+        }
+      }
+      @media (min-width: 1280px) {
+        .shelf-grid {
+          grid-template-columns: repeat(var(--shelf-desktop), minmax(0, 1fr));
+        }
+      }
       .management-row {
         display: grid;
         grid-template-columns: 1.5fr 0.7fr 1fr 0.8fr auto;
@@ -508,12 +533,19 @@
       }
       #lista-moradores .management-row {
         grid-template-columns: minmax(0, 1fr) auto;
+        align-content: start;
+        border: 1px solid #e6e1d3;
+        border-radius: 12px;
       }
       #lista-moradores .management-row > * {
         min-width: 0;
         overflow-wrap: anywhere;
       }
       #lista-moradores .management-actions {
+        grid-column: 1 / -1;
+      }
+      #lista-moradores .management-row > :nth-child(3),
+      #lista-moradores .management-row > :nth-child(4) {
         grid-column: 1 / -1;
       }
       .management-actions {
@@ -540,6 +572,11 @@
       }
       html.dark .management-row {
         border-color: #26324a;
+      }
+      @media (max-width: 1100px) {
+        #lista-moradores {
+          grid-template-columns: 1fr;
+        }
       }
       html.dark .management-actions button {
         background: #16213a;
@@ -824,13 +861,6 @@
           <div class="essential-only bg-blue-light border border-blue/20 rounded-2xl p-4 text-blue-dark text-sm">
             Essential: para falar com a portaria, o morador deve usar o WhatsApp informado pelo condomínio.
           </div>
-          <div class="bg-white border border-line rounded-2xl p-4 flex flex-wrap items-center gap-3">
-            <span class="font-display font-bold text-ink mr-2">Acesso rápido</span>
-            <button onclick="switchViewById('view-moradores')" class="bg-blue text-white font-bold px-4 py-2 rounded-xl">Moradores</button>
-            <button onclick="switchViewById('view-porteiros')" class="bg-blue-light text-blue-dark font-bold px-4 py-2 rounded-xl">Porteiros</button>
-            <button onclick="switchViewById('view-relatorios')" class="bg-blue-light text-blue-dark font-bold px-4 py-2 rounded-xl">Relatórios</button>
-            <button onclick="switchViewById('view-essencial')" class="essential-only bg-blue-light text-blue-dark font-bold px-4 py-2 rounded-xl">Encomendas</button>
-          </div>
           <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 w-full">
             <div
               class="bg-white p-6 rounded-2xl shadow-sm border border-line flex items-center justify-between"
@@ -984,10 +1014,10 @@
           <div class="essential-only bg-blue-light border border-blue/20 text-blue-dark p-4 rounded-xl max-w-5xl mx-auto mb-5 text-sm font-semibold">
             Comece cadastrando os moradores. Eles não precisam de aplicativo ou senha neste plano.
           </div>
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl mx-auto items-stretch">
+          <div class="grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-6 items-stretch">
             <div class="bg-white p-8 rounded-2xl shadow-sm border border-line">
               <h3 class="font-display font-bold text-ink text-2xl mb-1">Cadastrar novo morador</h3>
-              <p class="text-sm text-muted mb-6 full-only">O acesso ao Portal do Morador é gerado automaticamente.</p>
+              <p class="text-sm text-muted mb-6 full-only">O acesso ao App do Morador será enviado ao WhatsApp cadastrado.</p>
               <p class="text-sm text-muted mb-6 essential-only">O porteiro selecionará esta pessoa no recebimento da encomenda.</p>
               <div class="space-y-4">
                 <div>
@@ -1016,9 +1046,7 @@
                     />
                   </div>
                   <div>
-                    <label class="block text-xs font-bold text-muted uppercase mb-2"
-                      >WhatsApp (DDD + número)</label
-                    >
+                    <label class="block text-xs font-bold text-muted uppercase mb-2">WhatsApp</label>
                     <input
                       type="tel"
                       id="cad-tel"
@@ -1041,57 +1069,16 @@
               </div>
             </div>
 
-            <div class="flex flex-col gap-6 min-w-0">
-              <div
-                id="credenciais-box"
-                class="hidden-view bg-white p-8 rounded-2xl shadow-sm border border-teal/30"
-              >
-              <div class="flex items-center gap-3 mb-4">
-                <div class="bg-teal-light text-teal-dark p-2 rounded-xl">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
+            <div class="bg-white rounded-2xl shadow-sm border border-line overflow-hidden min-w-0">
+              <div class="p-5 border-b border-line flex items-center justify-between">
+                <div>
+                  <h3 class="font-display font-bold text-ink text-lg">Moradores cadastrados</h3>
+                  <p class="text-xs text-muted mt-1">Edite os dados ou controle o acesso sem apagar o histórico.</p>
                 </div>
-                <h4 class="font-display font-bold text-ink">Morador cadastrado com sucesso</h4>
+                <button onclick="carregarMoradores()" class="text-xs font-bold text-blue-dark">Atualizar</button>
               </div>
-              <p class="text-sm text-muted mb-4">
-                Repasse estas credenciais provisórias — o morador deverá trocar a senha no primeiro acesso.
-              </p>
-              <div class="grid grid-cols-2 gap-3">
-                <div class="bg-paper border border-line rounded-xl p-4">
-                  <p class="text-[10px] font-bold text-muted uppercase tracking-wide mb-1">Usuário</p>
-                  <p class="font-mono font-bold text-ink" id="cred-usuario">—</p>
-                </div>
-                <div class="bg-paper border border-line rounded-xl p-4">
-                  <p class="text-[10px] font-bold text-muted uppercase tracking-wide mb-1">
-                    Senha provisória
-                  </p>
-                  <p class="font-mono font-bold text-ink" id="cred-senha">—</p>
-                </div>
-              </div>
-              <button
-                onclick="document.getElementById('credenciais-box').classList.add('hidden-view')"
-                class="mt-5 text-sm font-bold text-muted hover:text-ink"
-              >
-                Fechar
-              </button>
-              </div>
-              <div class="bg-white rounded-2xl shadow-sm border border-line overflow-hidden min-w-0">
-                <div class="p-5 border-b border-line flex items-center justify-between">
-                  <div>
-                    <h3 class="font-display font-bold text-ink text-lg">Moradores cadastrados</h3>
-                    <p class="text-xs text-muted mt-1">Edite os dados ou controle o acesso sem apagar o histórico.</p>
-                  </div>
-                  <button onclick="carregarMoradores()" class="text-xs font-bold text-blue-dark">Atualizar</button>
-                </div>
-                <div id="lista-moradores" class="management-list">
-                  <div class="p-6 text-sm text-muted text-center">Carregando moradores…</div>
-                </div>
+              <div id="lista-moradores" class="management-list">
+                <div class="p-6 text-sm text-muted text-center">Carregando moradores…</div>
               </div>
             </div>
           </div>
@@ -1206,7 +1193,7 @@
                   >
                 </div>
               </div>
-              <div class="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-10 gap-3" id="grid-prateleiras"></div>
+              <div class="space-y-6" id="grid-prateleiras"></div>
             </div>
           </div>
         </div>
@@ -1868,24 +1855,30 @@
       }
 
       async function carregarPrateleiras() {
-        // Alimenta o mapa visual com ocupação retornada pelo servidor.
+        // Cada tamanho ocupa uma faixa; o número de colunas evita linhas finais isoladas.
         try {
           const res = await fetchDashboard('/api/dashboard/prateleiras')
           const data = await res.json()
           allShelves = Array.isArray(data) ? data : []
           const container = document.getElementById('grid-prateleiras')
-          container.innerHTML = ''
-          allShelves.forEach((p) => {
-            const isOcupada = p.status === 'ocupada'
-            let border = p.atrasada
-              ? 'border-amber bg-amber-light'
-              : isOcupada
-                ? 'border-blue bg-blue-light'
-                : 'border-line bg-paper'
-            let text = p.atrasada ? 'text-amber-dark' : isOcupada ? 'text-blue-dark' : 'text-muted/50'
-            const sub = isOcupada ? `Apto ${htmlSeguro(p.apt)}` : 'Livre'
-            container.innerHTML += `<button type="button" onclick="abrirDetalhesPrateleira('${htmlSeguro(p.id)}')" class="border-2 ${border} rounded-xl p-3 text-center transition-all hover:-translate-y-0.5 hover:shadow-md"><p class="font-mono font-bold ${text} text-sm">${htmlSeguro(p.id)}</p><p class="text-[10px] mt-1 ${text} font-bold">${sub}</p></button>`
-          })
+          container.innerHTML = [['Pequeno', 'Pequenas'], ['Médio', 'Médias'], ['Grande', 'Grandes']]
+            .map(([setor, titulo]) => {
+              const prateleiras = allShelves.filter((p) => p.setor === setor)
+              const total = Math.max(1, prateleiras.length)
+              const colunas = (limite) => Math.ceil(total / Math.ceil(total / limite))
+              const cartoes = prateleiras.map((p) => {
+                const isOcupada = p.status === 'ocupada'
+                const border = p.atrasada
+                  ? 'border-amber bg-amber-light'
+                  : isOcupada
+                    ? 'border-blue bg-blue-light'
+                    : 'border-line bg-paper'
+                const text = p.atrasada ? 'text-amber-dark' : isOcupada ? 'text-blue-dark' : 'text-muted/50'
+                const sub = isOcupada ? `Apto ${htmlSeguro(p.apt)}` : 'Livre'
+                return `<button type="button" onclick="abrirDetalhesPrateleira('${htmlSeguro(p.id)}')" class="border-2 ${border} rounded-xl p-3 text-center transition-all hover:-translate-y-0.5 hover:shadow-md"><p class="font-mono font-bold ${text} text-sm">${htmlSeguro(p.id)}</p><p class="text-[10px] mt-1 ${text} font-bold">${sub}</p></button>`
+              }).join('')
+              return `<section><h4 class="font-display font-bold text-ink mb-3">${titulo}</h4><div class="shelf-grid" style="--shelf-mobile:${colunas(2)};--shelf-tablet:${colunas(5)};--shelf-desktop:${colunas(10)}">${cartoes}</div></section>`
+            }).join('')
           setConnStatus(true)
         } catch (e) {
           setConnStatus(false)
@@ -2074,7 +2067,7 @@
       }
 
       async function salvarMorador() {
-        // Cadastra/edita morador e mostra as credenciais no painel lateral.
+        // O servidor envia as credenciais Smart ao WhatsApp sem mostrá-las ao síndico.
         if (window.DocksValidation && !window.DocksValidation.validate(document.getElementById('cad-nome').closest('.space-y-4'))) return
         const nome = document.getElementById('cad-nome').value.trim()
         const apt = document.getElementById('cad-apt').value.trim()
@@ -2092,12 +2085,7 @@
           })
           const data = await res.json()
           if (data.success) {
-            toast('Morador cadastrado com sucesso.', 'success')
-            if (planoDashboard === 'completo') {
-              document.getElementById('cred-usuario').innerText = data.usuario
-              document.getElementById('cred-senha').innerText = data.senha
-              document.getElementById('credenciais-box').classList.remove('hidden-view')
-            }
+            toast(planoDashboard === 'completo' ? 'Morador cadastrado. O acesso será enviado pelo WhatsApp.' : 'Morador cadastrado com sucesso.', 'success')
             document.getElementById('cad-nome').value = ''
             document.getElementById('cad-apt').value = ''
             document.getElementById('cad-tel').value = ''

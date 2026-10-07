@@ -105,7 +105,7 @@ CAMPOS_CONFIGURACAO = {
         "grupo": "Câmera",
         "rotulo": "URL RTSP / IP da câmera",
         "tipo": "rtsp",
-        "valor": "rtsp://CAMERA_USUARIO:CAMERA_SENHA@CAMERA_IP:CAMERA_PORTA/cam/realmonitor?channel=1&subtype=1",
+        "valor": "rtsp://USUARIO:SENHA@IP:PORTA/cam/realmonitor?channel=1&subtype=1",
         "max": 500,
         "secreto": True,
     },
@@ -151,9 +151,9 @@ CAMPOS_CONFIGURACAO = {
     },
     "tuya_device_id": {
         "grupo": "Fechadura Tuya",
-        "rotulo": "Identificador do dispositivo",
+        "rotulo": "TUYA_ID",
         "tipo": "text",
-        "valor": "TUYA_DEVICE_ID",
+        "valor": "eb8a6e1450025231dfu0ad",
         "max": 100,
         "secreto": True,
     },
@@ -161,7 +161,7 @@ CAMPOS_CONFIGURACAO = {
         "grupo": "Fechadura Tuya",
         "rotulo": "Token local do Tuya",
         "tipo": "text",
-        "valor": "TUYA_LOCAL_KEY",
+        "valor": "TUYA_TOKEN",
         "max": 100,
         "secreto": True,
     },
@@ -232,21 +232,21 @@ CAMPOS_CONFIGURACAO = {
         "grupo": "WhatsApp",
         "rotulo": "Mensagem de nova encomenda",
         "tipo": "textarea",
-        "valor": "*Docks Informa:* 📦✨\n\nOlá, {nome}! Uma nova encomenda acabou de ser registrada para o apartamento {apartamento}.\n\nAcesse o Portal do Morador para gerar seu QR Code de retirada e liberar a sala.",
+        "valor": "*📦✨* *Docks informa:*\n\nOlá, *{nome}*! Uma nova encomenda acabou de ser registrada para o apartamento *{apartamento}*.\n\nAcesse o Portal do Morador para gerar seu _QR Code_ de retirada e liberar a sala.",
         "max": 1500,
     },
     "whatsapp_mensagem_essencial": {
         "grupo": "WhatsApp",
         "rotulo": "Mensagem de encomenda do plano Essential",
         "tipo": "textarea",
-        "valor": "*Docks Informa:* 📦\n\nOlá, {nome}! Uma encomenda chegou para o Apto {apartamento}. Procure a portaria para retirá-la.",
+        "valor": "*📦* *Docks informa:*\n\nOlá, *{nome}*! Uma encomenda chegou para o apartamento *{apartamento}*. Procure a portaria para retirá-la.",
         "max": 1500,
     },
     "whatsapp_mensagem_recuperacao": {
         "grupo": "WhatsApp",
         "rotulo": "Mensagem de recuperação de senha",
         "tipo": "textarea",
-        "valor": "*Docks - Recuperação de senha* 🔐\n\nOlá, {nome}! Seu código de verificação é *{codigo}*.\n\nEle é válido por {minutos} minutos e não deve ser compartilhado com ninguém.",
+        "valor": "*🔐* *Docks - Recuperação de senha*\n\nOlá, *{nome}*! Seu código de verificação é *{codigo}*.\n\nEle é válido por {minutos} minutos e não deve ser compartilhado com ninguém.",
         "max": 1500,
     },
     "ocr_idiomas": {
@@ -284,6 +284,9 @@ CAMPOS_CONFIGURACAO = {
 CAMPOS_INTERNOS = {
     "whatsapp_bridge_url",
     "whatsapp_timeout_seconds",
+    "whatsapp_mensagem_encomenda",
+    "whatsapp_mensagem_essencial",
+    "whatsapp_mensagem_recuperacao",
     "termos_versao",
     "max_upload_mb",
     "logs_limite",
@@ -319,6 +322,15 @@ def carregar_valores(texto):
     except (TypeError, json.JSONDecodeError):
         salvos = {}
     if isinstance(salvos, dict):
+        # Atualiza apenas os textos padrão antigos; mensagens personalizadas permanecem intactas.
+        anteriores = {
+            "whatsapp_mensagem_encomenda": "*Docks Informa:* 📦✨\n\nOlá, {nome}! Uma nova encomenda acabou de ser registrada para o apartamento {apartamento}.\n\nAcesse o Portal do Morador para gerar seu QR Code de retirada e liberar a sala.",
+            "whatsapp_mensagem_essencial": "*Docks Informa:* 📦\n\nOlá, {nome}! Uma encomenda chegou para o Apto {apartamento}. Procure a portaria para retirá-la.",
+            "whatsapp_mensagem_recuperacao": "*Docks - Recuperação de senha* 🔐\n\nOlá, {nome}! Seu código de verificação é *{codigo}*.\n\nEle é válido por {minutos} minutos e não deve ser compartilhado com ninguém.",
+        }
+        for chave, antigo in anteriores.items():
+            if salvos.get(chave) == antigo:
+                salvos[chave] = valores[chave]
         valores.update(
             {
                 chave: valor

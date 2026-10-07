@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 from test_portaria import PortariaTests, server
 from backend.models import Condominio, Contato, Encomenda, EntregaPortaria, Morador, TarefaPendente, db
+from werkzeug.security import check_password_hash
 
 
 class EssencialTests(unittest.TestCase):
@@ -41,6 +42,8 @@ class EssencialTests(unittest.TestCase):
         pacote = db.session.get(Encomenda, resposta.json["encomenda_id"])
         tarefa = TarefaPendente.query.filter_by(condominio_id=self.cid).first()
         codigo = re.search(r"\*(\d{4})\*", json.loads(tarefa.payload)["mensagem"]).group(1)
+        self.assertIn("*📦* *Docks informa:*\n\nOlá, *Maria Teste*!", json.loads(tarefa.payload)["mensagem"])
+        self.assertIn("apartamento *101*", json.loads(tarefa.payload)["mensagem"])
         self.assertNotIn(codigo, str(resposta.json))
         self.assertEqual(pacote.prateleira, "Portaria")
         self.assertEqual(pacote.tamanho, "Não informado")
@@ -98,12 +101,44 @@ class EssencialTests(unittest.TestCase):
         self.assertEqual(login.json["data"]["plano"], "essencial")
         cadastro = self.client.post("/api/dashboard/moradores", headers={"X-Dashboard-Token": "sindico-teste"}, json={"nome": "Ana Silva", "apartamento": "201", "telefone": "11987654321"})
         self.assertEqual(cadastro.status_code, 200, cadastro.json)
+        self.assertFalse(cadastro.json["notificacao_pendente"])
+        self.assertEqual(TarefaPendente.query.filter_by(condominio_id=self.cid, tipo="notificacao_whatsapp").count(), 0)
+
+    def test_cadastro_smart_envia_acesso_sem_expor_senha_ao_dashboard(self):
+        condominio = db.session.get(Condominio, self.cid)
+        condominio.primeiro_login = False
+        db.session.commit()
+        server.dashboard_sessions["sindico-teste"] = {"condominio_id": self.cid, "condominio_nome": condominio.nome, "usuario": condominio.usuario}
+        resposta = self.client.post(
+            "/api/dashboard/moradores",
+            headers={"X-Dashboard-Token": "sindico-teste"},
+            json={"nome": "Ana Silva", "apartamento": "201", "telefone": "11987654321"},
+        )
+        self.assertEqual(resposta.status_code, 200, resposta.json)
+        self.assertEqual(resposta.json, {"success": True, "notificacao_pendente": True})
+        morador = Morador.query.filter_by(condominio_id=self.cid, nome="Ana Silva").one()
+        tarefa = TarefaPendente.query.filter_by(condominio_id=self.cid, tipo="notificacao_whatsapp").one()
+        payload = json.loads(tarefa.payload)
+        self.assertEqual(payload["telefone"], "11987654321")
+        mensagem = payload["mensagem"]
+        self.assertIn("Olá, *Ana Silva*! Seu acesso ao *Docks Smart*", mensagem)
+        self.assertIn(f"*Usuário:* {morador.usuario}", mensagem)
+        senha = mensagem.split("*Senha provisória:* ", 1)[1].split("\n", 1)[0]
+        self.assertEqual(senha, "Docks@201")
+        self.assertTrue(check_password_hash(morador.senha, senha))
+        self.assertTrue(morador.primeiro_login)
+        self.assertFalse(check_password_hash(morador.senha, "Docks@2011"))
+        self.assertNotIn(senha, resposta.get_data(as_text=True))
+        lista = self.client.get("/api/dashboard/moradores", headers={"X-Dashboard-Token": "sindico-teste"})
+        self.assertTrue(any(item["usuario"] == morador.usuario for item in lista.json))
+        self.assertNotIn("senha", str(lista.json))
 
     def test_opcao_de_codigo_salva_e_muda_a_mensagem_da_chegada(self):
         self.ativar(False)
         cabecalho = {"X-Dashboard-Token": "sindico-teste"}
         rota = "/api/dashboard/configuracoes"
         valores = self.client.get(rota, headers=cabecalho).json["valores"]
+        self.assertNotIn("whatsapp_mensagem_essencial", valores)
         valores["codigo_entrega_ativo"] = True
         resposta = self.client.put(rota, headers=cabecalho, json={"valores": valores})
         self.assertEqual(resposta.status_code, 200, resposta.json)
@@ -118,14 +153,10 @@ class EssencialTests(unittest.TestCase):
         tarefa = TarefaPendente.query.filter_by(condominio_id=self.cid).order_by(TarefaPendente.id.desc()).first()
         self.assertNotIn("código de retirada", json.loads(tarefa.payload)["mensagem"])
 
-    def test_marcador_de_codigo_personalizado_nao_duplica_o_aviso(self):
+    def test_marcador_de_codigo_interno_nao_duplica_o_aviso(self):
         self.ativar(True)
-        cabecalho = {"X-Dashboard-Token": "sindico-teste"}
-        rota = "/api/dashboard/configuracoes"
-        valores = self.client.get(rota, headers=cabecalho).json["valores"]
-        valores["whatsapp_mensagem_essencial"] = "Olá {nome}, Apto {apartamento}. Código: *{codigo}*."
-        resposta = self.client.put(rota, headers=cabecalho, json={"valores": valores})
-        self.assertEqual(resposta.status_code, 200, resposta.json)
+        valores = server.obter_configuracoes(self.cid)
+        server.salvar_configuracoes(self.cid, {**valores, "whatsapp_mensagem_essencial": "Olá {nome}, Apto {apartamento}. Código: *{codigo}*."})
         self.receber()
         tarefa = TarefaPendente.query.filter_by(condominio_id=self.cid).order_by(TarefaPendente.id.desc()).first()
         mensagem = json.loads(tarefa.payload)["mensagem"]
@@ -173,7 +204,7 @@ class EssencialTests(unittest.TestCase):
         self.assertIsNotNone(tarefa)
         self.assertEqual(tarefa.tipo, "notificacao_whatsapp")
         self.assertIn("entrará em contato em breve", json.loads(tarefa.payload)["mensagem"])
-        self.assertIn("Essential", json.loads(tarefa.payload)["mensagem"])
+        self.assertIn("Olá, *Ana Silva*! Recebemos sua mensagem sobre o *Docks Essential*.", json.loads(tarefa.payload)["mensagem"])
         with patch.object(server.requests, "post") as envio:
             envio.return_value.status_code = 200
             self.assertTrue(server.processar_tarefa_pendente(tarefa))

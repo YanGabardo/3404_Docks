@@ -893,7 +893,7 @@ def enviar_whatsapp(telefone, mensagem, condominio_id=None):
 
 
 def mensagem_notificacao_encomenda(nome, apartamento, condominio_id=None):
-    """Insere nome e apartamento no modelo configurado pelo síndico."""
+    """Insere nome e apartamento no modelo de mensagem do condomínio."""
     modelo = obter_configuracoes(condominio_id, criar=False)[
         "whatsapp_mensagem_encomenda"
     ]
@@ -1495,9 +1495,10 @@ def parar_gravacao_retirada(retirada_id):
 @app.route("/api/dashboard/moradores", methods=["GET", "POST"])
 @dashboard_auth_required
 def cadastrar_morador():
-    """Lista moradores ou cria cadastro com credencial inicial no condomínio ativo."""
+    """Lista moradores ou envia o acesso inicial Smart ao WhatsApp cadastrado."""
     condominio_id = g.dashboard_session["condominio_id"]
-    essencial = db.session.get(Condominio, condominio_id).plano == "essencial"
+    condominio = db.session.get(Condominio, condominio_id)
+    essencial = condominio.plano == "essencial"
     if request.method == "GET":
         moradores = (
             Morador.query.filter_by(condominio_id=condominio_id)
@@ -1534,7 +1535,7 @@ def cadastrar_morador():
     while Morador.query.filter_by(condominio_id=condominio_id, usuario=usuario).first():
         usuario = f"{usuario_base}{sufixo}"
         sufixo += 1
-    senha_gerada = secrets.token_urlsafe(24) if essencial else f"Docks@{apartamento}1"
+    senha_gerada = secrets.token_urlsafe(24) if essencial else f"Docks@{apartamento}"
     novo_morador = Morador(
         condominio_id=condominio_id,
         nome=nome,
@@ -1550,8 +1551,23 @@ def cadastrar_morador():
         commit=False,
         condominio_id=condominio_id,
     )
+    if not essencial:
+        # A fila guarda a mensagem junto ao cadastro e a envia quando o WhatsApp estiver disponível.
+        enfileirar_tarefa(
+            "notificacao_whatsapp",
+            {
+                "telefone": telefone,
+                "mensagem": (
+                    f"Olá, *{nome}*! Seu acesso ao *Docks Smart* do condomínio *{condominio.nome}* foi criado.\n\n"
+                    f"*Usuário:* {usuario}\n*Senha provisória:* {senha_gerada}\n\n"
+                    "Troque a senha no primeiro acesso e não compartilhe estes dados."
+                ),
+            },
+            condominio_id=condominio_id,
+            commit=False,
+        )
     db.session.commit()
-    return jsonify({"success": True, **({} if essencial else {"usuario": usuario, "senha": senha_gerada})})
+    return jsonify({"success": True, "notificacao_pendente": not essencial})
 
 
 @app.route("/api/dashboard/moradores/<int:morador_id>", methods=["PATCH"])
@@ -2149,11 +2165,11 @@ def admin_condominios():
         {
             "telefone": telefone,
             "mensagem": (
-                f"Olá, {responsavel}! O condomínio {nome} já pode acessar o Docks "
-                f"no plano {'Essential' if plano == 'essencial' else 'Smart'}. "
-                f"Entre pela Área do Cliente com o usuário {usuario} e a senha inicial "
-                f"{SENHA_INICIAL_CONDOMINIO}. Você deverá trocá-la no primeiro acesso. "
-                "Peça à equipe Docks o endereço de acesso do seu condomínio."
+                f"Olá, *{responsavel}*! O condomínio *{nome}* já pode acessar o Docks "
+                f"no plano *{'Essential' if plano == 'essencial' else 'Smart'}*. "
+                "Entre pela Área do Cliente com as credenciais abaixo.\n\n"
+                f"*Usuário:* {usuario}\n*Senha inicial:* {SENHA_INICIAL_CONDOMINIO}.\n\n"
+                "Troque a senha no primeiro acesso e não compartilhe estes dados."
             ),
         },
         condominio_id=condominio.id,
@@ -2283,8 +2299,8 @@ def criar_contato():
     contato = Contato(**campos, status="novo", criado_em=agora_str())
     db.session.add(contato)
     texto = (
-        f"Olá, {nome}! Recebemos sua mensagem sobre o Docks "
-        f"{'Essential' if plano_interesse == 'essencial' else 'Smart'}. "
+        f"Olá, *{nome}*! Recebemos sua mensagem sobre o "
+        f"*Docks {'Essential' if plano_interesse == 'essencial' else 'Smart'}*. "
         "A equipe Docks entrará em contato em breve. Obrigado pelo interesse!"
     )
     # O contato e o aviso entram juntos no banco; a fila reenviará quando houver conexão.
@@ -2397,10 +2413,9 @@ def dashboard_configuracoes():
     if essencial:
         campos = [campo for campo in campos if campo["chave"] in {
             "codigo_entrega_ativo", "encomenda_alerta_dias",
-            "whatsapp_mensagem_essencial",
         }]
     else:
-        campos = [campo for campo in campos if campo["chave"] not in {"codigo_entrega_ativo", "whatsapp_mensagem_essencial"}]
+        campos = [campo for campo in campos if campo["chave"] != "codigo_entrega_ativo"]
     if request.method == "GET":
         return jsonify(
             {

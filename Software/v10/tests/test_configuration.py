@@ -7,6 +7,7 @@ from werkzeug.security import check_password_hash
 import test_resident as fixtures
 from backend.configuration import (
     CAMPOS_INTERNOS,
+    carregar_valores,
     esquema_publico,
     validar_valores_painel,
     valores_padrao,
@@ -21,9 +22,29 @@ class ConfigurationTests(unittest.TestCase):
     setUp = fixtures.ResidentTests.setUp
     tearDown = fixtures.ResidentTests.tearDown
 
+    def test_mensagens_whatsapp_padrao_e_atualizacao_sem_perder_personalizacao(self):
+        atuais = valores_padrao()
+        self.assertIn("*📦✨* *Docks informa:*\n\nOlá, *{nome}*!", atuais["whatsapp_mensagem_encomenda"])
+        self.assertIn("apartamento *{apartamento}*", atuais["whatsapp_mensagem_encomenda"])
+        self.assertIn("_QR Code_", atuais["whatsapp_mensagem_encomenda"])
+        self.assertIn("*📦* *Docks informa:*\n\nOlá, *{nome}*!", atuais["whatsapp_mensagem_essencial"])
+        self.assertIn("*🔐* *Docks - Recuperação de senha*\n\nOlá, *{nome}*!", atuais["whatsapp_mensagem_recuperacao"])
+        anteriores = {
+            "whatsapp_mensagem_encomenda": "*Docks Informa:* 📦✨\n\nOlá, {nome}! Uma nova encomenda acabou de ser registrada para o apartamento {apartamento}.\n\nAcesse o Portal do Morador para gerar seu QR Code de retirada e liberar a sala.",
+            "whatsapp_mensagem_essencial": "*Docks Informa:* 📦\n\nOlá, {nome}! Uma encomenda chegou para o Apto {apartamento}. Procure a portaria para retirá-la.",
+            "whatsapp_mensagem_recuperacao": "*Docks - Recuperação de senha* 🔐\n\nOlá, {nome}! Seu código de verificação é *{codigo}*.\n\nEle é válido por {minutos} minutos e não deve ser compartilhado com ninguém.",
+        }
+        migrados = carregar_valores(json.dumps(anteriores))
+        for chave in anteriores:
+            self.assertEqual(migrados[chave], atuais[chave])
+        personalizado = "Olá, *{nome}*! Encomenda para o apartamento *{apartamento}*."
+        anteriores["whatsapp_mensagem_essencial"] = personalizado
+        self.assertEqual(carregar_valores(json.dumps(anteriores))["whatsapp_mensagem_essencial"], personalizado)
+
     def test_visible_schema_and_minute_conversion(self):
         campos = {campo["chave"]: campo for campo in esquema_publico()}
         self.assertFalse(CAMPOS_INTERNOS & campos.keys())
+        self.assertFalse({"whatsapp_mensagem_encomenda", "whatsapp_mensagem_essencial", "whatsapp_mensagem_recuperacao"} & campos.keys())
         self.assertEqual(campos["qr_validade_minutos"]["tipo"], "int")
         self.assertEqual(campos["gravacao_max_minutos"]["tipo"], "int")
         self.assertEqual(campos["qr_validade_minutos"]["min"], 1)
@@ -34,6 +55,9 @@ class ConfigurationTests(unittest.TestCase):
 
         atuais = valores_padrao()
         painel = valores_para_painel(atuais)
+        self.assertNotIn("whatsapp_mensagem_encomenda", painel)
+        self.assertNotIn("whatsapp_mensagem_essencial", painel)
+        self.assertNotIn("whatsapp_mensagem_recuperacao", painel)
         self.assertEqual(painel["qr_validade_minutos"], 5)
         self.assertEqual(painel["gravacao_max_minutos"], 3)
         painel["qr_validade_minutos"] = 7
@@ -54,6 +78,9 @@ class ConfigurationTests(unittest.TestCase):
                 self.assertIsNotNone(validar_valores_painel(tentativa, atuais)[1])
         self.assertIsNotNone(
             validar_valores_painel({**painel, "camera_fps": 60}, atuais)[1]
+        )
+        self.assertIsNotNone(
+            validar_valores_painel({**painel, "whatsapp_mensagem_encomenda": "Outro texto"}, atuais)[1]
         )
 
     def test_dashboard_saves_minutes_without_resetting_internal_values(self):
@@ -119,6 +146,8 @@ class ConfigurationTests(unittest.TestCase):
             self.assertIn("Área do Cliente", texto)
             self.assertIn("Docks@2026", texto)
             self.assertIn("ana", texto)
+            self.assertIn("*Condomínio Novo*", texto)
+            self.assertIn("*Usuário:* ana\n*Senha inicial:*", texto)
 
             login = self.client.post(
                 "/api/login", json={"usuario": "ana", "senha": "Docks@2026"}
